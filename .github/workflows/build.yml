@@ -2,7 +2,7 @@ name: build-api
 on: 
  - push
 jobs:
-  build_docker:
+  build_docker-prod:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -22,8 +22,30 @@ jobs:
           context: .
           push: true
           tags: |
-            docker.infra.phoenixlan.no/web/${{ github.event.repository.name }}:latest
-            docker.infra.phoenixlan.no/web/${{ github.event.repository.name }}:${{ github.sha }}
+            docker.infra.phoenixlan.no/web/${{ github.event.repository.name }}-prod:latest
+            docker.infra.phoenixlan.no/web/${{ github.event.repository.name }}-prod:${{ github.sha }}
+  build_docker-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Login to docker repo
+        uses: docker/login-action@v2
+        with:
+          registry: docker.infra.phoenixlan.no
+          username: ${{ secrets.REGISTRY_USERNAME}}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+      - name: Build and push
+        uses: docker/build-push-action@v3
+        with:
+          file: "docker/test/Dockerfile"
+          context: .
+          push: true
+          tags: |
+            docker.infra.phoenixlan.no/web/${{ github.event.repository.name }}-test:latest
+            docker.infra.phoenixlan.no/web/${{ github.event.repository.name }}-test:${{ github.sha }}
   test:
     runs-on: ubuntu-latest
     env:
