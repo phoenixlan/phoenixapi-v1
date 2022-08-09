@@ -1,0 +1,89 @@
+from pyramid.view import view_config, view_defaults
+from pyramid.httpexceptions import (
+    HTTPForbidden,
+    HTTPBadRequest,
+    HTTPNotFound,
+    HTTPInternalServerError
+)
+from pyramid.security import Authenticated, Everyone, Deny, Allow
+
+
+from phoenixRest.models import db
+from phoenixRest.models.crew.crew import Crew
+from phoenixRest.models.tickets.payment import Payment, PaymentProvider
+from phoenixRest.models.tickets.ticket_type import TicketType
+from phoenixRest.models.tickets.store_session import StoreSession
+
+from phoenixRest.utils import validate
+from phoenixRest.resource import resource
+
+from phoenixRest.roles import ADMIN, TICKET_ADMIN
+
+from phoenixRest.views.payment.instance import PaymentInstanceResource
+
+from datetime import datetime
+
+import logging
+log = logging.getLogger(__name__)
+
+@resource(name='payment')
+class PaymentResource(object):
+    __acl__ = [
+        (Allow, Authenticated, 'create'),
+        (Allow, ADMIN, 'fetch_all'),
+        (Allow, TICKET_ADMIN, 'fetch_all'),
+
+        # Authenticated pages
+        #(Allow, Authenticated, Authenticated),
+        #(Deny, Everyone, Authenticated),
+    ]
+
+    def __getitem__(self, key):
+        """Traverse to a specific payment"""
+        node = PaymentInstanceResource(self.request, key)
+        node.__parent__ = self
+        node.__name__ = key
+        return node
+
+    def __init__(self, request):
+        self.request = request
+
+
+@view_config(context=PaymentResource, name='', request_method='GET', renderer='json', permission='fetch_all')
+def get_all_payments(request):
+    # Returns all payments
+    return db.query(Payment).order_by(Payment.created).all()
+
+@view_config(context=PaymentResource, name='', request_method='POST', renderer='json', permission='create')
+@validate(json_body={'store_session': str, 'provider': str})
+def create_payment(context, request):
+    # Validate provider
+    chosen_provider = PaymentProvider[request.json_body['provider']]
+    if chosen_provider is None:
+        raise HTTPBadRequest('Invalid payment provider')
+    
+    # Store session
+    store_session = db.query(StoreSession).filter(StoreSession.uuid == request.json_body['store_session']).first()
+
+    if not store_session or store_session.user != request.user:
+        raise HTTPNotFound("Store session not found")
+    
+    if datetime.now() > store_session.expires:
+        raise HTTPNotFound("The store session has expired. Please create a new order")
+    
+    # Make sure you can't create two payments for the same store session
+    existing_payment = db.query(Payment).filter(Payment.store_session == store_session).first()
+    if existing_payment:
+        # TODO see if we can cancel the old one later
+        raise HTTPBadRequest("You have already created a payment for this store session. Please finish it")
+
+    payment = Payment(request.user, chosen_provider, store_session.get_total())
+    payment.store_session = store_session
+
+    db.add(payment)
+    db.flush()
+
+    return payment
+    
+
+    

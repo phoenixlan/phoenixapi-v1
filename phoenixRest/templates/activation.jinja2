@@ -1,0 +1,18 @@
+<html>
+    <head>
+        <title>{{name}} - Aktivering av konto</title>
+    </head>
+    <body>
+    {% if success %}
+        {% if url %}
+        <p>Kontoen er aktivert, vi tar deg videre</p>
+        <meta http-equiv="refresh" content="1; URL={{ url }}" />
+        {% else %}
+        <p>Kontoen er aktivert, du kan nå logge inn</p>
+        {% endif %}
+    {% else %}
+    <h1>Kunne ikke aktivere kontoen din</h1>
+    <p>Har du trykket på linken flere ganger? Det kan hende den allerede er aktivert - prøv å logge inn! Dersom problemet fortsetter, kontakt oss: <a href="mailto:{mail}">{mail}</a><p>
+    {% endif %}
+    </body>
+</html>
