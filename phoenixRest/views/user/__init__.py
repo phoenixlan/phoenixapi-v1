@@ -7,13 +7,11 @@ from pyramid.security import Authenticated, Everyone, Deny, Allow
 
 from sqlalchemy import or_
 
-from phoenixRest.mappers.user import map_user_no_positions
-
 from phoenixRest.models import db
-from phoenixRest.models.core.user import Gender, User
+from phoenixRest.models.core.user import Gender, User, calculate_age
 from phoenixRest.models.core.activation_code import ActivationCode
 
-from phoenixRest.mappers.user import map_user_simple_with_secret_fields
+from phoenixRest.mappers.user import map_user_simple_with_secret_fields, map_user_with_secret_fields
 
 from phoenixRest.utils import validate
 from phoenixRest.resource import resource
@@ -59,7 +57,7 @@ class UserViews(object):
 
 @view_config(context=UserViews, name='current', request_method='GET', renderer='json', permission='current_get')
 def get_current(context, request):
-    return request.user
+    return map_user_with_secret_fields(request.user, request)
 
 @view_config(context=UserViews, name='search', request_method='GET', renderer='json', permission='search')
 def search_users(context, request):
@@ -73,19 +71,12 @@ def search_users(context, request):
         User.username.contains(query),
         User.email.contains(query)
     )).all()
-    return [ map_user_simple_with_secret_fields(user) for user in users ]
+    return [ map_user_simple_with_secret_fields(user, request) for user in users ]
 
 @view_config(context=UserViews, name='', request_method='GET', renderer='json', permission='all_get')
 def all_users(context, request):
     users = db.query(User).order_by(User.created).all()
-    return [map_user_no_positions(user) for user in users]
-
-def age(dob):
-    today = date.today()
-    years = today.year - dob.year
-    if today.month < dob.month or (today.month == dob.month and today.day < dob.day):
-        years -= 1
-    return years
+    return [map_user_simple_with_secret_fields(user) for user in users]
 
 @view_config(context=UserViews, name='register', request_method="POST", renderer='json', permission="register")
 @validate(json_body={'username': str, 'firstname': str, 'surname': str, 'password': str, 'passwordRepeat': str, 'email': str, 'gender': str, "dateOfBirth": str, 'phone': str, 'address': str, 'zip': str, 'guardianPhone': str})
@@ -114,7 +105,7 @@ def register_user(context, request):
     user = User(request.json_body["username"], request.json_body["email"], request.json_body["password"], request.json_body["firstname"], request.json_body["surname"], birthdate, gender, request.json_body["phone"], request.json_body["address"], request.json_body["zip"])
     if "guardianPhone" in request.json_body and len(request.json_body["guardianPhone"]) > 0:
         user.guardian_phone = request.json_body["guardianPhone"]
-    elif age(birthdate) < 18:
+    elif calculate_age(birthdate) < 18:
         raise HTTPBadRequest("You need to provide a guardian phone number")
 
     # Create the activation code

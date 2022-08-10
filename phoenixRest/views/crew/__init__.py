@@ -15,17 +15,16 @@ from phoenixRest.resource import resource
 from phoenixRest.roles import ADMIN
 
 from phoenixRest.views.crew.instance import CrewInstanceViews
+from phoenixRest.mappers.crew import map_crew_simple
 
 from datetime import datetime
 
 import logging
 log = logging.getLogger(__name__)
 
-@view_defaults(context='.CrewViews')
 @resource(name='crew')
 class CrewViews(object):
     __acl__ = [
-        (Allow, Everyone, 'get'),
         (Allow, Everyone, 'getAll'),
         (Allow, ADMIN, 'create'),
 
@@ -44,7 +43,7 @@ class CrewViews(object):
         return node
 
 @view_config(context=CrewViews, name='', request_method='GET', renderer='json', permission='getAll')
-def get_all_crew(request):
+def get_all_crew(context, request):
     # Returns all crews
     query = db.query(Crew)
 
@@ -53,7 +52,7 @@ def get_all_crew(request):
         log.info("Reducing crew list as the requester is not admin")
         query = query.filter(Crew.active == True)
     
-    return query.order_by(Crew.name).all()
+    return [ map_crew_simple(crew, request) for crew in query.order_by(Crew.name).all() ]
 
 @view_config(context=CrewViews, request_method='PUT', renderer='json', permission='create')
 @validate(json_body={'name': str, 'description': str})

@@ -39,6 +39,13 @@ class Gender(enum.Enum):
     male = 1
     female = 2
 
+def calculate_age(dob):
+        today = date.today()
+        years = today.year - dob.year
+        if today.month < dob.month or (today.month == dob.month and today.day < dob.day):
+            years -= 1
+        return years
+
 class User(Base):
     __tablename__ = "user"
     uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
@@ -99,6 +106,23 @@ class User(Base):
 
         self.created = datetime.now()
 
+    def get_avatar_urls(self, request):
+        if self.avatar is None:
+            api_root = request.registry.settings['api.root']
+            filename = "default_child.png"
+            if self.get_age() >= 16:
+                if self.gender == Gender.male:
+                    filename = "default_gutt.png"
+                else:
+                    filename = "default_jente.png"
+            avatar_url = "%s/static/default_avatars/%s" % (api_root, filename)
+            return {
+                'sd': avatar_url,
+                'hd': avatar_url,
+                'thumb': avatar_url
+            }
+        else:
+            return self.avatar.__json__(request)['urls']
 
     def __json__(self, request):
         return {
@@ -110,8 +134,11 @@ class User(Base):
             
             'gender': str(self.gender),
 
-            'avatar': self.avatar
+            'avatar_urls': self.get_avatar_urls(request)
         }
+
+    def get_age(self):
+        return calculate_age(self.birthdate)
 
     # Consider a more readable implementation
     def _constant_time_compare(val1, val2):

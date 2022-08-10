@@ -55,6 +55,8 @@ class Avatar(Base):
         sd_dir = request.registry.settings["avatar.directory_sd"]
         hd_dir = request.registry.settings["avatar.directory_hd"]
         thumb_dir = request.registry.settings["avatar.directory_thumb"]
+
+        api_root = request.registry.settings['api.root']
         
         avatar_dict = {
             'uuid': self.uuid,
@@ -62,9 +64,9 @@ class Avatar(Base):
             #'created': int(self.created.timestamp()),
             'state': str(self.state),
             'urls': {
-                'sd': "%s/%s.%s" % (sd_dir, self.uuid, self.extension),
-                'hd': "%s/%s.%s" % (hd_dir, self.uuid, self.extension),
-                'thumb': "%s/%s.%s" % (thumb_dir, self.uuid, self.extension)
+                'sd': "%s%s/%s.%s" % (api_root, sd_dir, self.uuid, self.extension),
+                'hd': "%s%s/%s.%s" % (api_root, hd_dir, self.uuid, self.extension),
+                'thumb': "%s%s/%s.%s" % (api_root, thumb_dir, self.uuid, self.extension)
             }
         }
 

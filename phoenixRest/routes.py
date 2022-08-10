@@ -5,7 +5,7 @@ def includeme(config):
     settings = config.get_settings()
     log.info(settings)
     
-    config.add_static_view('static', 'static', cache_max_age=3600)
+    config.add_static_view('static', './static', cache_max_age=3600)
     config.add_static_view('files', settings['files.static_view_root'], cache_max_age=3600)
 
     #config.add_subscriber(verify_token_event, NewRequest)
