@@ -4,8 +4,10 @@
 	import Logo from './components/Logo.svelte';
 	import Panel from './components/Panel.svelte';
 
+	import Spinner from 'svelte-spinner';
+
 	import { Textfield, Button } from 'svelte-mui';
-import OauthSecurity from './components/OauthSecurity.svelte';
+	import OauthSecurity from './components/OauthSecurity.svelte';
 
 	var GET_PARAMS = {};
    	location.search.substr(1).split("&").forEach(function(item) {GET_PARAMS[item.split("=")[0]] = decodeURIComponent(item.split("=")[1]) });
@@ -15,8 +17,10 @@ import OauthSecurity from './components/OauthSecurity.svelte';
 	let password = "";
 
 	let error = "";
+	let loading = false;
 
 	async function handleLogin(e) {
+		loading = true;
 		console.log("login");
 		
 		const result = await fetch('/oauth/auth', {
@@ -30,7 +34,7 @@ import OauthSecurity from './components/OauthSecurity.svelte';
   			}
   		})
 		const resp = await result.json()
-		if(result.status === 200) {
+		if(result.ok) {
 			const redirectUri = GET_PARAMS['redirect_uri'];
 
           	console.log("redirect uri: " + redirectUri);
@@ -39,6 +43,7 @@ import OauthSecurity from './components/OauthSecurity.svelte';
 		} else {
 			error = resp.error
 		}
+		loading = false;
 	}
 </script>
 
@@ -70,9 +75,21 @@ import OauthSecurity from './components/OauthSecurity.svelte';
 			{#if error}
 				<p class="error">{error}</p>
 			{/if}
+			{#if loading}
+			<div class="spinnerContainer">
+				<Spinner
+					size="50"
+					speed="750"
+					color="#999"
+					thickness="2"
+					gap="40"
+				/>
+			</div>
+			{:else}
 			<Button color="primary" raised=true fullWidth=true form="loginForm" type="submit">Submit</Button>
+			{/if}
 			<p>Du kan også <a href={'register.html?client_id=' + encodeURIComponent(GET_PARAMS['client_id']) + "&redirect_uri=" + encodeURIComponent(GET_PARAMS['redirect_uri'])}>registrere deg</a></p>
-			<p><a href="forgot.html">Glemt passord?</a></p>
+			<p><a href={"forgot.html?client_id=" + encodeURIComponent(GET_PARAMS['client_id']) + "&redirect_uri=" + encodeURIComponent(GET_PARAMS['redirect_uri'])}>Glemt passord?</a></p>
 		</OauthSecurity>
 	</Panel>
 </main>
@@ -87,6 +104,13 @@ import OauthSecurity from './components/OauthSecurity.svelte';
 	}
 	h1 {
 		font-weight: 400;
+	}
+
+	.spinnerContainer {
+		width: 100%;
+		display: flex;
+		align-items: center;
+		flex-direction: column;
 	}
 
 	.divider {

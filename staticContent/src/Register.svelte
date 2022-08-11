@@ -1,8 +1,13 @@
 <script>
 	export let name;
 
+	import Spinner from 'svelte-spinner';
+
 	import Logo from './components/Logo.svelte';
 	import Panel from './components/Panel.svelte';
+	import Fa from 'svelte-fa/src/fa.svelte'
+	import { faCheck } from '@fortawesome/free-solid-svg-icons/index.es'
+
 
 	import { Textfield, Button, Radio, Datefield} from 'svelte-mui';
 	import OauthSecurity from './components/OauthSecurity.svelte';
@@ -29,6 +34,16 @@
 
 	let dateOfBirth = new Date(2005, 0, 1);
 
+	const STATES = {
+		input: "INPUT",
+		loading: "LOADING",
+		success: "SUCCESS",
+		failure: "FAILURE"
+	}
+
+	let registerState = STATES.input;
+	let error = "";
+
 	function getAge(birthDate) {
     	var today = new Date();
     	var age = today.getFullYear() - birthDate.getFullYear();
@@ -40,6 +55,7 @@
 	}
 
 	async function handleRegister(e) {
+		registerState = STATES.loading;
 		console.log("register");
 		console.log(dateOfBirth);
 		const month = ((dateOfBirth.getMonth()+1)+"").padStart(2, "0")
@@ -57,7 +73,8 @@
 			phone,
 			guardianPhone,
 			address,
-			zip
+			zip,
+			clientId: GET_PARAMS['client_id']
 		}
 		console.log(payload);
 		
@@ -68,14 +85,13 @@
   				"Content-Type": "application/json"
   			}
   		})
-		const resp = await result.json()
-		if(result.isOk) {
-			const redirectUri = GET_PARAMS['redirectUri'];
-
-          	console.log("redirect uri: " + redirectUri);
-    		window.location = redirectUri + "?code=" + resp.code;
-
+		console.log(result)
+		if(result.ok) {
+			registerState = STATES.success
 		} else {
+
+			const resp = await result.json()
+			registerState = STATES.failure;
 			error = resp.error
 		}
 	}
@@ -189,8 +205,37 @@
 					message="Obligatorisk dersom du er under 18 år"
 				/>
 			</form>
+			{#if registerState == STATES.failure}
+			<div class="registerError">
+				<p><b>Kunne ikke registrere deg:</b> {error}</p>
+			</div>
+			{/if}
+			{#if registerState == STATES.failure || registerState == STATES.input }
 			<Button color="primary" raised=true fullWidth=true form="registerForm" type="submit">Registrer deg</Button>
-			<p>Har du allerede konto? <a href={'login.html?client_id=' + encodeURIComponent(GET_PARAMS['client_id']) + "&redirect_uri=" + encodeURIComponent(GET_PARAMS['redirect_uri'])}>Logg inn</a></p>
+			{/if}
+			{#if registerState == STATES.loading}
+			<div class="registering">
+				<Spinner
+					size="50"
+					speed="750"
+					color="#999"
+					thickness="2"
+					gap="40"
+				/>
+			</div>
+			{/if}
+			{#if registerState == STATES.success}
+			<div class="registeringSuccess">
+				<Fa icon={faCheck} style="font-size: 3em; color: green;"/>
+				<h1>Kontoen din er registrert</h1>
+				<p>Du må verifisere mail-kontoen for å logge inn. Du skal ha fått en mail. Sjekk inboksen din for å fortsette. Det kan ta et par minutter før mailen kommer. Husk å sjekke søppelpost!</p>
+				<p>Mottok du ikke mailen? Kontakt oss: <a href="mailto:info@phoenixlan.no">info@phoenixlan.no</a></p>
+			</div>
+			{:else}
+			<div class="loginPrompt">
+				<p>Har du allerede konto? <a href={'login.html?client_id=' + encodeURIComponent(GET_PARAMS['client_id']) + "&redirect_uri=" + encodeURIComponent(GET_PARAMS['redirect_uri'])}>Logg inn</a></p>
+			</div>
+			{/if}
 		</OauthSecurity>
 	</Panel>
 </main>
@@ -213,6 +258,21 @@
 
 	.gender {
 		display: flex;
+	}
+	.registeringSuccess {
+		width: 100%;
+		display: flex;
+		align-items: center;
+		flex-direction: column;
+	}
+	.registerError {
+		color: red;
+	}
+	.registering {
+		width: 100%;
+		display: flex;
+		align-items: center;
+		flex-direction: column;
 	}
 	.label {
 		font-size: 1.0em;
