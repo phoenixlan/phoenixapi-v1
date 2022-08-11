@@ -72,9 +72,15 @@ def delete_avatar(context, request):
 @validate(json_body={'new_state': str})
 def update_status(context, request):
     if request.json_body['new_state'] not in ['accepted', 'rejected']:
-        raise HTTPBadRequest('new state is not accepted or rejected')
+        request.response.status = 400
+        return {
+            "error": "New avatar state is not accepted or rejected"
+        }
     if context.avatarInstance.state != AvatarState.uploaded:
-        raise HTTPBadRequest('Avatar is already accepted or rejected')
+        request.response.status = 400
+        return {
+            "error": "Avatar is already accepted or rejected"
+        }
 
     enum = AvatarState[request.json_body['new_state']]
     if enum is None:

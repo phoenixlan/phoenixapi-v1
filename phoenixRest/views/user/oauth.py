@@ -71,7 +71,10 @@ def login(request):
             'code': code.code
         }
     else:
-        raise HTTPForbidden('Access denied')
+        request.response.status = 403
+        return {
+            "error": "Invalid username or password"
+        }
  
 @view_config(route_name='oauth_token', request_method='POST', renderer='json')
 def token(request):
@@ -83,15 +86,26 @@ def token(request):
         code = db.query(OauthCode).filter(OauthCode.code == request.json_body['code']).first()
         if code is None:
             log.info("Not seen before code")
-            raise HTTPForbidden('Invalid code')
+
+            request.response.status = 403
+            return {
+                "error": "Invalid code"
+            }
         if datetime.now() > code.expires:
-            log.info("It expired")
-            raise HTTPForbidden('Invalid code')
+            log.warning("Expired code")
+
+            request.response.status = 403
+            return {
+                "error": "Invalid code"
+            }
         user = code.user
 
         if user is None:
             log.info('User is none when generating token!')
-            raise HTTPForbidden('Failed to get token')
+            request.response.status = 500
+            return {
+                "error": "Failed to get token"
+            }
 
         # The code can only be used once
         db.delete(code)
@@ -108,11 +122,17 @@ def token(request):
         }
     elif request.json_body['grant_type'] == 'refresh_token':
         if 'refresh_token' not in request.json_body:
-            raise HTTPBadRequest('Missing refresh_token')
+            request.response.status = 400
+            return {
+                "error": "Missing refresh_token"
+            }
         refreshToken = db.query(OauthRefreshToken).filter(OauthRefreshToken.token == request.json_body['refresh_token']).first()
         if refreshToken is None:
             # TODO rate limit
-            raise HTTPForbidden('Invalid token')
+            request.response.status = 403
+            return {
+                "error": "Invalid token"
+            }
         # The refresh token was valid
 
         return {
@@ -120,7 +140,10 @@ def token(request):
         }
 
     else:
-        raise HTTPForbidden('Invalid grant type')
+        request.response.status = 400
+        return {
+            "error": "Invalid grant type"
+        }
 
 # Make sure token returns 200 OK
 @view_config(route_name='oauth_token', request_method='OPTIONS', renderer='string')
@@ -130,13 +153,22 @@ def token_options(request):
 @view_config(route_name='oauth_validate', request_method="GET", renderer='string')
 def validate_oauth(request):
     if 'client_id' not in request.GET or 'redirect_uri' not in request.GET:
-        raise HTTPBadRequest("Missing parameters")
+        request.response.status = 400
+        return {
+            "error": "Missing parameters"
+        }
     client_id = request.GET['client_id']
     if client_id not in request.registry.settings["oauth.valid_client_ids"].split(","):
         log.warn("Failed to validate oAuth: %s is an invalid client id" % client_id)
-        raise HTTPBadRequest('Invalid client id')
+        request.response.status = 400
+        return {
+            "error": "Invalid client id"
+        }
     url = request.registry.settings["oauth.%s.redirect_url" % client_id]
     if url != request.GET['redirect_uri']:
         log.warn("Failed to validate oauth: Invalid URI %s for client id %s" % (request.GET['redirect_uri'], client_id))
-        raise HTTPBadRequest("Invalid redirect URI")
+        request.response.status = 400
+        return {
+            "error": "Invalid redirect URI"
+        }
     return ""

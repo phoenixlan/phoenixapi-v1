@@ -47,7 +47,7 @@ class UserViews(object):
         self.request = request
 
     def __getitem__(self, key):
-        if key in ['current', 'register', 'activate', 'search']:
+        if key in ['current', 'register', 'activate', 'search', 'forgot']:
             raise KeyError('')
         node = UserInstanceResource(self.request, key)
         
@@ -62,7 +62,10 @@ def get_current(context, request):
 @view_config(context=UserViews, name='search', request_method='GET', renderer='json', permission='search')
 def search_users(context, request):
     if 'query' not in request.GET:
-        raise HTTPBadRequest("Missing query")
+        request.response.status = 400
+        return {
+            "error": "Missing query"
+        }
 
     query = request.GET['query']
     users = db.query(User).filter(or_(
@@ -81,18 +84,21 @@ def all_users(context, request):
 @view_config(context=UserViews, name='register', request_method="POST", renderer='json', permission="register")
 @validate(json_body={'username': str, 'firstname': str, 'surname': str, 'password': str, 'passwordRepeat': str, 'email': str, 'gender': str, "dateOfBirth": str, 'phone': str, 'address': str, 'zip': str, 'guardianPhone': str})
 def register_user(context, request):
-    if request.json_body["gender"] not in ['male', 'female']:
-            raise HTTPBadRequest("Invalid gender") # Hi, foone
-    
     if request.json_body["password"] != request.json_body["passwordRepeat"]:
-        raise HTTPBadRequest("Password and repeat password does not match")
+        request.response.status = 400
+        return {
+            "error": "Password and repeat password does not match"
+        }
 
     existingUsername = db.query(User).filter(User.username == request.json_body["username"]).first()
     existingEmail = db.query(User).filter(User.email == request.json_body["email"]).first()
     existingPhone = db.query(User).filter(User.phone == request.json_body["phone"]).first()
 
     if existingUsername is not None or existingEmail is not None or existingPhone is not None:
-        raise HTTPBadRequest("An user by this username, phone number, or e-mail already exists")
+        request.response.status = 400
+        return {
+            "error": "An user by this username, phone number, or e-mail already exists"
+        }
 
     birthdate = date.fromisoformat(request.json_body["dateOfBirth"])
     if request.json_body["gender"] == "male":
@@ -100,13 +106,19 @@ def register_user(context, request):
     elif request.json_body["gender"] == "female":
         gender = Gender.female
     else:
-        raise HTTPBadRequest("Invalid gender")
+        request.response.status = 400
+        return {
+            "error": "Invalid gender"
+        }
 
     user = User(request.json_body["username"], request.json_body["email"], request.json_body["password"], request.json_body["firstname"], request.json_body["surname"], birthdate, gender, request.json_body["phone"], request.json_body["address"], request.json_body["zip"])
     if "guardianPhone" in request.json_body and len(request.json_body["guardianPhone"]) > 0:
         user.guardian_phone = request.json_body["guardianPhone"]
     elif calculate_age(birthdate) < 18:
-        raise HTTPBadRequest("You need to provide a guardian phone number")
+        request.response.status = 400
+        return {
+            "error": "You need to provide a guardian phone number"
+        }
 
     # Create the activation code
     clientId = request.json_body.get("clientId")
@@ -152,3 +164,18 @@ def activate_account(context, request):
             'mail': request.registry.settings["api.contact"],
             'name': request.registry.settings["api.name"]
         }
+
+@view_config(context=UserViews, name='forgot', request_method="POST", renderer='json', permission="register")
+@validate(json_body={'login': str})
+def forgot_password(context, request):
+    user = db.query(User).filter(or_(User.usermame == request.json_body['login'], User.email == request.json_body['login'])).first()
+    if not user:
+        log.warn("Got a forgot password request for an account that doesn't exist")
+    else:
+        code = "placeholder"
+        request.mail_service.send_mail(request.json_body["email"], "Glemt passord", "forgotten.jinja2", {
+            "mail": request.registry.settings["api.contact"],
+            "resetUrl": "%s/static/forgotten.html?code=%s" % (request.registry.settings["api.root"], code),
+            "name": request.registry.settings["api.name"],
+            "domain": request.registry.settings["api.mainpage"]
+        })

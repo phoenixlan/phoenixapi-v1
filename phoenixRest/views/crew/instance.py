@@ -40,10 +40,7 @@ class CrewInstanceViews(object):
         self.crewInstance = db.query(Crew).filter(Crew.uuid == uuid).first()
 
         if self.crewInstance is None:
-            log.info("Crew not found")
             raise HTTPNotFound("Crew not found")
-
-        log.info("Done constructing")
 
 @view_config(context=CrewInstanceViews, name='team', request_method='GET', renderer='json', permission='team_view')
 def list_teams(context, request):

@@ -49,7 +49,10 @@ def get_application(context, request):
 @validate(json_body={'state': str, 'answer': str})
 def edit_application(context, request):
     if request.json_body['state'] not in ['accepted', 'rejected']:
-        raise HTTPBadRequest('new state is not accepted or rejected')
+        request.response.status = 400
+        return {
+            "error": "Invalid state"
+        }
     
     context.applicationInstance.state = ApplicationState.accepted if request.json_body["state"] == "accepted" else ApplicationState.rejected
     context.applicationInstance.answer = request.json_body["answer"]

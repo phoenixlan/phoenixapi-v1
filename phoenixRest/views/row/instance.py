@@ -39,7 +39,7 @@ class RowInstanceResource(object):
         self.rowInstance = validateUuidAndQuery(Row, Row.uuid, uuid)
 
         if self.rowInstance is None:
-            raise HTTPNotFound("Seatmap not found")
+            raise HTTPNotFound("Row not found")
 
 @view_config(context=RowInstanceResource, name='', request_method='PATCH', renderer='json', permission='update_row')
 def update_row(context, request):

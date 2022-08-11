@@ -52,7 +52,10 @@ def create_agenda_entry(context, request):
     event = db.query(Event).filter(Event.uuid == request.json_body['event_uuid']).first()
 
     if not event:
-        raise HTTPNotFound("Event not found")
+        request.response.status = 404
+        return {
+            "error": "Event not found"
+        }
 
     entry = AgendaEntry(title=request.json_body['title'],
                         description=request.json_body['description'],

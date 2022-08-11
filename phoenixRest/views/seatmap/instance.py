@@ -56,7 +56,10 @@ def get_seatmap(context, request):
 @view_config(context=SeatmapInstanceViews, name='background', request_method='PUT', renderer='json', permission='upload_background')
 def upload_background(context, request):
     if "file" not in request.POST:
-        raise HTTPBadRequest("No file specified")
+        request.response.status = 400
+        return {
+            "error": "No file specified"
+        }
     
     background_dir = request.registry.settings["ticket.seatmap_background_location"]
     if not os.path.exists(background_dir):
@@ -96,13 +99,19 @@ def create_row(context, request):
     if "ticket_type" in request.json_body:
         ticket_type = db.query(TicketType).filter(TicketType.uuid == request.json_body['ticket_type']).first()
         if ticket_type is None:
-            raise HTTPBadRequest("Ticket type not found")
+            request.response.status = 400
+            return {
+                "error": "Ticket type not found"
+            }
 
     entrance = None
     if "entrance" in request.json_body:
         entrance = db.query(Entrance).filter(Entrance.uuid == request.json_body['entrance']).first()
         if entrance is None:
-            raise HTTPBadRequest("Entrance not found")
+            request.response.status = 400
+            return {
+                "error": "Entrance not found"
+            }
 
     row = Row( \
         request.json_body['row_number'], \

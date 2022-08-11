@@ -32,10 +32,7 @@ class TeamInstanceViews(object):
         self.teamInstance = db.query(Team).filter(Team.uuid == uuid).first()
 
         if self.teamInstance is None:
-            log.info("Team not found")
             raise HTTPNotFound("Team not found")
-
-        log.info("Done constructing")
 
 @view_config(context=TeamInstanceViews, name='', request_method='GET', renderer='json', permission='team_view')
 def get_team(context, request):

@@ -18,5 +18,4 @@ log = logging.getLogger(__name__)
 
 @view_config(route_name="home", renderer="string")
 def home(request):
-    foo = request.GET['hello']
     return "hello"

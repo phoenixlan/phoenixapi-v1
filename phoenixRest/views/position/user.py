@@ -37,10 +37,13 @@ class PositionUserInstanceResource(object):
 def add_to_position(context, request):
     user = db.query(User).filter(User.uuid == request.json_body['uuid']).first()
     if user is None:
-        raise HTTPNotFound("User not found")
+        request.response.status = 404
+        return {
+            "error": "User not found"
+        }
 
-    self.__parent__.positionInstance.users.add(user)
-    db.save(self.__parent__.positionInstance)
+    context.__parent__.positionInstance.users.add(user)
+    db.save(context.__parent__.positionInstance)
     return self.__parent__.positionInstance
 
     

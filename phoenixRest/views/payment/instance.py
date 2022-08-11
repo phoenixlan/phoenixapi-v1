@@ -48,24 +48,37 @@ def get_payment(context, request):
 @view_config(context=PaymentInstanceResource, name='initiate', request_method='POST', renderer='json', permission='initiate_payment')
 def initiate_payment(context, request):
     if context.paymentInstance.state != PaymentState.created:
-        raise HTTPBadRequest("Payment is already initiated")
+        request.response.status = 400
+        return {
+            "error": "Payment is already initiated"
+        }
 
     context.paymentInstance.state = PaymentState.initiated
     db.add(context.paymentInstance)
     # Bootstraps the payment with our external provider
     if context.paymentInstance.provider == PaymentProvider.vipps:
         if 'fallback_url' not in request.json_body:
-            raise HTTPBadRequest("The variable fallback_url must be provided when making payments using vipps")
+            request.response.status = 400
+            return {
+                "error": "The variable fallback_url must be provided when making payments using vipps"
+            }
         deeplinkUrl, slug = initialize_vipps_payment(context.paymentInstance, request.json_body['fallback_url'])
         if deeplinkUrl:
             # Since the payment is successful, insert everything. This populates payment.uuid
             db.flush()
             return {'url': deeplinkUrl, 'slug': slug}
         else:
-            raise HTTPInternalServerError("Failed to create vipps payment")
+            log.warn("Failed to create vipps payment")
+            request.response.status = 500
+            return {
+                "error": "Failed to create vipps payment"
+            }
     elif context.paymentInstance.provider == PaymentProvider.stripe:
         client_secret = initialize_stripe_payment(context.paymentInstance)
         db.flush()
         return {'client_secret': client_secret}
     else:
-        raise HTTPBadRequest("Payment type not yet supported")
+        request.response.status = 400
+        return {
+            "error": "Payment type not yet supported"
+        }

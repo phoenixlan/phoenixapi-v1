@@ -75,7 +75,10 @@ def get_applications_mine_cors(request):
 def create_application(context, request):
     crew = db.query(Crew).filter(Crew.uuid == request.json_body['crew_uuid']).first()
     if crew is None:
-        raise HTTPNotFound("Crew not found")
+        request.response.status = 404
+        return {
+            "error": "Crew not found"
+        }
 
     # Fetch current event
     event = db.query(Event).filter(Event.start_time > datetime.now()).order_by(Event.start_time.asc()).first()

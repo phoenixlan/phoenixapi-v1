@@ -50,12 +50,21 @@ def create_store_session(context, request):
     store_session_lifetime = int(request.registry.settings["ticket.store_session_lifetime"])
 
     if 'cart' not in request.json_body:
-        raise HTTPBadRequest('Lacking json parameter: %s' % 'cart')
+        request.response.status = 400
+        return {
+            "error": "Lacking json parameter: card"
+        }
     if not isinstance(request.json_body['cart'], list):
-        raise HTTPBadRequest('The cart should be an array')
+        request.response.status = 400
+        return {
+            "error": "The card should be an array"
+        }
     
     if len(request.json_body['cart']) == 0:
-        raise HTTPBadRequest('Cart is empty')
+        request.response.status = 400
+        return {
+            "error": "The cart is empty"
+        }
 
     # Expiry is prolonged when the user is sent to external payment, as some payment providers implement their own mechanism for this(vipps)
     store_session = StoreSession(request.user, store_session_lifetime)
@@ -63,13 +72,25 @@ def create_store_session(context, request):
     total_qty = 0
     for entry in request.json_body['cart']:
         if 'uuid' not in entry:
-            raise HTTPBadRequest('Cart entry lacks uuid')
+            request.response.status = 400
+            return {
+                "error": "Cart entry lacks uuid"
+            }
         if 'qty' not in entry:
-            raise HTTPBadRequest('Cart entry lacks qty')
+            request.response.status = 400
+            return {
+                "error": "Cart entry lacks qtr"
+            }
         if  type(entry['qty']) != int:
-            raise HTTPBadRequest('Quantity is not a number')
+            request.response.status = 400
+            return {
+                "error": "Quantity is not a number"
+            }
         if entry['qty'] < 0:
-            raise HTTPBadRequest('Quantity is negative')
+            request.response.status = 400
+            return {
+                "error": "Quantity is negative"
+            }
         if entry['qty'] == 0:
             continue
 
@@ -77,11 +98,17 @@ def create_store_session(context, request):
 
         ticket_type = db.query(TicketType).filter(TicketType.uuid == entry['uuid']).first()
         if ticket_type is None:
-            raise HTTPBadRequest('Ticket type not found')
+            request.response.status = 400
+            return {
+                "error": "Ticket type not found"
+            }
 
         store_session.cart_entries.append(StoreSessionCartEntry(ticket_type, entry['qty']))
     if total_qty > int(max_purchase_amt) and not TICKET_WHOLESALE in request.effective_principals:
-        raise HTTPBadRequest('You can only buy %s tickets at a time' % max_purchase_amt)
+        request.response.status = 400
+        return {
+            "error": "You can only buy %s tickets at a time" % max_purchase_amt
+        }
 
     db.add(store_session)
     db.flush()

@@ -56,11 +56,17 @@ def get_all_tickets(context, request):
 def create_ticket(context, request):
     receiving_user = db.query(User).filter(User.uuid == request.json_body['recipient']).first()
     if not receiving_user:
-        raise HTTPNotFound("Recepient user not found")
+        request.response.status = 400
+        return {
+            "error": "Recipient user not found"
+        }
 
     ticket_type = db.query(TicketType).filter(TicketType.uuid == request.json_body['ticket_type']).first()
     if ticket_type is None:
-        raise HTTPNotFound("Ticket type not found")
+        request.response.status = 400
+        return {
+            "error": "Ticket type not found"
+        }
 
     ticket = Ticket(receiving_user, None, ticket_type, get_current_event())
     db.add(ticket)

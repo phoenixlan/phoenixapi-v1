@@ -60,22 +60,33 @@ def create_payment(context, request):
     # Validate provider
     chosen_provider = PaymentProvider[request.json_body['provider']]
     if chosen_provider is None:
-        raise HTTPBadRequest('Invalid payment provider')
+        request.response.status = 400
+        return {
+            "error": "Invalid payment provider"
+        }
     
     # Store session
     store_session = db.query(StoreSession).filter(StoreSession.uuid == request.json_body['store_session']).first()
 
     if not store_session or store_session.user != request.user:
-        raise HTTPNotFound("Store session not found")
+        request.response.status = 404
+        return {
+            "error": "Store session not found"
+        }
     
     if datetime.now() > store_session.expires:
-        raise HTTPNotFound("The store session has expired. Please create a new order")
+        request.response.status = 400
+        return {
+            "error": "The store session has expired. Please create a new order"
+        }
     
     # Make sure you can't create two payments for the same store session
     existing_payment = db.query(Payment).filter(Payment.store_session == store_session).first()
     if existing_payment:
-        # TODO see if we can cancel the old one later
-        raise HTTPBadRequest("You have already created a payment for this store session. Please finish it")
+        request.response.status = 400
+        return {
+            "error": "You have already created a payment for this card. Please finish it!"
+        }
 
     payment = Payment(request.user, chosen_provider, store_session.get_total())
     payment.store_session = store_session

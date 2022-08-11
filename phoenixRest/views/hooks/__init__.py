@@ -58,6 +58,7 @@ def stripe_hook(context, request):
     payment = db.query(StripePayment).filter(StripePayment.payment_uuid == request.json_body['payment_uuid']).first()
 
     if payment is None:
+        log.warn("Payment not found!")
         raise HTTPNotFound("Payment not found")
 
     finalize_stripe_payment(payment)

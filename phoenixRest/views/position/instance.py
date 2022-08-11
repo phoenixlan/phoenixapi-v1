@@ -40,8 +40,6 @@ class PositionInstanceResource(object):
         if self.positionInstance is None:
             raise HTTPNotFound("Position not found")
 
-        log.info("Done constructing")
-
 @view_config(context=PositionInstanceResource, name='', request_method='GET', renderer='json', permission='get_position')
 def get_position(context, request):
     return self.positionInstance
@@ -55,7 +53,10 @@ def create_position(context, request):
     if request.json_body['crew'] is not None:
         crew = db.query(Crew).filter(Crew.uuid == request.json_body['crew']).first()
         if crew is None:
-            raise HTTPNotFound("Crew not found")
+            request.response.status = 404
+            return {
+                "error": "Crew not found"
+            }
         position.crew = crew
 
     # Add team
@@ -63,7 +64,10 @@ def create_position(context, request):
         team = db.query(Team).filter(Team.uuid == request.json_body['team']).first()
 
         if team is None:
-            raise HTTPNotFound("Team not found")
+            request.response.status = 404
+            return {
+                "error": "Team not found"
+            }
 
         position.team = team
     db.add(position)
