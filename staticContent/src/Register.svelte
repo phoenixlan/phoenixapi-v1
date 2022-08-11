@@ -9,7 +9,7 @@
 	import { faCheck } from '@fortawesome/free-solid-svg-icons/index.es'
 
 
-	import { Textfield, Button, Radio, Datefield} from 'svelte-mui';
+	import { Textfield, Button, Radio, Datefield, Checkbox } from 'svelte-mui';
 	import OauthSecurity from './components/OauthSecurity.svelte';
 
 	var GET_PARAMS = {};
@@ -31,6 +31,8 @@
 	let guardianPhone = "";
 	let address = "";
 	let zip = "";
+
+	let tosAccepted = false;
 
 	let dateOfBirth = new Date(2005, 0, 1);
 
@@ -204,14 +206,19 @@
 					label="Foresattes telefonnummer"
 					message="Obligatorisk dersom du er under 18 år"
 				/>
+				<Checkbox bind:checked={tosAccepted}>Jeg godtar brukervilkårene for Phoenix LAN</Checkbox>
 			</form>
+			<p>Brukervilkår finner du <a href="tos.html" target="_blank">her.</a></p>
+
 			{#if registerState == STATES.failure}
 			<div class="registerError">
 				<p><b>Kunne ikke registrere deg:</b> {error}</p>
 			</div>
 			{/if}
 			{#if registerState == STATES.failure || registerState == STATES.input }
+			{#if tosAccepted}
 			<Button color="primary" raised=true fullWidth=true form="registerForm" type="submit">Registrer deg</Button>
+			{/if}
 			{/if}
 			{#if registerState == STATES.loading}
 			<div class="registering">
