@@ -10,6 +10,7 @@ from sqlalchemy import or_
 from phoenixRest.models import db
 from phoenixRest.models.core.user import Gender, User, calculate_age
 from phoenixRest.models.core.activation_code import ActivationCode
+from phoenixRest.models.core.password_reset_code import PasswordResetCode
 
 from phoenixRest.mappers.user import map_user_simple_with_secret_fields, map_user_with_secret_fields
 
@@ -79,7 +80,7 @@ def search_users(context, request):
 @view_config(context=UserViews, name='', request_method='GET', renderer='json', permission='all_get')
 def all_users(context, request):
     users = db.query(User).order_by(User.created).all()
-    return [map_user_simple_with_secret_fields(user) for user in users]
+    return [map_user_simple_with_secret_fields(user, request) for user in users]
 
 @view_config(context=UserViews, name='register', request_method="POST", renderer='json', permission="register")
 @validate(json_body={'username': str, 'firstname': str, 'surname': str, 'password': str, 'passwordRepeat': str, 'email': str, 'gender': str, "dateOfBirth": str, 'phone': str, 'address': str, 'zip': str, 'guardianPhone': str})
@@ -121,8 +122,13 @@ def register_user(context, request):
         }
 
     # Create the activation code
-    clientId = request.json_body.get("clientId")
-    user.activation_code = ActivationCode(user, clientId)
+    client_id = request.json_body.get("clientId")
+    if client_id not in request.registry.settings["oauth.valid_client_ids"].split(","):
+        request.response.status = 400
+        return {
+            "error": "Invalid OAuth client ID"
+        }
+    user.activation_code = ActivationCode(user, client_id)
     db.add(user)
     db.flush()
 
@@ -166,16 +172,27 @@ def activate_account(context, request):
         }
 
 @view_config(context=UserViews, name='forgot', request_method="POST", renderer='json', permission="register")
-@validate(json_body={'login': str})
+@validate(json_body={'login': str, 'client_id': str})
 def forgot_password(context, request):
-    user = db.query(User).filter(or_(User.usermame == request.json_body['login'], User.email == request.json_body['login'])).first()
+    log.info("Processing forgot password request for %s" % request.json_body['login'])
+    client_id = request.json_body.get("client_id")
+    if client_id not in request.registry.settings["oauth.valid_client_ids"].split(","):
+        request.response.status = 400
+        return {
+            "error": "Invalid OAuth client ID"
+        }
+    url = request.registry.settings["oauth.%s.redirect_url" % client_id]
+
+    user = db.query(User).filter(or_(User.username == request.json_body['login'], User.email == request.json_body['login'])).first()
     if not user:
         log.warn("Got a forgot password request for an account that doesn't exist")
     else:
-        code = "placeholder"
-        request.mail_service.send_mail(request.json_body["email"], "Glemt passord", "forgotten.jinja2", {
+        resetCode = PasswordResetCode(user, client_id)
+        db.add(resetCode)
+        db.flush()
+        request.mail_service.send_mail(user.email, "Glemt passord", "forgotten.jinja2", {
             "mail": request.registry.settings["api.contact"],
-            "resetUrl": "%s/static/forgotten.html?code=%s" % (request.registry.settings["api.root"], code),
+            "resetUrl": "%s/static/forgot_reset.html?code=%s&client_id=%s&redirect_uri=%s" % (request.registry.settings["api.root"], resetCode.code, client_id, url),
             "name": request.registry.settings["api.name"],
             "domain": request.registry.settings["api.mainpage"]
         })

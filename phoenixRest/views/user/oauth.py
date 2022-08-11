@@ -4,6 +4,8 @@ from pyramid.httpexceptions import (
     HTTPBadRequest
 )
 
+from sqlalchemy import or_
+
 from phoenixRest.models import db
 from phoenixRest.models.core.user import User
 from phoenixRest.models.core.oauth.oauthCode import OauthCode
@@ -18,8 +20,8 @@ from datetime import datetime
 import logging
 log = logging.getLogger(__name__)
 
-def authenticate(username, password):
-    user = db.query(User).filter(User.username == username).first()
+def authenticate(login, password):
+    user = db.query(User).filter(or_(User.username == login, User.email == login)).first()
 
     if user is None:
         log.info("User not found")

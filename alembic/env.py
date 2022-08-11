@@ -27,7 +27,8 @@ from phoenixRest.models.core import (
     event,
     avatar,
     agenda_entry,
-    activation_code
+    activation_code,
+    password_reset_code
 )
 
 from phoenixRest.models.core.oauth import (

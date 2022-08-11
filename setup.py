@@ -28,7 +28,7 @@ requires = [
     'uuid',
     'sentry-sdk',
     'Pillow',
-    'stripe'
+    'stripe',
 ]
 
 setup(name='phoenixRest',

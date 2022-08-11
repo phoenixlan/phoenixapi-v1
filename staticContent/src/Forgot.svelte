@@ -35,6 +35,7 @@
 				method: 'POST',
 				body: JSON.stringify({
 					login: login,
+					client_id: GET_PARAMS['client_id']
 				}),
 				headers: {
 					"Content-Type": "application/json"
@@ -110,6 +111,12 @@
 		font-weight: 400;
 	}
 
+	.spinnerContainer {
+		width: 100%;
+		display: flex;
+		align-items: center;
+		flex-direction: column;
+	}
 	.forgotSuccess {
 		width: 100%;
 		display: flex;

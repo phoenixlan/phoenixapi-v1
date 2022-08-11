@@ -7,7 +7,7 @@ import css from 'rollup-plugin-css-only';
 
 const production = !process.env.ROLLUP_WATCH;
 
-const sites = ['login', 'register', 'forgot'];
+const sites = ['login', 'register', 'forgot', 'forgot_reset'];
 
 function serve() {
 	let server;

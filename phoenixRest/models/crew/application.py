@@ -19,8 +19,9 @@ from phoenixRest.models import db, Base
 
 from phoenixRest.models.core.user import User
 from phoenixRest.models.core.event import Event
-
 from phoenixRest.models.crew.crew import Crew
+
+from phoenixRest.mappers.user import map_user_with_secret_fields
 
 from datetime import datetime, timedelta
 
@@ -80,7 +81,7 @@ class Application(Base):
             'uuid': str(self.uuid),
             'crew': self.crew,
             'event_uuid': str(self.event_uuid),
-            'user': self.user,
+            'user': map_user_with_secret_fields(self.user, request),
             'contents': self.contents,
             'created': int(self.created.timestamp()),
             'state': str(self.state),

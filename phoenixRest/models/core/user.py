@@ -183,6 +183,11 @@ class User(Base):
         else:
             log.warn("Invalid password type")
             return False
+    
+    def set_password(self, new_password):
+        log.warn("Reset password for user %s" % self.uuid)
+        self.password_type = 1
+        self.password = argon2.hash(new_password)
 
     def migrate_password(self, password):
         if not self.verify_password(password):

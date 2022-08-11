@@ -18,6 +18,7 @@ def map_user_with_secret_fields(user, request):
         'postal_code': user.postal_code,
         'country_code': user.country_code,
         'tos_level': user.tos_level,
+        'created': (user.created.timestamp()),
 
         'positions': user.positions,
         'avatar_uuid': user.avatar.uuid if user.avatar is not None else None,
@@ -54,6 +55,7 @@ def map_user_simple_with_secret_fields(user, request):
         'lastname': user.lastname,
         
         'gender': str(user.gender),
+        'created': (user.created.timestamp()),
 
         'avatar_uuid': user.avatar.uuid if user.avatar is not None else None,
         'avatar_urls': user.get_avatar_urls(request),
