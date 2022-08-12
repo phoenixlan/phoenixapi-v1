@@ -80,6 +80,12 @@ def create_application(context, request):
             "error": "Crew not found"
         }
 
+    if not crew.is_applyable:
+        request.response.status = 400
+        return {
+            "error": "You applied to a crew that is not applyable"
+        }
+
     # Fetch current event
     event = db.query(Event).filter(Event.start_time > datetime.now()).order_by(Event.start_time.asc()).first()
 
