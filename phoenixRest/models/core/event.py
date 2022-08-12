@@ -55,6 +55,9 @@ class Event(Base):
     theme = Column(Text)
     max_participants = Column(Integer, nullable=False)
 
+    location_uuid = Column(UUID(as_uuid=True), ForeignKey("location.uuid"), nullable=True)
+    location = relationship("Location")
+
     seatmap_uuid = Column(UUID(as_uuid=True), ForeignKey("seatmap.uuid"), nullable=True)
     seatmap = relationship("Seatmap")
 
@@ -84,7 +87,8 @@ class Event(Base):
             'theme': self.theme,
             'max_participants': self.max_participants,
             'cancellation_reason': self.cancellation_reason,
-            'seatmap': self.seatmap
+            'seatmap': self.seatmap,
+            'location': self.location
         }
 
 def get_current_event():
