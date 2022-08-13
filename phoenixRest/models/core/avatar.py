@@ -60,7 +60,7 @@ class Avatar(Base):
         
         avatar_dict = {
             'uuid': self.uuid,
-            'user_uuid': self.user.uuid,
+            'user': self.user,
             #'created': int(self.created.timestamp()),
             'state': str(self.state),
             'urls': {

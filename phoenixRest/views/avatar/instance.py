@@ -11,7 +11,7 @@ from phoenixRest.models.core.avatar import Avatar, AvatarState
 
 from phoenixRest.mappers.crew import map_crew
 
-from phoenixRest.roles import ADMIN, HR_ADMIN
+from phoenixRest.roles import ADMIN, HR_ADMIN, CHIEF
 
 from phoenixRest.utils import validate
 from phoenixRest.resource import resource
@@ -36,7 +36,9 @@ class AvatarInstanceResource(object):
         (Allow, 'role:user:%s' % self.avatarInstance.user.uuid, 'avatar_delete'),
 
         # Only admins can update avatar state
+        # And chiefs. Chiefs do most HR work for their crew
         (Allow, HR_ADMIN, 'avatar_update'),
+        (Allow, CHIEF, 'avatar_update'),
         (Allow, ADMIN, 'avatar_update')
 
         # Authenticated pages
@@ -82,12 +84,21 @@ def update_status(context, request):
             "error": "Avatar is already accepted or rejected"
         }
 
-    enum = AvatarState[request.json_body['new_state']]
-    if enum is None:
+    enumerated_state = AvatarState[request.json_body['new_state']]
+    if enumerated_state is None:
         raise HTTPBadRequest('uh i fucked up')
 
-    # TODO send email if avatar is accepted
+    title = "Avataren ble avslått"
+    if enumerated_state == AvatarState.accepted:
+        title = "Avataren ble godkjent"
 
-    context.avatarInstance.state = enum
+    request.mail_service.send_mail(context.avatarInstance.user.email, title, "avatar_state_changed.jinja2", {
+        "mail": request.registry.settings["api.contact"],
+        "accepted": enumerated_state == AvatarState.accepted,
+        "name": request.registry.settings["api.name"],
+        "domain": request.registry.settings["api.mainpage"]
+    })
+
+    context.avatarInstance.state = enumerated_state
     db.add(context.avatarInstance)
     return 'ok'

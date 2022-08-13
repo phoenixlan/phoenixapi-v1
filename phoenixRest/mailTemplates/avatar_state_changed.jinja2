@@ -1,0 +1,14 @@
+
+<html>
+    <body>
+        <p>Hei!</p>
+{% if accepted %}
+        <p>Avataren du lastet opp på {{ name }} ({{ domain }}) har blitt godkjent.</p>
+{% else %}
+        <p>Avataren du lastet opp på {{ name }} ({{ domain }}) ble avslått. Dersom du har søkt crew er ikke søknaden trukket, men du må laste opp ny avatar før eventet.</p>
+        <p>Det er mange grunner til at avataren kan bli avslått. Sjekk retningslinjene for avatarer, på samme side som du laster den opp.</p>
+{% endif %}
+        <p>Har du spørsmål, kontakt <a href="mailto:{{mail}}">{{mail}}</a>.</p>
+
+    </body>
+</html>
