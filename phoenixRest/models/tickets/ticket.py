@@ -76,6 +76,8 @@ class Ticket(Base):
             'payment_uuid': self.payment_uuid,
             'ticket_type': self.ticket_type,
 
+            'event_uuid': self.event_uuid,
+
             'seat': self.seat,
 
             'created': int(self.created.timestamp())

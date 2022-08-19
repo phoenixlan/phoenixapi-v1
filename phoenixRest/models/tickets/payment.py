@@ -41,6 +41,9 @@ class Payment(Base):
     user_uuid = Column(UUID(as_uuid=True), ForeignKey("user.uuid"), nullable=False)
     user = relationship("User")
 
+    event_uuid = Column(UUID(as_uuid=True), ForeignKey("event.uuid"), nullable=False)
+    event = relationship("Event")
+
     tickets = relationship("Ticket", back_populates="payment")
 
     store_session_uuid = Column(UUID(as_uuid=True), ForeignKey("store_session.uuid"), nullable=True)
@@ -56,10 +59,11 @@ class Payment(Base):
 
     created = Column(DateTime, nullable=False)
 
-    def __init__(self, user: User, provider: PaymentProvider, price: int):
+    def __init__(self, user: User, provider: PaymentProvider, price: int, event):
         self.user = user
         self.provider = provider
         self.price = price
+        self.event = event
 
         self.state = PaymentState.created
         self.created = datetime.now()
@@ -68,6 +72,7 @@ class Payment(Base):
         return {
             'uuid': str(self.uuid),
             'user_uuid': self.user_uuid,
+            'event_uuid': self.event_uuid,
             'tickets': self.tickets,
             'store_session_uuid': self.store_session_uuid,
             'provider': str(self.provider),

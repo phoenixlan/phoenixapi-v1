@@ -14,7 +14,7 @@ def mint_tickets(payment: Payment):
 
     for entry in payment.store_session.cart_entries:
         for i in range(0, entry.amount):
-            ticket = Ticket(payment.user, payment, entry.ticket_type)
+            ticket = Ticket(payment.user, payment, entry.ticket_type, payment.event)
             db.add(ticket)
             # Probably not neccesary either?
             #payment.tickets.append(ticket)

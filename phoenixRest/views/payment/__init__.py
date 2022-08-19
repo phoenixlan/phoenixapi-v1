@@ -13,6 +13,7 @@ from phoenixRest.models.crew.crew import Crew
 from phoenixRest.models.tickets.payment import Payment, PaymentProvider
 from phoenixRest.models.tickets.ticket_type import TicketType
 from phoenixRest.models.tickets.store_session import StoreSession
+from phoenixRest.models.core.event import get_current_event
 
 from phoenixRest.utils import validate
 from phoenixRest.resource import resource
@@ -88,7 +89,7 @@ def create_payment(context, request):
             "error": "You have already created a payment for this card. Please finish it!"
         }
 
-    payment = Payment(request.user, chosen_provider, store_session.get_total())
+    payment = Payment(request.user, chosen_provider, store_session.get_total(), get_current_event())
     payment.store_session = store_session
 
     db.add(payment)
