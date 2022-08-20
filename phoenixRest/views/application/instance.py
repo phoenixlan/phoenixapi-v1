@@ -8,6 +8,7 @@ from pyramid.security import Authenticated, Everyone, Deny, Allow
 
 from phoenixRest.models import db
 from phoenixRest.models.crew.application import Application, ApplicationState
+from phoenixRest.models.crew.position import create_or_fetch_crew_position
 
 from phoenixRest.roles import ADMIN, CHIEF
 
@@ -56,7 +57,27 @@ def edit_application(context, request):
     
     context.applicationInstance.state = ApplicationState.accepted if request.json_body["state"] == "accepted" else ApplicationState.rejected
     context.applicationInstance.answer = request.json_body["answer"]
+    context.applicationInstance.last_processed_by = request.user
 
-    db.save(context.applicationInstance)
+    db.add(context.applicationInstance)
+    
+    if context.applicationInstance.state == ApplicationState.accepted:
+        position = create_or_fetch_crew_position(crew=context.applicationInstance.crew, team=None)
+        if position is None:
+            request.response.status = 500
+            return {
+                'error': "Unable to get position"
+            }
+        position.users.append(context.applicationInstance.user)
+
+    # Send mail
+    name = request.registry.settings["api.name"]
+    request.mail_service.send_mail(context.applicationInstance.user.email, "Vedrørende din crew-søknad til %s" % name, "application_response.jinja2", {
+        "mail": request.registry.settings["api.contact"],
+        "accepted": context.applicationInstance.state == ApplicationState.accepted,
+        "name": name,
+        "crew": context.applicationInstance.crew,
+        "domain": request.registry.settings["api.mainpage"]
+    })
 
     return context.applicationInstance 

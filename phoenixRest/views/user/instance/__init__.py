@@ -17,13 +17,14 @@ from phoenixRest.models.tickets.payment import Payment
 from phoenixRest.models.tickets.store_session import StoreSession
 
 from phoenixRest.mappers.user import map_user_with_secret_fields, map_user_public_with_positions
+from phoenixRest.mappers.ticket import map_ticket_simple
 
 from phoenixRest.utils import validate, validateUuidAndQuery
 from phoenixRest.resource import resource
 
 from phoenixRest.roles import HR_ADMIN, ADMIN, TICKET_ADMIN
 
-from sqlalchemy import and_
+from sqlalchemy import and_, or_
 
 from datetime import datetime
 
@@ -47,8 +48,14 @@ class UserInstanceResource(object):
             (Allow, ADMIN, 'user_get_store_session'),
             (Allow, TICKET_ADMIN, 'user_get_store_session'),
             # Who can list an users tickets
-            (Allow, ADMIN, 'user_get_store_session'),
-            (Allow, TICKET_ADMIN, 'user_get_store_session'),
+            (Allow, ADMIN, 'user_list_owned_tickets'),
+            (Allow, TICKET_ADMIN, 'user_list_owned_tickets'),
+            # Purchased tickets may contain tickets sent to others, so users cannot list them
+            (Allow, ADMIN, 'user_list_purchased_tickets'),
+            (Allow, TICKET_ADMIN, 'user_list_purchased_tickets'),
+            # Seatable tickets are either owned by the user or "lended" to them by another for the sake of seating
+            (Allow, ADMIN, 'user_list_seatable_tickets'),
+            (Allow, TICKET_ADMIN, 'user_list_seatable_tickets'),
             # Authenticated pages
             #(Allow, Authenticated, Authenticated),
             #(Deny, Everyone, Authenticated),
@@ -58,7 +65,8 @@ class UserInstanceResource(object):
                 # Users can view themselves, always
                 (Allow, "%s" % self.request.user.uuid, 'user_view'),
                 # Users can fetch their own tickets
-                (Allow, "%s" % self.request.user.uuid, 'user_list_tickets'),
+                (Allow, "%s" % self.request.user.uuid, 'user_list_owned_tickets'),
+                (Allow, "%s" % self.request.user.uuid, 'user_list_seatable_tickets'),
                 # Users can view their own store session
                 (Allow, "%s" % self.request.user.uuid, 'user_get_store_session'),
                 # Users can upload their own avatar
@@ -82,16 +90,49 @@ def get_user(context, request):
     return map_user_public_with_positions(context.userInstance, request)
 
 
-@view_config(context=UserInstanceResource, name='tickets', request_method='GET', renderer='json', permission='user_list_tickets')
-def get_tickets(context, request):
+@view_config(context=UserInstanceResource, name='owned_tickets', request_method='GET', renderer='json', permission='user_list_owned_tickets')
+def get_owned_tickets(context, request):
     query = db.query(Ticket)
     if 'event' in request.GET:
         event = db.query(Event).filter(Event.uuid == request.get['event']).first()
         if event is None:
-            raise HTTPNotFound("Event not found")
+            request.response.status = 404
+            return {
+                'error': 'Event not found'
+            }
         query = query.filter(and_(Ticket.owner == context.userInstance, Ticket.event == event))
     else:
         query = query.filter(Ticket.owner == context.userInstance)
+    return query.all()
+
+@view_config(context=UserInstanceResource, name='purchased_tickets', request_method='GET', renderer='json', permission='user_list_purchased_tickets')
+def get_purchased_tickets(context, request):
+    query = db.query(Ticket)
+    if 'event' in request.GET:
+        event = db.query(Event).filter(Event.uuid == request.get['event']).first()
+        if event is None:
+            request.response.status = 404
+            return {
+                'error': 'Event not found'
+            }
+        query = query.filter(and_(Ticket.buyer == context.userInstance, Ticket.event == event))
+    else:
+        query = query.filter(Ticket.buyer == context.userInstance)
+    return query.all()
+
+@view_config(context=UserInstanceResource, name='seatable_tickets', request_method='GET', renderer='json', permission='user_list_seatable_tickets')
+def get_seatable_tickets(context, request):
+    query = db.query(Ticket)
+    if 'event' in request.GET:
+        event = db.query(Event).filter(Event.uuid == request.get['event']).first()
+        if event is None:
+            request.response.status = 404
+            return {
+                'error': 'Event not found'
+            }
+        query = query.filter(or_(and_(Ticket.seater== context.userInstance, Ticket.event == event), and_(Ticket.seater == None, Ticket.owner == context.userInstance)))
+    else:
+        query = query.filter(or_(Ticket.seater == context.userInstance, and_(Ticket.seater == None, Ticket.owner == context.userInstance)))
     return query.all()
 
 @view_config(context=UserInstanceResource, name='payments', request_method='GET', renderer='json', permission='user_list_tickets')

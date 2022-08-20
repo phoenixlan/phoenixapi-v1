@@ -82,6 +82,7 @@ class Application(Base):
             'crew': self.crew,
             'event_uuid': str(self.event_uuid),
             'user': map_user_with_secret_fields(self.user, request),
+            'last_processed_by': self.last_processed_by,
             'contents': self.contents,
             'created': int(self.created.timestamp()),
             'state': str(self.state),
