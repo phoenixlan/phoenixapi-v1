@@ -31,10 +31,9 @@ def initialize_stripe_payment(payment: Payment):
     return client_secret
 
 # This should be called from the webhook
-def finalize_stripe_payment(payment: StripePayment):
+def finalize_stripe_payment(request, payment: StripePayment):
     # Mark it as paid
     payment.paid = True
-    db.add(payment)
 
     # Mint tickets
-    mint_tickets(payment.payment)
+    mint_tickets(request, payment.payment)

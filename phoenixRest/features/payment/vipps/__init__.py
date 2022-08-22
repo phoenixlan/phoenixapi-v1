@@ -159,6 +159,6 @@ def initialize_vipps_payment(payment: Payment, fallback_url: str):
 		return deeplinkUrl, vippsPayment.slug
 	return None, None
 
-def finalize_vipps_payment(payment: VippsPayment):
+def finalize_vipps_payment(request, payment: VippsPayment):
     # Mint tickets
-    mint_tickets(payment.payment)
+    mint_tickets(request, payment.payment)
