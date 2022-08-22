@@ -8,6 +8,10 @@ Vi forbeholder oss retten til å ta bilder under arrangementet. Hvis du ikke øn
 
 Det kreves Radar Event-medlemskap for å få de billige billettene. Dette er fordi hodestøtten fra medlemskap tungt subsidierer arrangementet.
 
+# Aldersgrense
+
+Radar Event innfører aldersgrense på arrangementene for å sørge for at det er trygt for målgruppen å delta. Du vil bli nektet inngang dersom du bryter aldersgrensen, selv om du har kjøpt billett.
+
 # Billett
 
  * Personer som blir bortvist, får ikke refundert inngangspengene.
