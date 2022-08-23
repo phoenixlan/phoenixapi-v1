@@ -22,6 +22,8 @@ from phoenixRest.roles import ADMIN, HR_ADMIN, TICKET_ADMIN
 
 from datetime import datetime, date
 
+import re
+
 import logging
 log = logging.getLogger(__name__)
 
@@ -82,6 +84,8 @@ def all_users(context, request):
     users = db.query(User).order_by(User.created).all()
     return [map_user_simple_with_secret_fields(user, request) for user in users]
 
+email_regex = re.compile('^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$')
+
 @view_config(context=UserViews, name='register', request_method="POST", renderer='json', permission="register")
 @validate(json_body={'username': str, 'firstname': str, 'surname': str, 'password': str, 'passwordRepeat': str, 'email': str, 'gender': str, "dateOfBirth": str, 'phone': str, 'address': str, 'zip': str, 'guardianPhone': str})
 def register_user(context, request):
@@ -89,6 +93,12 @@ def register_user(context, request):
         request.response.status = 400
         return {
             "error": "Password and repeat password does not match"
+        }
+    
+    if len(request.json_body["password"]) < 6:
+        request.response.status = 400
+        return {
+            "error": "Password is too short. Use at least 6 characters"
         }
 
     existingUsername = db.query(User).filter(User.username == request.json_body["username"]).first()
@@ -99,6 +109,28 @@ def register_user(context, request):
         request.response.status = 400
         return {
             "error": "An user by this username, phone number, or e-mail already exists"
+        }
+    
+    email = request.json_body['email']
+    if email_regex.match(email) is None:
+        request.response.status = 400
+        return {
+            "error": "You must enter a valid e-mail address"
+        }
+    username = request.json_body['username']
+    if len(username) < 1:
+        request.response.status = 400
+        return {
+            "error": "An username is required"
+        }
+    
+    firstname = request.json_body['firstname']
+    surname = request.json_body['surname']
+
+    if len(firstname) < 1 or len(surname) < 1:
+        request.response.status = 400
+        return {
+            "error": "A name is required"
         }
 
     birthdate = date.fromisoformat(request.json_body["dateOfBirth"])
@@ -112,7 +144,7 @@ def register_user(context, request):
             "error": "Invalid gender"
         }
 
-    user = User(request.json_body["username"], request.json_body["email"], request.json_body["password"], request.json_body["firstname"], request.json_body["surname"], birthdate, gender, request.json_body["phone"], request.json_body["address"], request.json_body["zip"])
+    user = User(username, email, request.json_body["password"], firstname, surname, birthdate, gender, request.json_body["phone"], request.json_body["address"], request.json_body["zip"])
     if "guardianPhone" in request.json_body and len(request.json_body["guardianPhone"]) > 0:
         user.guardian_phone = request.json_body["guardianPhone"]
     elif calculate_age(birthdate) < 18:
