@@ -13,6 +13,8 @@ from phoenixRest.models.tickets.ticket_type import TicketType
 from phoenixRest.models.tickets.row import Row
 from phoenixRest.models.tickets.seatmap_background import SeatmapBackground
 
+from phoenixRest.mappers.seatmap import map_seatmap_for_availability
+
 from phoenixRest.roles import ADMIN, TICKET_ADMIN
 
 from phoenixRest.utils import validate, validateUuidAndQuery
@@ -30,12 +32,15 @@ log = logging.getLogger(__name__)
 class SeatmapInstanceViews(object):
     def __acl__(self):
         return [
-        (Allow, Authenticated, 'seatmap_view'),
+        (Allow, Authenticated, 'seatmap_get_availability'),
         (Allow, ADMIN, 'create_row'),
         (Allow, TICKET_ADMIN, 'create_row'),
 
         (Allow, ADMIN, 'upload_background'),
         (Allow, TICKET_ADMIN, 'upload_background'),
+
+        (Allow, ADMIN, 'seatmap_view'),
+        (Allow, TICKET_ADMIN, 'seatmap_view'),
         # Authenticated pages
         #(Allow, Authenticated, Authenticated),
         #(Deny, Everyone, Authenticated),
@@ -52,6 +57,11 @@ class SeatmapInstanceViews(object):
 @view_config(context=SeatmapInstanceViews, name='', request_method='GET', renderer='json', permission='seatmap_view')
 def get_seatmap(context, request):
     return context.seatmapInstance
+
+@view_config(context=SeatmapInstanceViews, name='availability', request_method='GET', renderer='json', permission='seatmap_get_availability')
+def get_seatmap_availability(context, request):
+    return map_seatmap_for_availability(context.seatmapInstance, request)
+
 
 @view_config(context=SeatmapInstanceViews, name='background', request_method='PUT', renderer='json', permission='upload_background')
 def upload_background(context, request):
