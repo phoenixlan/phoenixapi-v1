@@ -85,6 +85,12 @@ def create_application(context, request):
         return {
             "error": "You applied to a crew that is not applyable"
         }
+    
+    if request.user.avatar is None:
+        request.response.status = 400
+        return {
+            "error": "You must upload an avatar before you can apply for crew"
+        }
 
     # Fetch current event
     event = db.query(Event).filter(Event.start_time > datetime.now()).order_by(Event.start_time.asc()).first()
