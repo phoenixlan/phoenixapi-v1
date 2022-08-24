@@ -234,7 +234,7 @@
 			{#if registerState == STATES.success}
 			<div class="registeringSuccess">
 				<Fa icon={faCheck} style="font-size: 3em; color: green;"/>
-				<h1>Kontoen din er registrert</h1>
+				<h1>Sjekk inboksen din</h1>
 				<p>Du må verifisere mail-kontoen for å logge inn. Du skal ha fått en mail. Sjekk inboksen din for å fortsette. Det kan ta et par minutter før mailen kommer. Husk å sjekke søppelpost!</p>
 				<p>Mottok du ikke mailen? Kontakt oss: <a href="mailto:info@phoenixlan.no">info@phoenixlan.no</a></p>
 			</div>
