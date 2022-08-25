@@ -34,7 +34,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Install packages
-        run: pip install -e . && pip install psycopg2
+        run: pip install wheel && pip install -e . && pip install psycopg2
       - name: Run tests
         run: pytest phoenixRest/tests
         env:
