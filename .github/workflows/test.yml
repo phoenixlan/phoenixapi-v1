@@ -33,6 +33,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+      - name: Ensure correct python version
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.8' 
       - name: Install packages
         run: pip install wheel && pip install -e . && pip install psycopg2
       - name: Run tests
