@@ -1,5 +1,10 @@
 on:
   workflow_call:
+    secrets:
+      REGISTRY_USERNAME:
+        required: true
+      REGISTRY_PASSWORD:
+        required: true
 jobs:
   run_tests:
     runs-on: ubuntu-18.04
@@ -20,8 +25,8 @@ jobs:
     container:
       image: docker.infra.phoenixlan.no/web/${{ github.event.repository.name }}-prod:latest
       credentials:
-        username: ${{ secrets.REGISTRY_USERNAME}}
-        password: ${{ secrets.REGISTRY_PASSWORD }}
+        username: "${{ secrets.REGISTRY_USERNAME }}"
+        password: "${{ secrets.REGISTRY_PASSWORD }}"
     steps:
       - name: Run tests
         run: pytest phoenixRest/tests

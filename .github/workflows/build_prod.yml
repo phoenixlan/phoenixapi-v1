@@ -3,6 +3,7 @@ on:
  - workflow_dispatch
 jobs:
   run_tests:
+    secrets: inherit
     uses: ./.github/workflows/test.yml
   build_docker-prod:
     runs-on: ubuntu-latest

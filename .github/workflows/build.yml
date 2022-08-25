@@ -3,6 +3,7 @@ on:
  - push
 jobs:
   run_tests:
+    secrets: inherit
     uses: ./.github/workflows/test.yml
   build_docker-test:
     runs-on: ubuntu-latest
