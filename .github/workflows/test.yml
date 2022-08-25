@@ -12,6 +12,14 @@ jobs:
     env:
       POSTGRES_USER: phoenix
       POSTGRES_PASSWORD: testing
+      DB_HOST: "postgresql:5432"
+      JWT_SECRET: "fadebabe"
+      VIPPS_CLIENT_ID: placeholder
+      VIPPS_CLIENT_SECRET: placeholder
+      VIPPS_SUBSCRIPTION_KEY: placeholder
+      VIPPS_CALLBACK_URL: placeholder
+      VIPPS_MERCHANT_SERIAL_NUMBER: 1
+      STRIPE_API_KEY: placeholder
     services:
       # Label used to access the service container
       postgresql:
@@ -40,14 +48,5 @@ jobs:
         run: /usr/local/bin/alembic upgrade heads
       - name: Run tests
         run: pytest phoenixRest/tests
-        env:
-          DB_HOST: "postgresql:5432"
-          JWT_SECRET: "fadebabe"
-          VIPPS_CLIENT_ID: placeholder
-          VIPPS_CLIENT_SECRET: placeholder
-          VIPPS_SUBSCRIPTION_KEY: placeholder
-          VIPPS_CALLBACK_URL: placeholder
-          VIPPS_MERCHANT_SERIAL_NUMBER: 1
-          STRIPE_API_KEY: placeholder
 
 
