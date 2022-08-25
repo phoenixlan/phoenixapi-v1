@@ -1,0 +1,3 @@
+POSTGRES_PASSWORD=testing
+POSTGRES_USER=phoenix
+DB_HOST=db

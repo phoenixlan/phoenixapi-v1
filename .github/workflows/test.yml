@@ -1,0 +1,38 @@
+on:
+  workflow_call:
+jobs:
+  run_tests:
+    runs-on: ubuntu-18.04
+    env:
+      POSTGRES_USER: phoenix
+      POSTGRES_PASSWORD: testing
+    services:
+      # Label used to access the service container
+      db:
+        # Docker Hub image
+        image: postgres
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    container:
+      image: docker.infra.phoenixlan.no/web/${{ github.event.repository.name }}-prod:latest
+      credentials:
+        username: ${{ secrets.REGISTRY_USERNAME}}
+        password: ${{ secrets.REGISTRY_PASSWORD }}
+    steps:
+      - name: Run tests
+        run: pytest phoenixRest/tests
+        env:
+          DB_HOST: db
+          JWT_SECRET: "fadebabe"
+          VIPPS_CLIENT_ID: placeholder
+          VIPPS_CLIENT_SECRET: placeholder
+          VIPPS_SUBSCRIPTION_KEY: placeholder
+          VIPPS_CALLBACK_URL: placeholder
+          VIPPS_MERCHANT_SERIAL_NUMBER: 1
+          STRIPE_API_KEY: placeholder
+
+

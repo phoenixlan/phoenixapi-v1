@@ -1,0 +1,32 @@
+version: '3'
+services:
+  db:
+    image: postgres:alpine
+    env_file: .db_env
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready --username=phoenix"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      options:
+       max-size: "1g"
+  rest:
+    build:
+      context: ../
+      dockerfile: docker/test/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    command: pytest phoenixRest/tests
+    environment:
+      DEBUG: "yes"
+    env_file: 
+      - .env
+      - .db_env
+    volumes:
+      - ../phoenixRest:/srv/phoenixRest/phoenixRest
+      - ../alembic:/srv/phoenixRest/alembic
+    logging:
+      options:
+       max-size: "1g"

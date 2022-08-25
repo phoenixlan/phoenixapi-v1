@@ -4,7 +4,7 @@ from pyramid.httpexceptions import (
     HTTPNotFound,
     HTTPBadRequest
 )
-from pyramid.security import Authenticated, Everyone, Deny, Allow
+from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
 from phoenixRest.models import db
 from phoenixRest.models.core.event import Event
@@ -42,6 +42,9 @@ class EventInstanceResource(object):
             (Allow, ADMIN, 'event_tickets_get'),
             (Allow, TICKET_ADMIN, 'event_tickets_get'),
 
+            (Allow, ADMIN, 'add_ticket_type'),
+            (Allow, TICKET_ADMIN, 'add_ticket_type'),
+
             (Allow, CHIEF, 'applications_get'),
             (Allow, ADMIN, 'applications_get'),
         ]
@@ -68,6 +71,20 @@ def get_applications(context, request):
 def get_tickets(context, request):
     tickets = db.query(Ticket).filter(Ticket.event_uuid == context.eventInstance.uuid).all()
     return tickets
+
+@view_config(name='ticketType', context=EventInstanceResource, request_method='PUT', renderer='json', permission='add_ticket_type')
+@validate(json_body={'ticket_type_uuid': str})
+def add_ticket_type(context, request):
+    ticket_type = db.query(TicketType).filter(TicketType.uuid == request.json_body['ticket_type_uuid']).first()
+    if not ticket_type:
+        request.response.status = 404
+        return {
+            'error': "Ticket type not found"
+        }
+    if ticket_type in context.eventInstance.static_ticket_types:
+        return context.eventInstance
+    context.eventInstance.static_ticket_types.append(ticket_type)
+    return context.eventInstance
 
 @view_config(context=EventInstanceResource, name='ticketType', request_method='GET', renderer='json', permission='event_ticket_type_get')
 def get_ticket_types(context, request):

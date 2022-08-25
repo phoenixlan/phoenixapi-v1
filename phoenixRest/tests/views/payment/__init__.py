@@ -1,17 +1,9 @@
-import unittest
-
 from phoenixRest.tests.utils import initTestingDB, authenticate
+from phoenixRest.tests.testCaseClass import TestCaseClass
+
 from phoenixRest.features.payment.vipps import VIPPS_CALLBACK_AUTH_TOKEN
 
-from pyramid import testing
-
-class FunctionalPaymentTests(unittest.TestCase):
-    def setUp(self):
-        from pyramid.paster import get_app
-        app = get_app('paste_prod.ini')
-        from webtest import TestApp
-        self.testapp = TestApp(app)
-
+class FunctionalPaymentTests(TestCaseClass):
     def _get_user_uuid(self, token):
         res = self.testapp.get('/user/current', headers=dict({
             'X-Phoenix-Auth': token
@@ -101,7 +93,7 @@ class FunctionalPaymentTests(unittest.TestCase):
         user_uuid = self._get_user_uuid(token)
         print("User uuid: %s" % user_uuid)
         
-        res = self.testapp.get('/user/%s/tickets' % user_uuid, headers=dict({
+        res = self.testapp.get('/user/%s/purchased_tickets' % user_uuid, headers=dict({
             'X-Phoenix-Auth': token
         }))
 

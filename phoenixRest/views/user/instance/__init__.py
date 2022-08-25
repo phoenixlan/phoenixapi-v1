@@ -5,7 +5,7 @@ from pyramid.httpexceptions import (
     HTTPNotFound,
     HTTPBadRequest
 )
-from pyramid.security import Authenticated, Everyone, Deny, Allow
+from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
 from phoenixRest.models import db
 from phoenixRest.models.core.user import User
@@ -56,6 +56,9 @@ class UserInstanceResource(object):
             # Seatable tickets are either owned by the user or "lended" to them by another for the sake of seating
             (Allow, ADMIN, 'user_list_seatable_tickets'),
             (Allow, TICKET_ADMIN, 'user_list_seatable_tickets'),
+            # Who can view payments?
+            (Allow, ADMIN, 'list_payments'),
+            (Allow, TICKET_ADMIN, 'list_payments'),
             # Authenticated pages
             #(Allow, Authenticated, Authenticated),
             #(Deny, Everyone, Authenticated),
@@ -70,7 +73,9 @@ class UserInstanceResource(object):
                 # Users can view their own store session
                 (Allow, "%s" % self.request.user.uuid, 'user_get_store_session'),
                 # Users can upload their own avatar
-                (Allow, "%s" % self.request.user.uuid, 'avatar_upload')
+                (Allow, "%s" % self.request.user.uuid, 'avatar_upload'),
+                # Users can view their own payments
+                (Allow, "%s" % self.request.user.uuid, 'list_payments'),
             ]
         return acl
 
@@ -135,7 +140,7 @@ def get_seatable_tickets(context, request):
         query = query.filter(or_(Ticket.seater == context.userInstance, and_(Ticket.seater == None, Ticket.owner == context.userInstance)))
     return query.all()
 
-@view_config(context=UserInstanceResource, name='payments', request_method='GET', renderer='json', permission='user_list_tickets')
+@view_config(context=UserInstanceResource, name='payments', request_method='GET', renderer='json', permission='list_payments')
 def get_payments(context, request):
     payments = db.query(Payment).filter(Payment.user == context.userInstance).all()
     return payments

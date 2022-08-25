@@ -1,16 +1,7 @@
-import unittest
-
 from phoenixRest.tests.utils import initTestingDB, authenticate
+from phoenixRest.tests.testCaseClass import TestCaseClass
 
-from pyramid import testing
-
-class FunctionalCrewTests(unittest.TestCase):
-    def setUp(self):
-        from pyramid.paster import get_app
-        app = get_app('paste_prod.ini')
-        from webtest import TestApp
-        self.testapp = TestApp(app)
-
+class FunctionalCrewTests(TestCaseClass):
     # Test listing crews, and make sure it works as intended both logged in as admin and not logged in
     def test_get_crews(self):
         res = self.testapp.get('/crew', status=200)

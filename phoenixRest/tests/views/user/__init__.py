@@ -1,16 +1,7 @@
-import unittest
-
 from phoenixRest.tests.utils import initTestingDB, authenticate
+from phoenixRest.tests.testCaseClass import TestCaseClass
 
-from pyramid import testing
-
-class FunctionalUserTests(unittest.TestCase):
-    def setUp(self):
-        from pyramid.paster import get_app
-        app = get_app('paste_prod.ini')
-        from webtest import TestApp
-        self.testapp = TestApp(app)
-
+class FunctionalUserTests(TestCaseClass):
     def test_list_users(self):
         token, refresh = authenticate(self.testapp, 'test', 'sixcharacters')
 

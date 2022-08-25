@@ -5,7 +5,7 @@ from pyramid.httpexceptions import (
     HTTPNotFound,
     HTTPInternalServerError
 )
-from pyramid.security import Authenticated, Everyone, Deny, Allow
+from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
 
 from phoenixRest.models import db

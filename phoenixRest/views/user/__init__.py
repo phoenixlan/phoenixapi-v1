@@ -3,7 +3,7 @@ from pyramid.httpexceptions import (
     HTTPForbidden,
     HTTPBadRequest
 )
-from pyramid.security import Authenticated, Everyone, Deny, Allow
+from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
 from sqlalchemy import or_
 

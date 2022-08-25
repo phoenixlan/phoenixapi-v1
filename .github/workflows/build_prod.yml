@@ -1,8 +1,8 @@
-name: build-api
+name: build-prod
 on: 
- - push
+ - workflow_dispatch
 jobs:
-  build_docker-test:
+  build_docker-prod:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -20,9 +20,9 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v3
         with:
-          file: "docker/test/Dockerfile"
+          file: "docker/production/Dockerfile"
           context: .
           push: true
           tags: |
-            docker.infra.phoenixlan.no/web/${{ github.event.repository.name }}-test:latest
-            docker.infra.phoenixlan.no/web/${{ github.event.repository.name }}-test:${{ github.sha }}
+            docker.infra.phoenixlan.no/web/${{ github.event.repository.name }}-prod:latest
+            docker.infra.phoenixlan.no/web/${{ github.event.repository.name }}-prod:${{ github.sha }}
