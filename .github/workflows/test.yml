@@ -25,14 +25,16 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-    container:
-      image: docker.infra.phoenixlan.no/web/${{ github.event.repository.name }}-prod:latest
-      credentials:
-        username: "${{ secrets.REGISTRY_USERNAME }}"
-        password: "${{ secrets.REGISTRY_PASSWORD }}"
+    #container:
+    #  image: docker.infra.phoenixlan.no/web/${{ github.event.repository.name }}-prod:latest
+    #  credentials:
+    #    username: "${{ secrets.REGISTRY_USERNAME }}"
+    #    password: "${{ secrets.REGISTRY_PASSWORD }}"
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+      - name: Install packages
+        run: pip install -e . && pip install psycopg2
       - name: Run tests
         run: pytest phoenixRest/tests
         env:
