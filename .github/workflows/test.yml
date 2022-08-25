@@ -42,7 +42,7 @@ jobs:
       - name: Run tests
         run: pytest phoenixRest/tests
         env:
-          DB_HOST: postgresql
+          DB_HOST: "postgresql:5432"
           JWT_SECRET: "fadebabe"
           VIPPS_CLIENT_ID: placeholder
           VIPPS_CLIENT_SECRET: placeholder
