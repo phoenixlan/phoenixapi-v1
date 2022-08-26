@@ -27,4 +27,4 @@ USER phoenixRest
 EXPOSE 8080
 
 ENTRYPOINT ["sh", "/srv/phoenixRest/docker-startup.sh"]
-CMD ["pserve", "paste_pytest.ini"]
+CMD ["pserve", "paste_prod.ini"]
