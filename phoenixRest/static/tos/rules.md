@@ -2,29 +2,30 @@ For å gjøre LAN-et best mulig for alle har vi laget ett sett regler som må f�
 
 Radar er et rusfritt område, dette inkluderer snus og røyk. Det er ikke lov å røyke eller snuse under phoenix, derfor foregår all røyking og snusing utenfor Phoenixs område på eget ansvar.
 
-Vi forbeholder oss retten til å ta bilder under arrangementet. Hvis du ikke ønsker å bli tatt bilde av, ta kontakt med Info-desken.
+Vi forbeholder oss retten til å ta bilder under arrangementet. Hvis du ikke ønsker å bli tatt bilde av, ta kontakt med info.
 
 # Radar Event-medlemskap
 
-**Billettprisen inkl. Medlemsskap i Radar Event avd. Phoenix LAN. Ved medlemskap får man blant annet rabatt på de fleste andre arrangementer på Radar.**
+Det kreves Radar Event-medlemskap for å få de billige billettene. Dette er fordi hodestøtten fra medlemskap tungt subsidierer arrangementet.
 
-Hvis du ikke ønsker å bli medlem ta kontakt med [info@phoenix.no](mailto:info@phoenix.no)
+# Aldersgrense
+
+Radar Event innfører aldersgrense på arrangementene for å sørge for at det er trygt for målgruppen å delta. Du vil bli nektet inngang dersom du bryter aldersgrensen, selv om du har kjøpt billett.
 
 # Billett
 
  * Personer som blir bortvist, får ikke refundert inngangspengene.
- * Billetten er ikke refunderbar.
+ * Billetten er i prinsipp ikke refunderbar, da Phoenix LAN er et kulturarrangement.
 
 # Nettverk
 
- * phoenix forbeholder seg retten til å loggføre og overvåke all nettverkstrafikk som benytter seg av vårt nettverk, vår leverandører, og / eller våre partneres nettverksløsninger, infrastruktur eller internettlinjer. Loggene holdes lagret av Phoenix sitt tech crew inntil Phoenix som organisasjon avgjør at loggene ikke lenger har noen form for lagringsverdi for oss. Vi forbeholder oss også retten til å analysere nettverkstrafikk dersom vi finner dette nødvendig.
- * Phoenix bruker **NFC-teknologi** for å logge lokasjonen til deltagere(Ute/inne av bygget, samt hvilket omeråde på bygget deltageren befinner seg i). Dette gjøres av hensyn til egen sikkerhet. Ved å søke crew, kjøpe billett, eller ellers delta på Phoenix, samtykker du til dette.
+ * Phoenix forbeholder seg retten til å loggføre og overvåke all nettverkstrafikk som benytter seg av vårt nettverk, vår leverandører, og / eller våre partneres nettverksløsninger, infrastruktur eller internettlinjer. Loggene holdes lagret av Phoenix sitt tech crew inntil det har gått en fornuftig mengde tid siden LANet, slik at myndigheter har tid til å kontakte oss i forbindelse med potensielle lovbrudd. Vi forbeholder oss også retten til å analysere nettverkstrafikk for å bedre forstå hva folk på LANet liker å gjøre.
 
 # Sikkerhet
 
  * Ikke rør dører/avstengte områder i bygget. Dette kan medføre i at alarmer går og vedkommende vil bli holdt økonomisk ansvarlig.
  * Tyveri, hærverk og andre brudd på regler, blir slått hardt ned på. Politianmeldelse og erstatningskrav kan bli brukt i slike tilfeller.
- * Vi forbeholder oss retten til å holde deltagere og frivillige under 15 år på bygget, mellom 01:00 og 06:00, dersom det ikke foreligger skriftlig tillatelse fra foresatte.
+ * Vi forbeholder oss retten til å nekte deltagere og frivillige under 18 år utgang fra bygget fra 23:00 til 06:00.
  * Ved inngangen skal du vise bånd **uoppfordret,** hver gang du kommer inn (inkludert crew).
  * Den som påfører eventuelle ødeleggelser på bygg/anlegg osv, vil måtte erstatte eventuelle skader.
  * Sov kun på anviste steder.
@@ -45,7 +46,6 @@ Hvis du ikke ønsker å bli medlem ta kontakt med [info@phoenix.no](mailto:info@
  * Alle deltagere er ansvarlige for sitt eget utstyr under arrangementet. Arrangør kan ikke stilles til ansvar om det oppstår skader på – eller tyveri av ditt datautstyr eller andre personlige eiendeler.
  * Det er ikke tillatt med elektroniske artikler som hvitevarer og andre strømkonsumerende eller brannfarlige artikler (kjøleskap og andre ting du finner nødvendig å ta med) på bordradene eller andre steder i lokalet.
  * Det er ikke lov til å ta med seg høyttalere.
- * Hvis du har tenkt å ta med PCen din hjem før LANet er ferdig, si i fra til Security.
 
 # Reaksjoner
 

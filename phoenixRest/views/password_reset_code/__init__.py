@@ -2,7 +2,7 @@ from pyramid.view import view_config, view_defaults
 from pyramid.httpexceptions import (
     HTTPForbidden,
 )
-from pyramid.security import Authenticated, Everyone, Deny, Allow
+from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
 from phoenixRest.resource import resource
 

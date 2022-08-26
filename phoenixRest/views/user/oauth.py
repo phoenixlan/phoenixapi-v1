@@ -20,20 +20,6 @@ from datetime import datetime
 import logging
 log = logging.getLogger(__name__)
 
-def authenticate(login, password):
-    user = db.query(User).filter(or_(User.username == login, User.email == login)).first()
-
-    if user is None:
-        log.info("User not found")
-    elif user.activation_code is not None:
-        log.info("User is not activated")
-    else:
-        if user.activation_code is not None:
-            return False
-        if user.verify_password(password):
-            return user
-    return False 
-
 def generate_token(user: User, request):
     log.warning("Generating token")
     # We now need to fetch the users permissions
@@ -62,16 +48,27 @@ def generate_token(user: User, request):
 def login(request):
     login = request.json_body['login']
     password = request.json_body['password']
-    user = authenticate(login, password)
+    user = db.query(User).filter(or_(User.username == login, User.email == login)).first()
 
-    if user is not False:
-        # Create a code that can be exchanged for an oauth token
-        code = OauthCode(user)
-        db.add(code)
-        log.warning("Created oauth code: %s" % code.code)
-        return {
-            'code': code.code
-        }
+    if user is not None:
+        if user.activation_code is not None:
+            request.response.status = 403
+            return {
+                'error': "Kontoen er ikke aktivert - sjekk innboksen din"
+            }
+        if user.verify_password(password):
+            # Create a code that can be exchanged for an oauth token
+            code = OauthCode(user)
+            db.add(code)
+            log.warning("Created oauth code: %s" % code.code)
+            return {
+                'code': code.code
+            }
+        else:
+            request.response.status = 403
+            return {
+                "error": "Invalid username or password"
+            }
     else:
         request.response.status = 403
         return {

@@ -2,7 +2,7 @@ from pyramid.view import view_config, view_defaults
 from pyramid.httpexceptions import (
     HTTPNotFound,
 )
-from pyramid.security import Authenticated, Everyone, Deny, Allow
+from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
 
 from phoenixRest.models import db
@@ -84,6 +84,12 @@ def create_application(context, request):
         request.response.status = 400
         return {
             "error": "You applied to a crew that is not applyable"
+        }
+    
+    if request.user.avatar is None:
+        request.response.status = 400
+        return {
+            "error": "You must upload an avatar before you can apply for crew"
         }
 
     # Fetch current event

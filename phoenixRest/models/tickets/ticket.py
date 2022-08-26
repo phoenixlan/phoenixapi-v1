@@ -1,4 +1,3 @@
-"""Payment object"""
 from sqlalchemy import (
     Column,
     DateTime,

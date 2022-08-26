@@ -1,0 +1,19 @@
+<html>
+    <body>
+    <h1>Du har kjøpt billetter til {{ name }}</h1>
+
+    <h2>Bestilling</h2>
+    <ul>
+    {% for entry in payment.store_session.cart_entries %}
+    <li>{{ entry.amount }} x {{ entry.ticket_type.name }}</li>
+    {% endfor %}
+    </ul>
+
+    <p><b>Total: </b>{{ payment.store_session.get_total() }}</p>
+
+    <p>Vennligst merk at et medlemskap til Radar Event er nødvendig for å benytte eventuelle medlemskap-billetter.</p>
+
+    <p>Spørsmål? Kontakt <a href="mailto:{{mail}}">{{mail}}</a></p>
+
+    </body>
+</html>

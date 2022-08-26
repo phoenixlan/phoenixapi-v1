@@ -1,16 +1,7 @@
-import unittest
-
 from phoenixRest.tests.utils import initTestingDB, authenticate
+from phoenixRest.tests.testCaseClass import TestCaseClass
 
-from pyramid import testing
-
-class FunctionalStoreSessionTests(unittest.TestCase):
-    def setUp(self):
-        from pyramid.paster import get_app
-        app = get_app('paste_prod.ini')
-        from webtest import TestApp
-        self.testapp = TestApp(app)
-
+class FunctionalStoreSessionTests(TestCaseClass):
     # Test if we can reserve a store session
     def test_create_store_session(self):
         res = self.testapp.get('/event/current', status=200)

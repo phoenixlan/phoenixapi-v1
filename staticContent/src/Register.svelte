@@ -34,7 +34,7 @@
 
 	let tosAccepted = false;
 
-	let dateOfBirth = new Date(2005, 0, 1);
+	let dateOfBirth = '';
 
 	const STATES = {
 		input: "INPUT",
@@ -46,13 +46,22 @@
 	let registerState = STATES.input;
 	let error = "";
 
-	function getAge(birthDate) {
+	function getAge(birthDateStr) {
+		if(birthDateStr == '') {
+			return 0;
+		}
+		const split = birthDateStr.split('-')
+		const year = Number.parseInt(split[0], 10)
+		const month = Number.parseInt(split[1], 10)
+		const day = Number.parseInt(split[2], 10)
+
     	var today = new Date();
-    	var age = today.getFullYear() - birthDate.getFullYear();
-    	var m = today.getMonth() - birthDate.getMonth();
-    	if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+    	var age = today.getFullYear() - year;
+    	var m = today.getMonth() - month + 1;
+    	if (m < 0 || (m === 0 && today.getDate() < day)) {
     	    age--;
     	}
+		console.log("Age: " + age);
     	return age;
 	}
 
@@ -60,8 +69,6 @@
 		registerState = STATES.loading;
 		console.log("register");
 		console.log(dateOfBirth);
-		const month = ((dateOfBirth.getMonth()+1)+"").padStart(2, "0")
-		const day = ((dateOfBirth.getDate()+1)+"").padStart(2, "0")
 
 		const payload = {
 			username,
@@ -69,7 +76,7 @@
 			surname,
 			password,
 			passwordRepeat,
-			dateOfBirth: `${dateOfBirth.getFullYear()}-${month}-${day}`,
+			dateOfBirth: dateOfBirth,
 			email,
 			gender: genderRadio,
 			phone,
@@ -234,7 +241,7 @@
 			{#if registerState == STATES.success}
 			<div class="registeringSuccess">
 				<Fa icon={faCheck} style="font-size: 3em; color: green;"/>
-				<h1>Kontoen din er registrert</h1>
+				<h1>Sjekk inboksen din</h1>
 				<p>Du må verifisere mail-kontoen for å logge inn. Du skal ha fått en mail. Sjekk inboksen din for å fortsette. Det kan ta et par minutter før mailen kommer. Husk å sjekke søppelpost!</p>
 				<p>Mottok du ikke mailen? Kontakt oss: <a href="mailto:info@phoenixlan.no">info@phoenixlan.no</a></p>
 			</div>

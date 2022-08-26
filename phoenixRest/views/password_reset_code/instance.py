@@ -5,7 +5,7 @@ from pyramid.httpexceptions import (
     HTTPNotFound,
     HTTPBadRequest
 )
-from pyramid.security import Authenticated, Everyone, Deny, Allow
+from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
 from phoenixRest.models import db
 from phoenixRest.models.core.password_reset_code import PasswordResetCode

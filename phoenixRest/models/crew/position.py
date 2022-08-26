@@ -19,6 +19,9 @@ from phoenixRest.models import db, Base
 
 from datetime import datetime, timedelta
 
+import logging
+log = logging.getLogger(__name__)
+
 import secrets
 import string
 import uuid
@@ -65,3 +68,28 @@ class Position(Base):
             'permissions': self.permissions
 
         }
+
+def create_or_fetch_crew_position(crew, team=None, chief=False):
+    existing = db.query(Position).filter(Position.chief == chief)
+
+    existing = existing.filter(Position.crew == crew)
+    
+    if team is not None:
+        existing = existing.filter(Position.team == team)
+    else:
+        existing = existing.filter(Position.team == None)
+
+    existing = existing.all()
+    if len(existing) == 0:
+        new_position = Position(None, None)
+        new_position.chief = chief
+        new_position.crew = crew
+        new_position.team = team
+        db.add(new_position)
+        db.flush()
+        return new_position
+    elif len(existing) == 1:
+        return existing[0]
+    else:
+        log.warn([ exist.uuid for exist in existing ])
+        raise RuntimeError("More than one position exists matching the query")

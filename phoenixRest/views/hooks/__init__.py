@@ -5,7 +5,7 @@ from pyramid.httpexceptions import (
     HTTPNotFound,
     HTTPInternalServerError
 )
-from pyramid.security import Authenticated, Everyone, Deny, Allow
+from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
 
 from phoenixRest.models import db
@@ -61,7 +61,7 @@ def stripe_hook(context, request):
         log.warn("Payment not found!")
         raise HTTPNotFound("Payment not found")
 
-    finalize_stripe_payment(payment)
+    finalize_stripe_payment(request, payment)
     db.flush()
     return payment.payment
 #/v2/payments/{orderId}
@@ -86,7 +86,7 @@ def vipps_hook(context, request):
         if vipps_payment.payment.state != PaymentState.initiated:
             log.warning("Security issue: tried to activate a payment that was not in state: initiated")
             raise HTTPBadRequest("Tried to request a hook on a payment which has already gotten a callback")
-        finalize_vipps_payment(vipps_payment)
+        finalize_vipps_payment(request, vipps_payment)
         log.info("Successfully registered vipps sale")
     elif status == "REJECTED":
         vipps_payment.payment.state = PaymentState.failed

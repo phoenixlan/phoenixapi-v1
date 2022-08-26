@@ -3,7 +3,7 @@ from pyramid.httpexceptions import (
     HTTPForbidden,
     HTTPNotFound
 )
-from pyramid.security import Authenticated, Everyone, Deny, Allow
+from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
 
 from phoenixRest.models import db
@@ -18,7 +18,7 @@ from phoenixRest.resource import resource
 
 from phoenixRest.roles import ADMIN, TICKET_ADMIN
 
-from phoenixRest.views.row.instance import RowInstanceResource
+from phoenixRest.views.ticket.instance import TicketInstanceResource
 
 from datetime import datetime
 
@@ -41,8 +41,7 @@ class TicketResource(object):
         self.request = request
 
     def __getitem__(self, key):
-        """Traverse to a specific seatmap item"""
-        node = RowInstanceResource(self.request, key)
+        node = TicketInstanceResource(self.request, key)
         node.__parent__ = self
         node.__name__ = key
         return node

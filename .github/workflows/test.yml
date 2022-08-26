@@ -1,0 +1,53 @@
+on:
+  workflow_call:
+    secrets:
+      REGISTRY_USERNAME:
+        required: true
+      REGISTRY_PASSWORD:
+        required: true
+jobs:
+  run_tests:
+    runs-on: ubuntu-latest
+    container: "python:3.8"
+    env:
+      POSTGRES_USER: phoenix
+      POSTGRES_PASSWORD: testing
+      DB_HOST: "postgresql:5432"
+      DEBUG: "yes"
+      JWT_SECRET: "fadebabe"
+      VIPPS_CLIENT_ID: placeholder
+      VIPPS_CLIENT_SECRET: placeholder
+      VIPPS_SUBSCRIPTION_KEY: placeholder
+      VIPPS_CALLBACK_URL: placeholder
+      VIPPS_MERCHANT_SERIAL_NUMBER: 1
+      STRIPE_API_KEY: placeholder
+    services:
+      # Label used to access the service container
+      postgresql:
+        # Docker Hub image
+        image: postgres:alpine
+        env:
+          POSTGRES_USER: phoenix
+          POSTGRES_PASSWORD: testing
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    #container:
+    #  image: docker.infra.phoenixlan.no/web/${{ github.event.repository.name }}-prod:latest
+    #  credentials:
+    #    username: "${{ secrets.REGISTRY_USERNAME }}"
+    #    password: "${{ secrets.REGISTRY_PASSWORD }}"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install packages
+        run: pip install wheel && pip install -e . && pip install psycopg2
+      - name: Run DB migrations
+        run: /usr/local/bin/alembic upgrade heads
+      - name: Run tests
+        run: pytest phoenixRest/tests
+
+

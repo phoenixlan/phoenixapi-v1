@@ -1,8 +1,6 @@
-import unittest
+from unittest import TestCase
+from phoenixRest.tests.testCaseClass import TestCaseClass
 
-from phoenixRest.tests.utils import initTestingDB
-
-from pyramid import testing
 """
 class ViewTests(unittest.TestCase):
     def setUp(self):
@@ -19,10 +17,10 @@ class ViewTests(unittest.TestCase):
         self.assertEqual(info['user'], None)
 """
 
-class FunctionalTests(unittest.TestCase):
+class FunctionalTests(TestCaseClass):
     def setUp(self):
         from pyramid.paster import get_app
-        app = get_app('paste_prod.ini')
+        app = get_app('paste_pytest.ini')
         from webtest import TestApp
         self.testapp = TestApp(app)
 

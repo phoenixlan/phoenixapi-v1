@@ -55,6 +55,7 @@ from phoenixRest.models.tickets import (
     store_session_cart_entry,
     payment,
     ticket,
+    ticket_transfer,
     seatmap_background
 )
 from phoenixRest.models.tickets.payment_providers import (

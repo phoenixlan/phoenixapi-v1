@@ -1,15 +1,10 @@
-import unittest
-
 from phoenixRest.tests.utils import initTestingDB, authenticate
+from phoenixRest.tests.testCaseClass import TestCaseClass
 
-from pyramid import testing
-
-
-
-class FunctionalUserAvatarTests(unittest.TestCase):
+class FunctionalUserAvatarTests(TestCaseClass):
     def setUp(self):
         from pyramid.paster import get_app
-        app = get_app('paste_prod.ini')
+        app = get_app('paste_pytest.ini')
         from webtest import TestApp
         self.testapp = TestApp(app)
 
@@ -21,12 +16,12 @@ class FunctionalUserAvatarTests(unittest.TestCase):
             'X-Phoenix-Auth': token
             }), status=200).json_body
 
-        avatar = currentUser['avatar']
+        avatar_uuid = currentUser['avatar_uuid']
         user_uuid = currentUser['uuid']
-        if avatar is not None:
+        if avatar_uuid is not None:
             # Delete the avatar so we can test with a new one
             # This is done so the tests can run locally
-            self.testapp.delete('/avatar/%s' % avatar['uuid'], headers=dict({
+            self.testapp.delete('/avatar/%s' % avatar_uuid, headers=dict({
                 'X-Phoenix-Auth': token
                 }), status=200)
 

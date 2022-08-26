@@ -2,30 +2,12 @@ name: build-api
 on: 
  - push
 jobs:
-  build_docker-prod:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-      - name: Login to docker repo
-        uses: docker/login-action@v2
-        with:
-          registry: docker.infra.phoenixlan.no
-          username: ${{ secrets.REGISTRY_USERNAME}}
-          password: ${{ secrets.REGISTRY_PASSWORD }}
-      - name: Build and push
-        uses: docker/build-push-action@v3
-        with:
-          file: "docker/production/Dockerfile"
-          context: .
-          push: true
-          tags: |
-            docker.infra.phoenixlan.no/web/${{ github.event.repository.name }}-prod:latest
-            docker.infra.phoenixlan.no/web/${{ github.event.repository.name }}-prod:${{ github.sha }}
+  run_tests:
+    secrets: inherit
+    uses: ./.github/workflows/test.yml
   build_docker-test:
     runs-on: ubuntu-latest
+    needs: run_tests
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -46,30 +28,3 @@ jobs:
           tags: |
             docker.infra.phoenixlan.no/web/${{ github.event.repository.name }}-test:latest
             docker.infra.phoenixlan.no/web/${{ github.event.repository.name }}-test:${{ github.sha }}
-  test:
-    runs-on: ubuntu-latest
-    env:
-      JWT_SECRET: "foobar"
-      DB_HOST: postgres
-      POSTGRES_USER: phoenix
-      POSTGRES_PASSWORD: password
-    services:
-      postgres:
-        image: postgres
-        env:
-          POSTGRES_USERNAME: phoenix
-          POSTGRES_PASSWORD: password
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '3.10' 
-      - name: Install dependencies
-        run: pip install -e . && pip install psycopg2
-      - name: Run tests
-        run: "pytest /tests"

@@ -1,4 +1,4 @@
-from pyramid.security import Authenticated, Everyone, Deny, Allow
+from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
 import logging
 log = logging.getLogger(__name__)

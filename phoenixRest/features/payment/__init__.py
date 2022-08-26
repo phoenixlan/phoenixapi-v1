@@ -5,7 +5,7 @@ from phoenixRest.models import db
 import logging
 log = logging.getLogger(__name__)
 
-def mint_tickets(payment: Payment):
+def mint_tickets(request, payment: Payment):
     if payment.store_session is None:
         raise RuntimeError("Tried to mint tickets on a payment that is already detatched from a store session")
     # Store that we received a websocket callback, such that an operator can see proof that we received payment.
@@ -20,8 +20,12 @@ def mint_tickets(payment: Payment):
             #payment.tickets.append(ticket)
         log.info("Minted %s tickets of type %s for user %s" % (entry.amount, entry.ticket_type.name, payment.user_uuid))
 
-    # TODO do we need this?
-    #db.add(payment)
+    # Send a mail
+    request.mail_service.send_mail(payment.user.email, "Kvittering for kjøp av billetter", "tickets_minted.jinja2", {
+        "mail": request.registry.settings["api.contact"],
+        "name": request.registry.settings["api.name"],
+        "payment": payment,
+    })
 
     # Free up store session
     for entry in payment.store_session.cart_entries:
@@ -29,4 +33,5 @@ def mint_tickets(payment: Payment):
     db.delete(payment.store_session)
     # Mark the payment as completed - tickets are minted
     payment.state = PaymentState.tickets_minted
+
     
