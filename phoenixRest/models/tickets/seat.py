@@ -35,7 +35,7 @@ class Seat(Base):
     row_uuid = Column(UUID(as_uuid=True), ForeignKey("row.uuid"), nullable=False)
     row = relationship("Row", back_populates="seats")
 
-    ticket = relationship("Ticket", back_populates="seat")
+    ticket = relationship("Ticket", back_populates="seat", uselist=False)
 
     def __init__(self, number: int, row):
         self.number = number

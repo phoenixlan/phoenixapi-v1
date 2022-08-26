@@ -1,4 +1,3 @@
-from re import A, S
 from pyramid.view import view_config, view_defaults
 from pyramid.httpexceptions import (
     HTTPForbidden,

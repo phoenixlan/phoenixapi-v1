@@ -7,10 +7,13 @@ from pyramid.httpexceptions import (
 from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
 from phoenixRest.models import db
+from phoenixRest.models.core.event import Event, get_current_event
 from phoenixRest.models.tickets.seatmap import Seatmap
 from phoenixRest.models.tickets.entrance import Entrance
 from phoenixRest.models.tickets.ticket_type import TicketType
 from phoenixRest.models.tickets.row import Row
+from phoenixRest.models.tickets.seat import Seat
+from phoenixRest.models.tickets.ticket import Ticket
 from phoenixRest.models.tickets.seatmap_background import SeatmapBackground
 
 from phoenixRest.mappers.seatmap import map_seatmap_for_availability
@@ -20,10 +23,13 @@ from phoenixRest.roles import ADMIN, TICKET_ADMIN
 from phoenixRest.utils import validate, validateUuidAndQuery
 from phoenixRest.resource import resource
 
+from sqlalchemy import and_
+
 from datetime import datetime
 
 import os
 import shutil
+import json
 
 import logging
 log = logging.getLogger(__name__)
@@ -60,7 +66,25 @@ def get_seatmap(context, request):
 
 @view_config(context=SeatmapInstanceViews, name='availability', request_method='GET', renderer='json', permission='seatmap_get_availability')
 def get_seatmap_availability(context, request):
-    return map_seatmap_for_availability(context.seatmapInstance, request)
+    event = None
+    if 'event_uuid' in request.GET:
+        event = db.query(Event).filter(Event.uuid == request.GET['event_uuid']).first()
+        if event is None:
+            request.response.status = 404
+            return {
+                'error': "Event not found"
+            }
+    else:
+        event = get_current_event()
+    
+    seatmap = db.query(Seatmap) \
+        .join(Row, Row.seatmap_uuid == Seatmap.uuid) \
+        .join(Seat, Seat.row_uuid == Row.uuid) \
+        .join(Ticket, Ticket.seat_uuid == Seat.uuid, isouter=True) \
+        .filter(Seatmap.uuid == context.seatmapInstance.uuid) \
+        .first()
+
+    return map_seatmap_for_availability(seatmap, request)
 
 
 @view_config(context=SeatmapInstanceViews, name='background', request_method='PUT', renderer='json', permission='upload_background')

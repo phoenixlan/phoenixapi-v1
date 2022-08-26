@@ -11,6 +11,7 @@ from phoenixRest.models import db
 from phoenixRest.models.core.user import User
 from phoenixRest.models.tickets.ticket_transfer import TicketTransfer
 from phoenixRest.models.tickets.ticket import Ticket
+from phoenixRest.models.tickets.seat import Seat
 
 from phoenixRest.roles import ADMIN, TICKET_ADMIN
 
@@ -30,9 +31,8 @@ class TicketInstanceResource(object):
         acl = [
             (Allow, ADMIN, 'view_ticket'),
             (Allow, TICKET_ADMIN, 'view_ticket'),
-            # Authenticated pages
-            #(Allow, Authenticated, Authenticated),
-            #(Deny, Everyone, Authenticated),
+            (Allow, ADMIN, 'seat_ticket'),
+            (Allow, TICKET_ADMIN, 'seat_ticket'),
         ]
         if self.ticketInstance is not None:
             acl = acl + [
@@ -40,6 +40,9 @@ class TicketInstanceResource(object):
                 (Allow, "%s" % self.ticketInstance.owner.uuid, 'view_ticket'),
                 # Ticket owner can transfer their ticket
                 (Allow, "%s" % self.ticketInstance.owner.uuid, 'transfer_ticket'),
+
+                # Ticket owner can seat their own ticket
+                (Allow, "%s" % self.ticketInstance.owner.uuid, 'seat_ticket'),
             ]
 
         return acl
@@ -54,6 +57,20 @@ class TicketInstanceResource(object):
 
 @view_config(context=TicketInstanceResource, name='', request_method='GET', renderer='json', permission='view_ticket')
 def get_ticket(context, request):
+    return context.ticketInstance
+
+
+@view_config(context=TicketInstanceResource, name='seat', request_method='PUT', renderer='json', permission='seat_ticket')
+@validate(json_body={'seat_uuid': str})
+def seat_ticket(context, request):
+    seat = db.query(Seat).filter(Seat.uuid == request.json_body['seat_uuid']).first()
+    if seat is None:
+        request.response.status = 404
+        return {
+            'error': 'Seat not found'
+        }
+
+    context.ticketInstance.seat = seat
     return context.ticketInstance
 
 @view_config(context=TicketInstanceResource, name='transfer', request_method='POST', renderer='json', permission='transfer_ticket')
