@@ -4,15 +4,6 @@ from phoenixRest.tests.testCaseClass import TestCaseClass
 from phoenixRest.features.payment.vipps import VIPPS_CALLBACK_AUTH_TOKEN
 
 class FunctionalPaymentTests(TestCaseClass):
-    def _get_user_uuid(self, token):
-        res = self.testapp.get('/user/current', headers=dict({
-            'X-Phoenix-Auth': token
-        }), status=200)
-
-        self.assertIsNotNone(res.json_body['uuid'])
-
-        return res.json_body['uuid']
-    
     def _create_store_session(self, token):
         res = self.testapp.get('/event/current', status=200)
         self.assertIsNotNone(res.json_body['uuid'])
@@ -90,12 +81,12 @@ class FunctionalPaymentTests(TestCaseClass):
         }), status=200)
 
         # Tickets should now exist, so lets look for a ticket minted from this payment
-        user_uuid = self._get_user_uuid(token)
+        user_uuid = self._get_user(token)['uuid']
         print("User uuid: %s" % user_uuid)
         
         res = self.testapp.get('/user/%s/purchased_tickets' % user_uuid, headers=dict({
             'X-Phoenix-Auth': token
-        }))
+        }), status=200)
 
         exists = False
         for ticket in res.json_body:

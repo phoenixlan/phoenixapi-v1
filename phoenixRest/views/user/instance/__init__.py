@@ -1,4 +1,4 @@
-from re import A
+from re import A, S
 from pyramid.view import view_config, view_defaults
 from pyramid.httpexceptions import (
     HTTPForbidden,
@@ -9,12 +9,13 @@ from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
 from phoenixRest.models import db
 from phoenixRest.models.core.user import User
-from phoenixRest.models.core.event import Event
+from phoenixRest.models.core.event import Event, get_current_event
 from phoenixRest.models.core.avatar import Avatar
 from phoenixRest.models.tickets.ticket import Ticket
 from phoenixRest.models.tickets.payment import Payment
 
 from phoenixRest.models.tickets.store_session import StoreSession
+from phoenixRest.models.tickets.ticket_transfer import TicketTransfer
 
 from phoenixRest.mappers.user import map_user_with_secret_fields, map_user_public_with_positions
 from phoenixRest.mappers.ticket import map_ticket_simple
@@ -26,11 +27,10 @@ from phoenixRest.roles import HR_ADMIN, ADMIN, TICKET_ADMIN
 
 from sqlalchemy import and_, or_
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import shutil
 import os
-import datetime
 
 from PIL import Image
 
@@ -56,6 +56,9 @@ class UserInstanceResource(object):
             # Seatable tickets are either owned by the user or "lended" to them by another for the sake of seating
             (Allow, ADMIN, 'user_list_seatable_tickets'),
             (Allow, TICKET_ADMIN, 'user_list_seatable_tickets'),
+            # Ticket transfers
+            (Allow, ADMIN, 'user_list_ticket_transfers'),
+            (Allow, TICKET_ADMIN, 'user_list_ticket_transfers'),
             # Who can view payments?
             (Allow, ADMIN, 'list_payments'),
             (Allow, TICKET_ADMIN, 'list_payments'),
@@ -66,16 +69,18 @@ class UserInstanceResource(object):
         if self.request.user is not None:
             acl = acl + [
                 # Users can view themselves, always
-                (Allow, "%s" % self.request.user.uuid, 'user_view'),
+                (Allow, "%s" % self.userInstance.uuid, 'user_view'),
                 # Users can fetch their own tickets
-                (Allow, "%s" % self.request.user.uuid, 'user_list_owned_tickets'),
-                (Allow, "%s" % self.request.user.uuid, 'user_list_seatable_tickets'),
+                (Allow, "%s" % self.userInstance.uuid, 'user_list_owned_tickets'),
+                (Allow, "%s" % self.userInstance.uuid, 'user_list_seatable_tickets'),
+                # Users can see their own ticket transfers
+                (Allow, "%s" % self.userInstance.uuid, 'user_list_ticket_transfers'),
                 # Users can view their own store session
-                (Allow, "%s" % self.request.user.uuid, 'user_get_store_session'),
+                (Allow, "%s" % self.userInstance.uuid, 'user_get_store_session'),
                 # Users can upload their own avatar
-                (Allow, "%s" % self.request.user.uuid, 'avatar_upload'),
+                (Allow, "%s" % self.userInstance.uuid, 'avatar_upload'),
                 # Users can view their own payments
-                (Allow, "%s" % self.request.user.uuid, 'list_payments'),
+                (Allow, "%s" % self.userInstance.uuid, 'list_payments'),
             ]
         return acl
 
@@ -109,6 +114,26 @@ def get_owned_tickets(context, request):
     else:
         query = query.filter(Ticket.owner == context.userInstance)
     return query.all()
+
+# We only care about transfers from this event
+@view_config(context=UserInstanceResource, name='ticket_transfers', request_method='GET', renderer='json', permission='user_list_ticket_transfers')
+def get_ticket_transfers(context, request):
+    event = None
+    if 'event_uuid' in request.GET:
+        event = db.query(Event).filter(Event.uuid == request.GET['event_uuid']).first()
+        if event is None:
+            request.response.status = 404
+            return {
+                'error': "Event not found"
+            }
+    else:
+        event = get_current_event()
+
+    transfers = db.query(TicketTransfer).filter(and_(TicketTransfer.ticket.has(Ticket.event_uuid == event.uuid), or_(
+        or_(TicketTransfer.from_user == context.userInstance),
+        or_(TicketTransfer.to_user == context.userInstance)
+    ))).all()
+    return transfers
 
 @view_config(context=UserInstanceResource, name='purchased_tickets', request_method='GET', renderer='json', permission='user_list_purchased_tickets')
 def get_purchased_tickets(context, request):
@@ -149,7 +174,7 @@ def get_payments(context, request):
 def get_store_session(context, request):
     session_lifetime = int(request.registry.settings["ticket.store_session_lifetime"])
 
-    too_old = datetime.datetime.now() - datetime.timedelta(seconds=session_lifetime)
+    too_old = datetime.now() - timedelta(seconds=session_lifetime)
 
     session = db.query(StoreSession).filter(or_(StoreSession.user == context.userInstance, StoreSession.created < too_old)).first()
     if session is not None:
