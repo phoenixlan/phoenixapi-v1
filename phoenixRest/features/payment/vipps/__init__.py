@@ -24,7 +24,7 @@ API_ROOT = os.environ.get("VIPPS_API_ROOT", "https://apitest.vipps.no")
 # Static values
 MERCHANT_SERIAL_NUMBER = os.environ["VIPPS_MERCHANT_SERIAL_NUMBER"] #If we get more units we can change this
 VIPPS_SYSTEM_VERSION = "0.1"
-VIPPS_SYSTEM_NAME = "PhonixRest"
+VIPPS_SYSTEM_NAME = "PhoenixRest"
 CALLBACK_PREFIX = os.environ["VIPPS_CALLBACK_URL"]
 
 token = None
