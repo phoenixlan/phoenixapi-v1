@@ -1,7 +1,12 @@
 from phoenixRest.tests.utils import initTestingDB, authenticate
 from phoenixRest.tests.testCaseClass import TestCaseClass
 
+from phoenixRest.models import db
+from phoenixRest.models.core.event import Event
+
 from phoenixRest.features.payment.vipps import VIPPS_CALLBACK_AUTH_TOKEN
+
+from datetime import datetime, timedelta
 
 class FunctionalPaymentTests(TestCaseClass):
     def _create_store_session(self, token):
@@ -25,6 +30,31 @@ class FunctionalPaymentTests(TestCaseClass):
 
         self.assertIsNotNone(store_session)
         return store_session
+    
+    def test_ticket_sale_start_limit(self):
+        # Jeff doesn't have permission to buy tickets any time
+        token, refresh = authenticate(self.testapp, 'jeff', 'sixcharacters')
+
+        current_event = self.testapp.get('/event/current', status=200).json_body
+        self.assertIsNotNone(current_event['uuid'])
+
+        # Make sure buying tickets is illegal
+        event_instance = db.query(Event).filter(Event.uuid == current_event['uuid']).first()
+        event_instance.booking_time = datetime.now() + timedelta(hours=1)
+        db.flush()
+
+        res = self.testapp.get('/event/%s/ticketType' % current_event['uuid'], headers=dict({
+            'X-Phoenix-Auth': token
+        }), status=200)
+
+        # Reserve a card for the first ticket for sale, i guess
+        res = self.testapp.put_json('/store_session', dict({
+            'cart': [
+                {'qty': 1, 'uuid': res.json_body[0]['uuid']}
+            ]
+        }), headers=dict({
+            'X-Phoenix-Auth': token
+        }), status=400)
 
     # Test if we can create a payment
     def test_payment_flow_vipps(self):

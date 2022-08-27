@@ -76,9 +76,8 @@ def get_tickets(context, request):
 
 @view_config(context=EventInstanceResource, name='ticket_availability', request_method='GET', renderer='json', permission='ticket_availability_get')
 def get_ticket_availability(context, request):
-    total_count = db.query(Ticket).filter(Ticket.event_uuid == context.eventInstance.uuid).count()
     return {
-        'total': max(context.eventInstance.max_participants - total_count, 0)
+        'total': max(context.eventInstance.get_total_ticket_availability(), 0)
     }
 
 @view_config(name='ticketType', context=EventInstanceResource, request_method='PUT', renderer='json', permission='add_ticket_type')

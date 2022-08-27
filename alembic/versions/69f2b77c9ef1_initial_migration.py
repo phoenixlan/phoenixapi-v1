@@ -635,6 +635,18 @@ def upgrade():
                 'event_uuid': None,
                 'permission': 'admin'
             },
+            {
+                'uuid':uuid.uuid4(), 
+                'position_uuid': admin_position_uuid, 
+                'event_uuid': None,
+                'permission': 'ticket_bypass_ticketsale_start_restriction'
+            },
+            {
+                'uuid':uuid.uuid4(), 
+                'position_uuid': admin_position_uuid, 
+                'event_uuid': None,
+                'permission': 'ticket_wholesale'
+            },
         ]
     )
 

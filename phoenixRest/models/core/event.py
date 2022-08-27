@@ -19,6 +19,7 @@ from phoenixRest.models import db
 from phoenixRest.models import Base
 
 from phoenixRest.models.core.user import User
+from phoenixRest.models.tickets.ticket import Ticket
 
 # We must make sure that classes that are used in relationships are loaded
 from phoenixRest.models.tickets.seatmap import Seatmap
@@ -93,6 +94,12 @@ class Event(Base):
             'seatmap_uuid': self.seatmap_uuid,
             'location': self.location
         }
+    
+    """
+    Returns a numer prepresenting the total number of tickets left for the event
+    """
+    def get_total_ticket_availability(self):
+        return self.max_participants - db.query(Ticket).filter(Ticket.event_uuid == self.uuid).count()
 
 def get_current_event():
     firstEvent = db.query(Event).filter(Event.end_time > datetime.now()).order_by(Event.start_time.asc()).first()
