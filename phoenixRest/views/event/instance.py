@@ -39,6 +39,8 @@ class EventInstanceResource(object):
             (Allow, ADMIN, 'event_ticket_type_get'),
             (Allow, EVENT_ADMIN, 'event_ticket_type_get'),
 
+            (Allow, Everyone, 'ticket_availability_get'),
+
             (Allow, ADMIN, 'event_tickets_get'),
             (Allow, TICKET_ADMIN, 'event_tickets_get'),
 
@@ -71,6 +73,13 @@ def get_applications(context, request):
 def get_tickets(context, request):
     tickets = db.query(Ticket).filter(Ticket.event_uuid == context.eventInstance.uuid).all()
     return tickets
+
+@view_config(context=EventInstanceResource, name='ticket_availability', request_method='GET', renderer='json', permission='ticket_availability_get')
+def get_ticket_availability(context, request):
+    total_count = db.query(Ticket).filter(Ticket.event_uuid == context.eventInstance.uuid).count()
+    return {
+        'total': max(context.eventInstance.max_participants - total_count, 0)
+    }
 
 @view_config(name='ticketType', context=EventInstanceResource, request_method='PUT', renderer='json', permission='add_ticket_type')
 @validate(json_body={'ticket_type_uuid': str})
