@@ -25,7 +25,8 @@ from phoenixRest.roles import ADMIN, TICKET_ADMIN
 from phoenixRest.views.crew.instance import CrewInstanceViews
 
 from phoenixRest.features.payment.vipps import VIPPS_CALLBACK_AUTH_TOKEN, finalize_vipps_payment
-from phoenixRest.features.payment.stripe import finalize_stripe_payment
+from phoenixRest.features.payment.stripe import STRIPE_ENDPOINT_SECRET, finalize_stripe_payment
+import stripe
 
 from datetime import datetime
 
@@ -52,14 +53,33 @@ class HookResource(object):
 
 @view_config(context=HookResource, name='stripe', request_method='POST', renderer='json', permission='stripe')
 def stripe_hook(context, request):
-    if request.json_body['type'] != 'payment_intent.succeeded':
+    sig_header = request.headers.get('stripe-signature', '')
+    log.info(request.body)
+    try:
+        event = stripe.Webhook.construct_event(
+            request.body.decode('ascii'), sig_header, STRIPE_ENDPOINT_SECRET
+        )
+    except ValueError as e:
+        log.warn("Unable to decode stripe webhook")
+        request.response.status = 400
+        return {
+            "error": "Failed to decode"
+        }
+    except stripe.error.SignatureVerificationError as e:
+        request.response.status = 400
+        log.error("GOT INVALID SIGNATURE VERIFICATION!")
+        return {
+            "error": "Invalid signature"
+        }
+
+    if event.type != 'payment_intent.succeeded':
         log.warn("Rejected a stripe hook with invalid type")
         request.response.status = 400
         return {
             'error': "Invalid type"
         }
     # stripe payment 
-    payment_id = request.json_body['data']['object']['id']
+    payment_id = event.data.object.id
     payment = db.query(StripePayment).filter(StripePayment.payment_id == payment_id).first()
 
     if payment is None:

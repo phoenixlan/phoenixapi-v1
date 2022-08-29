@@ -12,6 +12,8 @@ log = logging.getLogger(__name__)
 
 STRIPE_INITIALIZED = False
 
+STRIPE_ENDPOINT_SECRET = os.environ.get('STRIPE_ENDPOINT_SECRET', 'placeholder')
+
 def initialize_stripe_payment(payment: Payment):
     # If we are running in pytest, we can safely mock
     if "PYTEST_CURRENT_TEST" in os.environ:
