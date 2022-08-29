@@ -5,7 +5,7 @@
     <h2>Bestilling</h2>
     <ul>
     {% for entry in payment.store_session.cart_entries %}
-    <li>{{ entry.amount }} x {{ entry.ticket_type.name }}</li>
+    <li>{{ entry.amount }} x {{ entry.ticket_type.name }} for {{ entry.ticket_type.price }},- pr. stk</li>
     {% endfor %}
     </ul>
 
