@@ -50,20 +50,28 @@ class HookResource(object):
     def __init__(self, request):
         self.request = request
 
-# TODO write this hook!
 @view_config(context=HookResource, name='stripe', request_method='POST', renderer='json', permission='stripe')
-@validate(json_body={'payment_uuid': str})
 def stripe_hook(context, request):
+    if request.json_body['type'] != 'payment_intent.succeeded':
+        log.warn("Rejected a stripe hook with invalid type")
+        request.response.status = 400
+        return {
+            'error': "Invalid type"
+        }
     # stripe payment 
-    payment = db.query(StripePayment).filter(StripePayment.payment_uuid == request.json_body['payment_uuid']).first()
+    payment_id = request.json_body['data']['object']['id']
+    payment = db.query(StripePayment).filter(StripePayment.payment_id == payment_id).first()
 
     if payment is None:
         log.warn("Payment not found!")
-        raise HTTPNotFound("Payment not found")
+        request.response.status = 404
+        return {
+            'error': 'Payment not found'
+        }
 
     finalize_stripe_payment(request, payment)
-    db.flush()
     return payment.payment
+
 #/v2/payments/{orderId}
 @view_config(context=HookResource, name='vipps', request_method='POST', renderer='string', permission='vipps')
 def vipps_hook(context, request):
