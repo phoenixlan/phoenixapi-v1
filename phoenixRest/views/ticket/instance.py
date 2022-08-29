@@ -9,6 +9,7 @@ from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
 from phoenixRest.models import db
 from phoenixRest.models.core.user import User
+from phoenixRest.models.core.event import get_current_event
 from phoenixRest.models.tickets.ticket_transfer import TicketTransfer
 from phoenixRest.models.tickets.ticket import Ticket
 from phoenixRest.models.tickets.seat import Seat
@@ -64,6 +65,14 @@ def get_ticket(context, request):
 @validate(json_body={'seat_uuid': str})
 def seat_ticket(context, request):
     seat = db.query(Seat).filter(Seat.uuid == request.json_body['seat_uuid']).first()
+    event = get_current_event()
+
+    if datetime.now() < event.booking_time + timedelta(seconds=event.seating_time_delta):
+        request.response.status = 400
+        return {
+            'error': "You cannot seat your ticket yet"
+        }
+
     if seat is None:
         request.response.status = 404
         return {
