@@ -23,6 +23,8 @@ from phoenixRest.models.core.user import User
 from phoenixRest.models.tickets.payment import Payment
 from phoenixRest.models.tickets.ticket_type import TicketType
 
+from phoenixRest.mappers.seat import map_seat_for_ticket
+
 from datetime import datetime, timedelta
 
 import string
@@ -77,7 +79,7 @@ class Ticket(Base):
 
             'event_uuid': self.event_uuid,
 
-            'seat': self.seat,
+            'seat': map_seat_for_ticket(self.seat) if self.seat is not None else None,
 
             'created': int(self.created.timestamp())
         }

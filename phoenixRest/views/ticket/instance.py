@@ -69,6 +69,12 @@ def seat_ticket(context, request):
         return {
             'error': 'Seat not found'
         }
+    
+    if seat.ticket is not None:
+        request.response.status = 400
+        return {
+            'error': "Someone has already seated there"
+        }
 
     context.ticketInstance.seat = seat
     return context.ticketInstance
