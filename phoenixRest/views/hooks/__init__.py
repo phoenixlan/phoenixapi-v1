@@ -54,7 +54,6 @@ class HookResource(object):
 @view_config(context=HookResource, name='stripe', request_method='POST', renderer='json', permission='stripe')
 def stripe_hook(context, request):
     sig_header = request.headers.get('stripe-signature', '')
-    log.info(request.body)
     try:
         event = stripe.Webhook.construct_event(
             request.body.decode('ascii'), sig_header, STRIPE_ENDPOINT_SECRET
