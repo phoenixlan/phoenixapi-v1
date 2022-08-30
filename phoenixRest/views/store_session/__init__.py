@@ -49,7 +49,7 @@ def get_all_sessions(request):
     return db.query(StoreSession).order_by(StoreSession.created).all()
 
 @view_config(context=StoreSessionResource, name='active', request_method='GET', renderer='json', permission='fetch_active')
-def get_all_sessions(request):
+def get_active_sessions(request):
     # Returns all active store sessions
     return db.query(StoreSession).filter(StoreSession.expires > datetime.now()).order_by(StoreSession.created).all()
 
