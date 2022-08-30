@@ -155,7 +155,6 @@ class FunctionalPaymentTests(TestCaseClass):
 
         payment_uuid = res.json_body['uuid']
 
-        # Initiate the payment with vipps
         res = self.testapp.post_json('/payment/%s/initiate' % payment_uuid, dict({
             'fallback_url': "https://test.phoenix.no"
         }), headers=dict({

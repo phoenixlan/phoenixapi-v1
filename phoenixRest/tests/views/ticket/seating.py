@@ -1,7 +1,13 @@
 from phoenixRest.tests.utils import initTestingDB, authenticate
 from phoenixRest.tests.testCaseClass import TestCaseClass
 
+from phoenixRest.models.core.event import Event
+from phoenixRest.models import db
+
 import json
+import transaction
+
+from datetime import datetime, timedelta
 
 class FunctionalTicketSeatingTest(TestCaseClass):
     def ensure_seatmap(self, token, event_uuid):
@@ -91,8 +97,27 @@ class FunctionalTicketSeatingTest(TestCaseClass):
             break
             
         self.assertIsNotNone(seat)
-        # Seat the ticket
 
+        # Make sure seating a ticket is illegal
+        event_instance = db.query(Event).filter(Event.uuid == current_event['uuid']).first()
+        event_instance.booking_time = datetime.now() 
+        event_instance.seating_time_delta = 60*60
+        transaction.commit()
+
+        # Seat the ticket
+        self.testapp.put_json('/ticket/%s/seat' % seat_ticket['ticket_id'], dict({
+            'seat_uuid': seat['uuid']
+        }), headers=dict({
+            'X-Phoenix-Auth': token
+        }), status=400)
+
+        # Make sure sating is legal
+        event_instance = db.query(Event).filter(Event.uuid == current_event['uuid']).first()
+        event_instance.booking_time = datetime.now() - timedelta(days=1)
+        event_instance.seating_time_delta = 30
+        transaction.commit()
+
+        # Seat again
         self.testapp.put_json('/ticket/%s/seat' % seat_ticket['ticket_id'], dict({
             'seat_uuid': seat['uuid']
         }), headers=dict({

@@ -67,10 +67,12 @@ def seat_ticket(context, request):
     seat = db.query(Seat).filter(Seat.uuid == request.json_body['seat_uuid']).first()
     event = get_current_event()
 
-    if datetime.now() < event.booking_time + timedelta(seconds=event.seating_time_delta):
+    seating_time = event.booking_time + timedelta(seconds=event.seating_time_delta)
+
+    if datetime.now() < seating_time:
         request.response.status = 400
         return {
-            'error': "You cannot seat your ticket yet"
+            'error': "You cannot seat your ticket yet(%s < %s)" % (datetime.now(), seating_time)
         }
 
     if seat is None:
