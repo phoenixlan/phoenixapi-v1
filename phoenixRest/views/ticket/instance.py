@@ -34,6 +34,8 @@ class TicketInstanceResource(object):
             (Allow, TICKET_ADMIN, 'view_ticket'),
             (Allow, ADMIN, 'seat_ticket'),
             (Allow, TICKET_ADMIN, 'seat_ticket'),
+            (Allow, ADMIN, 'set_seater'),
+            (Allow, TICKET_ADMIN, 'set_seater'),
         ]
         if self.ticketInstance is not None:
             acl = acl + [
@@ -41,10 +43,17 @@ class TicketInstanceResource(object):
                 (Allow, "%s" % self.ticketInstance.owner.uuid, 'view_ticket'),
                 # Ticket owner can transfer their ticket
                 (Allow, "%s" % self.ticketInstance.owner.uuid, 'transfer_ticket'),
+                # Ticket owner can set the seater of their ticket
+                (Allow, "%s" % self.ticketInstance.owner.uuid, 'set_seater'),
 
                 # Ticket owner can seat their own ticket
                 (Allow, "%s" % self.ticketInstance.owner.uuid, 'seat_ticket'),
             ]
+            if self.ticketInstance.seater is not None:
+                # Seaters can also seat the ticket
+                acl = acl + [
+                    (Allow, "%s" % self.ticketInstance.seater.uuid, 'seat_ticket'),
+                ]
 
         return acl
 
@@ -89,6 +98,23 @@ def seat_ticket(context, request):
 
     context.ticketInstance.seat = seat
     return context.ticketInstance
+
+@view_config(context=TicketInstanceResource, name='seater', request_method='PUT', renderer='json', permission='set_seater')
+def set_seater(context, request):
+    if 'user_email' not in request.json_body:
+        seater = request.user
+    else:
+        seater = db.query(User).filter(User.email == request.json_body['user_email']).first()
+    if seater is None:
+        request.response.status = 404
+        return {
+            'error': "User not found"
+        }
+    
+    context.ticketInstance.seater = seater
+
+    return context.ticketInstance
+
 
 @view_config(context=TicketInstanceResource, name='transfer', request_method='POST', renderer='json', permission='transfer_ticket')
 @validate(json_body={'user_email': str})
