@@ -108,7 +108,7 @@ def vipps_hook(context, request):
     
     status = transaction_info['status']
     vipps_payment.state = status
-    transaction.commit()
+    db.flush()
 
     if status == "SALE":
         # Extra security checks
