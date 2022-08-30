@@ -93,7 +93,6 @@ def create_payment(context, request):
     payment.store_session = store_session
 
     db.add(payment)
-    db.flush()
 
     return payment
     

@@ -32,6 +32,9 @@ class StoreSessionResource(object):
         (Allow, ADMIN, 'fetch_all'),
         (Allow, TICKET_ADMIN, 'fetch_all'),
 
+        (Allow, ADMIN, 'fetch_active'),
+        (Allow, TICKET_ADMIN, 'fetch_active'),
+
         # Authenticated pages
         #(Allow, Authenticated, Authenticated),
         #(Deny, Everyone, Authenticated),
@@ -44,6 +47,11 @@ class StoreSessionResource(object):
 def get_all_sessions(request):
     # Returns all active store sessions
     return db.query(StoreSession).order_by(StoreSession.created).all()
+
+@view_config(context=StoreSessionResource, name='active', request_method='GET', renderer='json', permission='fetch_active')
+def get_all_sessions(request):
+    # Returns all active store sessions
+    return db.query(StoreSession).filter(StoreSession.expires > datetime.now()).order_by(StoreSession.created).all()
 
 @view_config(context=StoreSessionResource, name='', request_method='PUT', renderer='json', permission='create')
 def create_store_session(context, request):
