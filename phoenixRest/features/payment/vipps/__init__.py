@@ -80,10 +80,39 @@ def _ensureToken():
 	else:
 		log.debug("Token is already fetched")
 
+def _get_payment_str(payment):
+	return ", ".join(["%s %s-billett%s" % (entry.amount, entry.ticket_type.name, "er" if entry.amount > 1 else "") for entry in payment.store_session.cart_entries])
+
+def capture_vipps_payment(vipps_payment):
+	payload = {
+		"merchantInfo": {
+			"merchantSerialNumber": MERCHANT_SERIAL_NUMBER,
+		},
+		"transaction": {
+			"amount": vipps_payment.payment.price*100,
+			"transactionText": _get_payment_str(vipps_payment.payment)
+		}
+	}
+
+	log.debug("Sending %s" % json.dumps(payload))
+
+	response = requests.post('%s/ecomm/v2/payments/%s/capture' % (API_ROOT, vipps_payment.order_id),
+		headers={
+			**_get_headers(), 
+			**{
+				"Authorization": token,
+				"Content-Type": "application/json",
+				"X-Request-Id": str(vipps_payment.payment.uuid)
+			}},
+		json=payload)
+	
+	log.info("Captured vipps payment for %s - got response %d" % (vipps_payment.order_id, response.status_code))
+	
+	return response.status_code == 200
+
 def _initiatePayment(payment, vipps_payment, fallback):
 	global token
 
-	paymentStr = ", ".join(["%s %s-billett%s" % (entry.amount, entry.ticket_type.name, "er" if entry.amount > 1 else "") for entry in payment.store_session.cart_entries])
 
 	payload = {
 		"customerInfo": {
@@ -99,20 +128,20 @@ def _initiatePayment(payment, vipps_payment, fallback):
 		"transaction": {
 			"orderId": vipps_payment.slug,
 			"amount": payment.price*100,
-			"transactionText": paymentStr,
+			"transactionText": _get_payment_str(payment),
 		}
 	}
 
 	log.debug("Sending %s" % json.dumps(payload))
 
 	response = requests.post('%s/ecomm/v2/payments' % API_ROOT,
-				headers={
-					**_get_headers(), 
-					**{
-						"Authorization": token,
-						"Content-Type": "application/json"
-					}},
-				json=payload)
+		headers={
+			**_get_headers(), 
+			**{
+				"Authorization": token,
+				"Content-Type": "application/json"
+			}},
+		json=payload)
 	log.debug('Initiate payment response: %d' % response.status_code)
 
 	paymentMetadata = response.json()

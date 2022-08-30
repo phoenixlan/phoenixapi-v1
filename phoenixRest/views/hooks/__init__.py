@@ -24,9 +24,12 @@ from phoenixRest.roles import ADMIN, TICKET_ADMIN
 
 from phoenixRest.views.crew.instance import CrewInstanceViews
 
-from phoenixRest.features.payment.vipps import VIPPS_CALLBACK_AUTH_TOKEN, finalize_vipps_payment
+from phoenixRest.features.payment.vipps import VIPPS_CALLBACK_AUTH_TOKEN, finalize_vipps_payment, capture_vipps_payment
 from phoenixRest.features.payment.stripe import STRIPE_ENDPOINT_SECRET, finalize_stripe_payment
+
 import stripe
+
+import transaction
 
 from datetime import datetime
 
@@ -105,8 +108,7 @@ def vipps_hook(context, request):
     
     status = transaction_info['status']
     vipps_payment.state = status
-    db.add(vipps_payment)
-    db.flush()
+    transaction.commit()
 
     if status == "SALE":
         # Extra security checks
@@ -123,6 +125,16 @@ def vipps_hook(context, request):
         vipps_payment.payment.state = PaymentState.failed
         db.add(vipps_payment.payment)
         log.info("Registered cancelled vipps sale")
+    elif status == "RESERVED":
+        log.info("Got a reserved transaction, capturing the amout and making the purchase")
+        if vipps_payment.payment.state != PaymentState.initiated:
+            log.warning("Security issue: tried to activate a payment that was not in state: initiated")
+            raise HTTPBadRequest("Tried to request a hook on a payment which has already gotten a callback")
+        if capture_vipps_payment(vipps_payment):
+            finalize_vipps_payment(request, vipps_payment)
+            log.info("Successfully registered vipps sale")
+        else:
+            log.error("Unable to capture VIPPS sale, no ticket is minted")
     else:
         log.error("Got vipps transaction status which is not supported: %s" % status)
         raise HTTPInternalServerError("Unknown status")

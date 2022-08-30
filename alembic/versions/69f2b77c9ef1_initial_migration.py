@@ -214,7 +214,7 @@ def upgrade():
                 'firstname': 'Test',
                 'lastname': 'Testesen',
                 'gender': 'male',
-                'phone': '48932417', # Vipps test number
+                'phone': '98643254', # Vipps test number
                 'postal_code': '1395',
                 'tos_level': 0
             },
