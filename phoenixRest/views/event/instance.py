@@ -71,7 +71,7 @@ def get_applications(context, request):
 
 @view_config(context=EventInstanceResource, name='ticket', request_method='GET', renderer='json', permission='event_tickets_get')
 def get_tickets(context, request):
-    tickets = db.query(Ticket).filter(Ticket.event_uuid == context.eventInstance.uuid).all()
+    tickets = db.query(Ticket).filter(Ticket.event_uuid == context.eventInstance.uuid).order_by(Ticket.ticket_id).all()
     return tickets
 
 @view_config(context=EventInstanceResource, name='ticket_availability', request_method='GET', renderer='json', permission='ticket_availability_get')

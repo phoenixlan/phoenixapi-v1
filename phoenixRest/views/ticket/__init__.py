@@ -48,7 +48,7 @@ class TicketResource(object):
 
 @view_config(name='', context=TicketResource, request_method='GET', renderer='json', permission='getAll')
 def get_all_tickets(context, request):
-    return db.query(Row).order_by(Row.name).all()
+    return db.query(Ticket).order_by(Ticket.ticket_id).all()
 
 @view_config(name='', context=TicketResource, request_method='POST', renderer='json', permission='create')
 @validate(json_body={'recipient': str, 'ticket_type': str})
