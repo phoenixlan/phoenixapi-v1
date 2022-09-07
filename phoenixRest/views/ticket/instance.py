@@ -132,7 +132,7 @@ def transfer_ticket(context, request):
     existing_transfer = db.query(TicketTransfer).filter(and_(
         TicketTransfer.ticket == context.ticketInstance,
         TicketTransfer.created > expiry_time)).first()
-    if existing_transfer is not None:
+    if existing_transfer is not None and not existing_transfer.reverted:
         request.response.status = 400
         return {
             'error': "The ticket can still be returned to the original owner, so you cannot transfer it further"
@@ -142,6 +142,25 @@ def transfer_ticket(context, request):
     db.add(transfer)
     context.ticketInstance.owner = transfer_target
     db.flush()
+
+    request.mail_service.send_mail(request.user.email, "Du har overført en billett", "ticket_transferred_to_sender.jinja2", {
+        "mail": request.registry.settings["api.contact"],
+        "name": request.registry.settings["api.name"],
+        "domain": request.registry.settings["api.mainpage"],
+        "recipient": transfer_target,
+        "hours": expiry_offset/60/60,
+        "ticket": context.ticketInstance
+    })
+
+    request.mail_service.send_mail(transfer_target.email, "Du har blitt overført en billett", "ticket_transferred_to_recipient.jinja2", {
+        "mail": request.registry.settings["api.contact"],
+        "name": request.registry.settings["api.name"],
+        "domain": request.registry.settings["api.mainpage"],
+        "sender": request.user,
+        "hours": expiry_offset/60/60,
+        "ticket": context.ticketInstance
+    })
+
     return transfer
 
 

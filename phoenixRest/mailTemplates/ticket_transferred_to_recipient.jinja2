@@ -1,0 +1,11 @@
+<html>
+    <body>
+        <p>Hei!</p>
+
+        <p>Du har blitt overført billett #{{ ticket.ticket_id }} ({{ ticket.ticket_type.name }}) hos {{ name }}({{ domain }}) fra {{ sender.firstname }} {{ sender.lastname }} til kontoen tilknyttet denne e-post addressen</p>
+        <p>Senderen kan angre på overføringen i {{ hours|int }} timer. Logg på for å plassere billetten på et sete</p>
+
+        <p>Spørsmål? Kontakt <a href="mailto:{{mail}}">{{mail}}</a></p>
+
+    </body>
+</html>

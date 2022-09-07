@@ -54,6 +54,9 @@ class TicketTransfer(Base):
         self.created = datetime.now()
 
     def __json__(self, request):
+        expiry_offset = int(request.registry.settings['ticket.transfer.expiry'])
+        expiry_time = self.created + timedelta(seconds=expiry_offset)
+
         return {
             'uuid': self.uuid,
             'from_user': self.from_user,
@@ -62,6 +65,7 @@ class TicketTransfer(Base):
 
             'created': int(self.created.timestamp()),
             'expired': self.is_expired(request),
+            'expires': int(expiry_time.timestamp()),
             'reverted': self.reverted
         }
 
