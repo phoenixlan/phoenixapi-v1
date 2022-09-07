@@ -6,6 +6,8 @@ from phoenixRest.models.core.event import Event
 
 from phoenixRest.features.payment.vipps import VIPPS_CALLBACK_AUTH_TOKEN
 
+import transaction
+
 from datetime import datetime, timedelta
 
 class FunctionalPaymentTests(TestCaseClass):
@@ -40,8 +42,8 @@ class FunctionalPaymentTests(TestCaseClass):
 
         # Make sure buying tickets is illegal
         event_instance = db.query(Event).filter(Event.uuid == current_event['uuid']).first()
-        event_instance.booking_time = datetime.now() + timedelta(hours=1)
-        db.flush()
+        event_instance.booking_time = datetime.now() + timedelta(days=1)
+        transaction.commit()
 
         res = self.testapp.get('/event/%s/ticketType' % current_event['uuid'], headers=dict({
             'X-Phoenix-Auth': token
