@@ -102,8 +102,11 @@ def register_user(context, request):
             "error": "Password is too short. Use at least 6 characters"
         }
 
-    existingUsername = db.query(User).filter(User.username == request.json_body["username"]).first()
-    existingEmail = db.query(User).filter(User.email == request.json_body["email"]).first()
+    email = request.json_body['email'].lower()
+    username = request.json_body['username']
+
+    existingUsername = db.query(User).filter(User.username == username).first()
+    existingEmail = db.query(User).filter(User.email == email).first()
     existingPhone = db.query(User).filter(User.phone == request.json_body["phone"]).first()
 
     if existingUsername is not None or existingEmail is not None or existingPhone is not None:
@@ -112,13 +115,12 @@ def register_user(context, request):
             "error": "An user by this username, phone number, or e-mail already exists"
         }
     
-    email = request.json_body['email']
     if email_regex.match(email) is None:
         request.response.status = 400
         return {
             "error": "You must enter a valid e-mail address"
         }
-    username = request.json_body['username']
+
     if len(username) < 1:
         request.response.status = 400
         return {

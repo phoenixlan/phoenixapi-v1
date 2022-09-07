@@ -104,7 +104,7 @@ def set_seater(context, request):
     if 'user_email' not in request.json_body:
         seater = request.user
     else:
-        seater = db.query(User).filter(User.email == request.json_body['user_email']).first()
+        seater = db.query(User).filter(User.email == request.json_body['user_email'].lower()).first()
     if seater is None:
         request.response.status = 404
         return {
@@ -119,7 +119,7 @@ def set_seater(context, request):
 @view_config(context=TicketInstanceResource, name='transfer', request_method='POST', renderer='json', permission='transfer_ticket')
 @validate(json_body={'user_email': str})
 def transfer_ticket(context, request):
-    transfer_target = db.query(User).filter(User.email == request.json_body['user_email']).first()
+    transfer_target = db.query(User).filter(User.email == request.json_body['user_email'].lower()).first()
     if transfer_target is None:
         request.response.status = 404
         return {
