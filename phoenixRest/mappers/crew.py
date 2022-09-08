@@ -7,6 +7,7 @@ def map_crew(crew, request):
         'description': crew.description,
         'active': crew.active,
         'is_applyable': crew.is_applyable,
+        'application_prompt': crew.application_prompt,
         'hex_color': crew.hex_color,
         'teams': crew.teams,
         'positions': [map_position_no_crew(position, request) for position in crew.positions]
@@ -19,5 +20,6 @@ def map_crew_simple(crew, request):
         'description': crew.description,
         'active': crew.active,
         'is_applyable': crew.is_applyable,
+        'application_prompt': crew.application_prompt,
         'hex_color': crew.hex_color
     }

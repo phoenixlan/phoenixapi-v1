@@ -32,6 +32,7 @@ class Crew(Base):
     name = Column(Text, nullable=False)
     description = Column(Text, nullable=False)
 
+    application_prompt = Column(Text, nullable=True)
 
     active = Column(Boolean, nullable=False, default=True)
     is_applyable = Column(Boolean, nullable=False, default=True)
@@ -55,5 +56,6 @@ class Crew(Base):
             'is_applyable': self.is_applyable,
             'hex_color': self.hex_color,
             'teams': self.teams,
+            'application_prompt': self.application_prompt,
             'positions': self.positions
         }
