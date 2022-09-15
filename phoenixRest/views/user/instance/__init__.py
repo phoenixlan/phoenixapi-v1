@@ -61,6 +61,11 @@ class UserInstanceResource(object):
             # Who can view payments?
             (Allow, ADMIN, 'list_payments'),
             (Allow, TICKET_ADMIN, 'list_payments'),
+
+            # Who can activate users on others behalf
+            (Allow, ADMIN, 'activate_user'),
+            # Who can view if an user is activated and activate their user?
+            (Allow, ADMIN, 'get_activation_state'),
             # Authenticated pages
             #(Allow, Authenticated, Authenticated),
             #(Deny, Everyone, Authenticated),
@@ -180,6 +185,21 @@ def get_store_session(context, request):
         return session
     raise HTTPNotFound("User does not have an active store session")
 
+@view_config(context=UserInstanceResource, name='activation', request_method='GET', renderer='json', permission='get_activation_state')
+def get_activation_state(context, request):
+    return {
+        "activated" :context.userInstance.activation_code is None
+    }
+
+@view_config(context=UserInstanceResource, name='activation', request_method='PATCH', renderer='text', permission='activate_user')
+def activate_user(context, request):
+    if context.userInstance.activation_code is None:
+        request.response.status = 400
+        return {
+            "error": "User is already activated"
+        }
+    db.delete(context.userInstance.activation_code)
+    return ""
 
 @view_config(context=UserInstanceResource, name='avatar', request_method='POST', renderer='json', permission='avatar_upload')
 @validate(post={'x': str, 'y': str, 'w': str, 'h': str})
