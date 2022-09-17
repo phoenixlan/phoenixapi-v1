@@ -76,7 +76,7 @@ def edit_application(context, request):
         "mail": request.registry.settings["api.contact"],
         "accepted": context.applicationInstance.state == ApplicationState.accepted,
         "name": name,
-        "crew": context.applicationInstance.crew,
+        "application": context.applicationInstance,
         "domain": request.registry.settings["api.mainpage"]
     })
 

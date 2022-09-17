@@ -2,19 +2,21 @@
     <body>
         <p>Hei!</p>
 
-        <p>Du søkte {{ crew.name }} hos {{ name }}. Vi har nå behandlet søknaden din, og resultater er...</p>
+        <p>Du søkte {{ application.crew.name }} hos {{ name }}. Vi har nå behandlet søknaden din, og resultater er...</p>
 {% if accepted %}
-        <p><b>Du har blitt tatt opp i {{ crew.name }}!</b></p>
+        <p><b>Du har blitt tatt opp i {{ application.crew.name }}!</b></p>
         <p>Velkommen til {{ name }}! Vi setter pris på at du også ønsker å hjelpe til med å lage et fett arrangement, og gleder oss til å jobbe med deg.</p>
         <p>Du vil få mer informasjon fra din gruppeleder i løpet av de neste ukene. I mellomtiden anbefaler vi deg å gå inn på <a href="{{ domain }}">{{ domain }}</a> og bli med i vår Discord slik at du kan holde kontakt med crewet ditt.</p>
+        <p>I tillegg har du fått følgende beskjed fra søknadsbehandler:</p>
+        <p><i>{{ application.answer }}</i></p>
         <p>Sees!</p>
 {% else %}
         <p><b>Du har desverre ikke blitt tatt opp i denne omgangen</b><p>
         <p>Vi har mange søkere og begrenset plass, så det kan være vanskelig å få plas til alle som vil.</p>
-        <p>Ønsker du mer informasjon om hvorfor du ble avslått, kan du sjekke søknaden din. Kanskje du har fått noe feedback som kan hjelpe deg med neste søknad?</p>
+        <p>Søknadsbehandleren din skrev følgende som begrunnelse:<p>
+        <p><i>{{ application.answer }}</i></p>
         <p>Vi vil uansett takke deg for at du er ivrig etter å bli med på å gjøre {{ name }} til et fett sted å være. Vi håper du ikke mister håpet, og at du søker igjen senere. Du er selvfølgelig velkommen som deltaker.</p>
 {% endif %}
         <p>Har du spørsmål, kontakt <a href="mailto:{{mail}}">{{mail}}</a>.</p>
-
     </body>
 </html>
