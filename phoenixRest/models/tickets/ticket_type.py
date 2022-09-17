@@ -36,6 +36,9 @@ class TicketType(Base):
     refundable = Column(Boolean, default=True, nullable=False)
 
     seatable = Column(Boolean, nullable=False, default=True)
+
+    requires_membership = Column(Boolean, server_default="false", nullable=False)
+    grants_membership = Column(Boolean, server_default="true", nullable=False)
     
     description = Column(Text)
     

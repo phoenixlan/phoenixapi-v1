@@ -45,6 +45,9 @@ def map_user_simple_with_secret_fields(user, request):
         'username': user.username,
         'birthdate': str(user.birthdate),
         'email': user.email,
+        'phone': user.phone,
+        'address': user.address,
+        'postal_code': user.postal_code,
         
         'firstname': user.firstname,
         'lastname': user.lastname,

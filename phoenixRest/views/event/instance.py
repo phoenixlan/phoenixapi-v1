@@ -8,17 +8,21 @@ from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
 from phoenixRest.models import db
 from phoenixRest.models.core.event import Event
+from phoenixRest.models.core.user import User
 from phoenixRest.models.tickets.ticket import Ticket
 from phoenixRest.models.tickets.row import Row
 from phoenixRest.models.tickets.seatmap import Seatmap
 from phoenixRest.models.tickets.ticket_type import TicketType
 
 from phoenixRest.mappers.crew import map_crew
+from phoenixRest.mappers.user import map_user_simple_with_secret_fields
 
-from phoenixRest.roles import ADMIN, EVENT_ADMIN, CHIEF, TICKET_ADMIN
+from phoenixRest.roles import ADMIN, EVENT_ADMIN, CHIEF, HR_ADMIN, TICKET_ADMIN
 
 from phoenixRest.utils import validate
 from phoenixRest.resource import resource
+
+from sqlalchemy import and_
 
 from datetime import datetime
 import os
@@ -43,6 +47,10 @@ class EventInstanceResource(object):
 
             (Allow, ADMIN, 'event_tickets_get'),
             (Allow, TICKET_ADMIN, 'event_tickets_get'),
+
+            (Allow, ADMIN, 'event_memberships_get'),
+            (Allow, TICKET_ADMIN, 'event_memberships_get'),
+            (Allow, HR_ADMIN, 'event_memberships_get'),
 
             (Allow, ADMIN, 'add_ticket_type'),
             (Allow, TICKET_ADMIN, 'add_ticket_type'),
@@ -73,6 +81,11 @@ def get_applications(context, request):
 def get_tickets(context, request):
     tickets = db.query(Ticket).filter(Ticket.event_uuid == context.eventInstance.uuid).order_by(Ticket.ticket_id).all()
     return tickets
+
+@view_config(context=EventInstanceResource, name='new_memberships', request_method='GET', renderer='json', permission='event_memberships_get')
+def get_new_memberships(context, request):
+    users = db.query(User).join(Ticket, Ticket.owner_uuid == User.uuid).join(TicketType, Ticket.ticket_type_uuid==TicketType.uuid).filter(and_(Ticket.event_uuid == context.eventInstance.uuid, TicketType.grants_membership == True)).all()
+    return [ map_user_simple_with_secret_fields(user, request) for user in users ]
 
 @view_config(context=EventInstanceResource, name='ticket_availability', request_method='GET', renderer='json', permission='ticket_availability_get')
 def get_ticket_availability(context, request):
