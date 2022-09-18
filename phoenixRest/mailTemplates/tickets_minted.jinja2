@@ -10,8 +10,11 @@
     </ul>
 
     <p><b>Total: </b>{{ payment.store_session.get_total() }}</p>
+    <p><b>Betalings-ID:</b> {{ payment.uuid }}</p>
 
-    <p>Vennligst merk at et medlemskap til Radar Event er nødvendig for å benytte eventuelle medlemskap-billetter.</p>
+    {%if payment.store_session.cart_entries | map(attribute="ticket_type") | selectattr("requires_membership", "equalto", true) | list | length > 0 %}
+    <p><b>Du har kjøpt blletter som krever radar event medlemskap. Du er selv ansvarlig for at du har dette medlemskapet for å kunne benytte de.</b></p>
+    {% endif %}
 
     <p>Spørsmål? Kontakt <a href="mailto:{{mail}}">{{mail}}</a></p>
 
