@@ -40,13 +40,13 @@ class AgendaEntry(Base):
         self.title = title
         self.description = description
         self.event = event
-        self.time = datetime.now()
+        self.time = time
 
     def __json__(self, request):
         return {
             'uuid': str(self.uuid),
             'title': self.title,
             'description': self.description,
-            'time': self.time.timestamp(),
+            'time': int(self.time.timestamp()),
             'event_uuid': self.event_uuid
         }

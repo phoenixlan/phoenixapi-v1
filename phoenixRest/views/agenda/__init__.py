@@ -56,12 +56,13 @@ def create_agenda_entry(context, request):
         return {
             "error": "Event not found"
         }
+    parsed_time = datetime.fromtimestamp(int(request.json_body['time']))
 
     entry = AgendaEntry(title=request.json_body['title'],
                         description=request.json_body['description'],
-                        time=datetime.fromtimestamp(request.json_body['time']), 
+                        time=parsed_time, 
                         event=event)
     db.add(entry)
     db.flush()
-    return event
+    return entry
 
