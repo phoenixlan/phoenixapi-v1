@@ -78,6 +78,12 @@ def seat_ticket(context, request):
 
     seating_time = event.booking_time + timedelta(seconds=event.seating_time_delta)
 
+    if not context.ticketInstance.ticket_type.seatable:
+        request.response.status = 400
+        return {
+            'error': 'You cannot seat an unseatable ticket'
+        }
+
     if datetime.now() < seating_time:
         request.response.status = 400
         return {
