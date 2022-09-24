@@ -12,7 +12,7 @@ from phoenixRest.models.core.event import Event, get_current_event
 from phoenixRest.utils import validate
 from phoenixRest.resource import resource
 
-from phoenixRest.roles import ADMIN, EVENT_ADMIN, COMPO_ADMIN
+from phoenixRest.roles import ADMIN, EVENT_ADMIN, COMPO_ADMIN, INFO_ADMIN
 
 from phoenixRest.views.agenda.instance import AgendaInstanceResource
 
@@ -29,6 +29,7 @@ class AgendaViews(object):
         (Allow, Everyone, 'get'),
         (Allow, ADMIN, 'create'),
         (Allow, EVENT_ADMIN, 'create'),
+        (Allow, INFO_ADMIN, 'create'),
         (Allow, COMPO_ADMIN, 'create')
     ]
     def __init__(self, request):

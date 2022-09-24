@@ -1,6 +1,10 @@
 <html>
     <body>
+    {%if payment.store_session.cart_entries | map(attribute="ticket_type") | selectattr("seatable", "equalto", false) | list | length > 0 %}
+    <h1>Du har kjøpt ting til {{ name }}</h1>
+    {% else %}
     <h1>Du har kjøpt billetter til {{ name }}</h1>
+    {% endif %}
 
     <h2>Bestilling</h2>
     <ul>

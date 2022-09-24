@@ -11,6 +11,7 @@ from phoenixRest.models.core.user import User
 from phoenixRest.models.core.event import Event, get_current_event
 from phoenixRest.models.core.avatar import Avatar
 from phoenixRest.models.tickets.ticket import Ticket
+from phoenixRest.models.tickets.ticket_type import TicketType
 from phoenixRest.models.tickets.payment import Payment
 
 from phoenixRest.models.tickets.store_session import StoreSession
@@ -24,7 +25,7 @@ from phoenixRest.resource import resource
 
 from phoenixRest.roles import HR_ADMIN, ADMIN, TICKET_ADMIN
 
-from sqlalchemy import and_, or_
+from sqlalchemy import and_, or_, extract
 
 from datetime import datetime, timedelta
 
@@ -43,6 +44,9 @@ class UserInstanceResource(object):
             # Who has access to view an user?
             (Allow, HR_ADMIN, 'user_view'),
             (Allow, ADMIN, 'user_view'),
+            # Who can see if an user is a member or not?
+            (Allow, HR_ADMIN, 'get_membership_state'),
+            (Allow, ADMIN, 'get_membership_state'),
             # Who can view an users store session
             (Allow, ADMIN, 'user_get_store_session'),
             (Allow, TICKET_ADMIN, 'user_get_store_session'),
@@ -74,6 +78,7 @@ class UserInstanceResource(object):
             acl = acl + [
                 # Users can view themselves, always
                 (Allow, "%s" % self.userInstance.uuid, 'user_view'),
+                (Allow, "%s" % self.userInstance.uuid, 'get_membership_state'),
                 # Users can fetch their own tickets
                 (Allow, "%s" % self.userInstance.uuid, 'user_list_owned_tickets'),
                 (Allow, "%s" % self.userInstance.uuid, 'user_list_seatable_tickets'),
@@ -307,3 +312,16 @@ def upload_avatar(context, request):
 
 
     return avatar
+
+@view_config(context=UserInstanceResource, name='membership', request_method='GET', renderer='json', permission='get_membership_state')
+def get_membership_information(context, request):
+    year = datetime.now().year
+    if "year" in request.GET:
+        year = int(request.GET['year'])
+
+    member_granting_tickets = db.query(Ticket).join(TicketType, Ticket.ticket_type_uuid==TicketType.uuid).join(Event, Ticket.event_uuid == Event.uuid) \
+        .filter(and_(extract('year', Event.start_time) == year, TicketType.grants_membership == True, Ticket.owner_uuid == context.userInstance.uuid)).all()
+    
+    return {
+        'is_member': len(member_granting_tickets) > 0
+    }

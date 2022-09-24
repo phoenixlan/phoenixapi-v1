@@ -58,5 +58,7 @@ class TicketType(Base):
             'price': self.price,
             'refundable': self.refundable,
             'seatable': self.seatable,
-            'description': self.description
+            'description': self.description,
+            'requires_membership': self.requires_membership,
+            'grants_membership': self.grants_membership
         }
