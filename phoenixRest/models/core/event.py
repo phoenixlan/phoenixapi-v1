@@ -14,12 +14,14 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import UUID
 
 from sqlalchemy.orm import relationship
+from sqlalchemy import and_
 
 from phoenixRest.models import db
 from phoenixRest.models import Base
 
 from phoenixRest.models.core.user import User
 from phoenixRest.models.tickets.ticket import Ticket
+from phoenixRest.models.tickets.ticket_type import TicketType
 
 # We must make sure that classes that are used in relationships are loaded
 from phoenixRest.models.tickets.seatmap import Seatmap
@@ -99,7 +101,13 @@ class Event(Base):
     Returns a numer prepresenting the total number of tickets left for the event
     """
     def get_total_ticket_availability(self):
-        return self.max_participants - db.query(Ticket).filter(Ticket.event_uuid == self.uuid).count()
+        return self.max_participants - db.query(Ticket) \
+            .join(TicketType, Ticket.ticket_type_uuid == TicketType.uuid) \
+            .filter(and_(
+                TicketType.seatable == True,
+                Ticket.event_uuid == self.uuid
+            )) \
+            .count()
 
 def get_current_event():
     firstEvent = db.query(Event).filter(Event.end_time > datetime.now()).order_by(Event.start_time.asc()).first()
