@@ -169,9 +169,21 @@ def get_seatable_tickets(context, request):
             return {
                 'error': 'Event not found'
             }
-        query = query.filter(or_(and_(Ticket.seater== context.userInstance, Ticket.event == event), and_(Ticket.seater == None, Ticket.owner == context.userInstance)))
+        query = query.join(TicketType, Ticket.ticket_type_uuid == TicketType.uuid).filter(and_(
+            TicketType.seatable == True,
+            or_(
+                and_(Ticket.seater== context.userInstance, Ticket.event == event), 
+                and_(Ticket.seater == None, Ticket.owner == context.userInstance)
+            )
+        ))
     else:
-        query = query.filter(or_(Ticket.seater == context.userInstance, and_(Ticket.seater == None, Ticket.owner == context.userInstance)))
+        query = query.join(TicketType, Ticket.ticket_type_uuid == TicketType.uuid).filter(and_(
+            TicketType.seatable == True,
+            or_(
+                Ticket.seater == context.userInstance, 
+                and_(Ticket.seater == None, Ticket.owner == context.userInstance)
+            )
+        ))
     return query.all()
 
 @view_config(context=UserInstanceResource, name='payments', request_method='GET', renderer='json', permission='list_payments')
