@@ -136,7 +136,13 @@ def register_user(context, request):
             "error": "A name is required"
         }
 
+    if request.json_body["dateOfBirth"] == "":
+        request.response.status = 400
+        return {
+            "error": "Enter a valid birthdate"
+        }
     birthdate = date.fromisoformat(request.json_body["dateOfBirth"])
+
     if request.json_body["gender"] == "male":
         gender = Gender.male
     elif request.json_body["gender"] == "female":
@@ -166,6 +172,8 @@ def register_user(context, request):
     user.activation_code = ActivationCode(user, client_id)
     db.add(user)
     db.flush()
+
+    log.info("Registered new user %s %s (%s)" % (firstname, surname, email))
 
     # Now send activation e-mail
     request.mail_service.send_mail(request.json_body["email"], "Registrert konto", "registration.jinja2", {

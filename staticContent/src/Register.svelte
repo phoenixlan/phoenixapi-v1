@@ -98,10 +98,14 @@
 		if(result.ok) {
 			registerState = STATES.success
 		} else {
-
-			const resp = await result.json()
-			registerState = STATES.failure;
-			error = resp.error
+			try {
+				const resp = await result.json()
+				registerState = STATES.failure;
+				error = resp.error
+			} catch(e) {
+				registerState = STATES.failure;
+				error = `En ukjent feil har oppstått, kontakt info@phoenix.no: ${e}`
+			}
 		}
 	}
 </script>
