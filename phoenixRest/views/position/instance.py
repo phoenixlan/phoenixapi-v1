@@ -8,6 +8,9 @@ from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 from phoenixRest.models import db
 from phoenixRest.models.crew.position import Position 
 from phoenixRest.models.crew.team import Team
+from phoenixRest.models.crew.crew import Crew
+
+from phoenixRest.mappers.position import map_position_with_users
 
 from phoenixRest.roles import ADMIN, HR_ADMIN
 
@@ -42,7 +45,7 @@ class PositionInstanceResource(object):
 
 @view_config(context=PositionInstanceResource, name='', request_method='GET', renderer='json', permission='get_position')
 def get_position(context, request):
-    return self.positionInstance
+    return map_position_with_users(context.positionInstance, request)
     
 @view_config(context=PositionInstanceResource, name='', request_method='PUT', renderer='json', permission='create_position')
 @validate(json_body={'name': str, 'description': str})

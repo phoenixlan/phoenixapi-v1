@@ -61,8 +61,8 @@ class Position(Base):
             'name': self.name,
             'description': self.description,
 
-            'crew': str(self.crew_uuid) if self.crew_uuid is not None else None,
-            'team': str(self.team_uuid) if self.team_uuid is not None else None,
+            'crew_uuid': str(self.crew_uuid) if self.crew_uuid is not None else None,
+            'team_uuid': str(self.team_uuid) if self.team_uuid is not None else None,
             'users': [str(user.uuid) for user in self.users],
             'chief': self.chief,
             'permissions': self.permissions
