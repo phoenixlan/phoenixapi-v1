@@ -13,6 +13,8 @@ def map_user_with_secret_fields(user, request):
         'gender': str(user.gender),
 
         'phone': user.phone,
+        'guardian_phone': user.guardian_phone,
+
         'address': user.address,
         'postal_code': user.postal_code,
         'country_code': user.country_code,
@@ -45,7 +47,10 @@ def map_user_simple_with_secret_fields(user, request):
         'username': user.username,
         'birthdate': str(user.birthdate),
         'email': user.email,
+
         'phone': user.phone,
+        'guardian_phone': user.guardian_phone,
+
         'address': user.address,
         'postal_code': user.postal_code,
         
