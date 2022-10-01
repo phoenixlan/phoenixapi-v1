@@ -11,7 +11,7 @@ from phoenixRest.models.core.agenda_entry import AgendaEntry
 
 from phoenixRest.mappers.crew import map_crew
 
-from phoenixRest.roles import ADMIN, EVENT_ADMIN, CHIEF
+from phoenixRest.roles import ADMIN, EVENT_ADMIN, CHIEF, INFO_ADMIN, COMPO_ADMIN
 
 from phoenixRest.utils import validate
 from phoenixRest.resource import resource
@@ -30,9 +30,13 @@ class AgendaInstanceResource(object):
             (Allow, Everyone, 'agenda_get'),
             (Allow, ADMIN, 'agenda_get'),
             (Allow, EVENT_ADMIN, 'agenda_get'),
+            (Allow, INFO_ADMIN, 'agenda_get'),
+            (Allow, COMPO_ADMIN, 'agenda_get'),
 
             (Allow, EVENT_ADMIN, 'agenda_delete'),
             (Allow, ADMIN, 'agenda_delete'),
+            (Allow, INFO_ADMIN, 'agenda_delete'),
+            (Allow, COMPO_ADMIN, 'agenda_delete'),
         ]
         return acl
 
