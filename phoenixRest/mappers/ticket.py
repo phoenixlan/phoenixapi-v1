@@ -11,7 +11,7 @@ def map_ticket_simple(ticket):
         'payment_uuid': ticket.payment_uuid,
         'ticket_type': ticket.ticket_type,
 
-        'checked_in': int(ticket.checked_in.timestamp()),
+        'checked_in': int(ticket.checked_in.timestamp()) if ticket.checked_in is not None else None,
 
         'seat_uuid': ticket.seat_uuid,
 

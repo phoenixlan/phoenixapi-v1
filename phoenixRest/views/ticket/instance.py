@@ -110,7 +110,7 @@ def seat_ticket(context, request):
 
 @view_config(context=TicketInstanceResource, name='check_in', request_method='POST', renderer='json', permission='check_in')
 def check_in_ticket(context, request):
-    if context.ticket_instance.checked_in is not None:
+    if context.ticketInstance.checked_in is not None:
         request.response.status = 400;
         return {
             'error': "Ticket already checked in"

@@ -80,7 +80,7 @@ class Ticket(Base):
             'ticket_type': self.ticket_type,
 
             'event_uuid': self.event_uuid,
-            'checked_in': int(self.checked_in.timestamp()),
+            'checked_in': int(self.checked_in.timestamp()) if self.checked_in is not None else None,
 
             'seat': map_seat_for_ticket(self.seat) if self.seat is not None else None,
 
