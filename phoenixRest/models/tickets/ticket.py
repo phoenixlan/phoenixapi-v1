@@ -57,6 +57,8 @@ class Ticket(Base):
 
     created = Column(DateTime, nullable=False)
 
+    checked_in = Column(DateTime, nullable=True)
+
     def __init__(self, buyer: User, payment: Payment, ticket_type: TicketType, event):
         self.buyer = buyer
         self.owner = buyer
@@ -78,6 +80,7 @@ class Ticket(Base):
             'ticket_type': self.ticket_type,
 
             'event_uuid': self.event_uuid,
+            'checked_in': int(self.checked_in.timestamp()),
 
             'seat': map_seat_for_ticket(self.seat) if self.seat is not None else None,
 

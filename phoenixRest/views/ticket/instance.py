@@ -36,6 +36,8 @@ class TicketInstanceResource(object):
             (Allow, TICKET_ADMIN, 'seat_ticket'),
             (Allow, ADMIN, 'set_seater'),
             (Allow, TICKET_ADMIN, 'set_seater'),
+            (Allow, ADMIN, 'check_in'),
+            (Allow, TICKET_ADMIN, 'check_in'),
         ]
         if self.ticketInstance is not None:
             acl = acl + [
@@ -104,6 +106,18 @@ def seat_ticket(context, request):
 
     context.ticketInstance.seat = seat
     return context.ticketInstance
+
+
+@view_config(context=TicketInstanceResource, name='check_in', request_method='POST', renderer='json', permission='check_in')
+def check_in_ticket(context, request):
+    if context.ticket_instance.checked_in is not None:
+        request.response.status = 400;
+        return {
+            'error': "Ticket already checked in"
+        }
+    else:
+        context.ticketInstance.checked_in = datetime.now()
+        return context.ticketInstance
 
 @view_config(context=TicketInstanceResource, name='seater', request_method='PUT', renderer='json', permission='set_seater')
 def set_seater(context, request):
