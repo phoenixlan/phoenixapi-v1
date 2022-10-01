@@ -14,7 +14,7 @@ from phoenixRest.models.tickets.ticket_transfer import TicketTransfer
 from phoenixRest.models.tickets.ticket import Ticket
 from phoenixRest.models.tickets.seat import Seat
 
-from phoenixRest.roles import ADMIN, TICKET_ADMIN
+from phoenixRest.roles import ADMIN, TICKET_ADMIN, TICKET_CHECKIN
 
 from phoenixRest.utils import validate, validateUuidAndQuery
 from phoenixRest.resource import resource
@@ -38,6 +38,7 @@ class TicketInstanceResource(object):
             (Allow, TICKET_ADMIN, 'set_seater'),
             (Allow, ADMIN, 'check_in'),
             (Allow, TICKET_ADMIN, 'check_in'),
+            (Allow, TICKET_CHECKIN, 'check_in'),
         ]
         if self.ticketInstance is not None:
             acl = acl + [

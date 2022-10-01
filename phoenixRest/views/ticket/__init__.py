@@ -16,7 +16,7 @@ from phoenixRest.models.core.event import get_current_event
 from phoenixRest.utils import validate
 from phoenixRest.resource import resource
 
-from phoenixRest.roles import ADMIN, TICKET_ADMIN
+from phoenixRest.roles import ADMIN, TICKET_ADMIN, TICKET_CHECKIN
 
 from phoenixRest.views.ticket.instance import TicketInstanceResource
 
@@ -30,6 +30,7 @@ class TicketResource(object):
     __acl__ = [
         (Allow, ADMIN, 'getAll'),
         (Allow, TICKET_ADMIN, 'getAll'),
+        (Allow, TICKET_CHECKIN, 'getAll'),
         (Allow, ADMIN, 'create'),
         (Allow, TICKET_ADMIN, 'create'),
 

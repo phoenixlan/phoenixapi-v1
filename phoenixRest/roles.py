@@ -3,6 +3,7 @@ CHIEF = "role:chief" # Chief for a crew
 MEMBER = "role:member" # Crew member
 
 TICKET_ADMIN = "role:ticket_admin" # Admin for the ticket part of the site
+TICKET_CHECKIN = "role:ticket_checkin" # Neccesary for checking in users
 EVENT_ADMIN = "role:event_admin" # Admin for event management
 INFO_ADMIN = "role:info_admin" # Access to publish information(agenda + infoscreen later)
 COMPO_ADMIN = "role:compo_admin" # Admin for compos
