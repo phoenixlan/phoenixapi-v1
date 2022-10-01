@@ -17,7 +17,7 @@ from phoenixRest.models.tickets.ticket_type import TicketType
 from phoenixRest.mappers.crew import map_crew
 from phoenixRest.mappers.user import map_user_simple_with_secret_fields
 
-from phoenixRest.roles import ADMIN, EVENT_ADMIN, CHIEF, HR_ADMIN, TICKET_ADMIN
+from phoenixRest.roles import ADMIN, EVENT_ADMIN, CHIEF, HR_ADMIN, TICKET_ADMIN, TICKET_CHECKIN
 
 from phoenixRest.utils import validate
 from phoenixRest.resource import resource
@@ -47,6 +47,7 @@ class EventInstanceResource(object):
 
             (Allow, ADMIN, 'event_tickets_get'),
             (Allow, TICKET_ADMIN, 'event_tickets_get'),
+            (Allow, TICKET_CHECKIN, 'event_tickets_get'),
 
             (Allow, ADMIN, 'event_memberships_get'),
             (Allow, TICKET_ADMIN, 'event_memberships_get'),
