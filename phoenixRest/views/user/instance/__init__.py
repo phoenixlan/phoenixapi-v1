@@ -23,7 +23,7 @@ from phoenixRest.mappers.ticket import map_ticket_simple
 from phoenixRest.utils import validate, validateUuidAndQuery
 from phoenixRest.resource import resource
 
-from phoenixRest.roles import HR_ADMIN, ADMIN, TICKET_ADMIN, TICKET_SEATING
+from phoenixRest.roles import HR_ADMIN, ADMIN, TICKET_ADMIN, TICKET_CHECKIN
 
 from sqlalchemy import and_, or_, extract
 
@@ -45,7 +45,7 @@ class UserInstanceResource(object):
             (Allow, HR_ADMIN, 'user_view'),
             (Allow, ADMIN, 'user_view'),
             (Allow, TICKET_ADMIN, 'user_view'),
-            (Allow, TICKET_SEATING, 'user_view'),
+            (Allow, TICKET_CHECKIN, 'user_view'),
             # Who can see if an user is a member or not?
             (Allow, HR_ADMIN, 'get_membership_state'),
             (Allow, ADMIN, 'get_membership_state'),
