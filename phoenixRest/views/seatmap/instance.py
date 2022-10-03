@@ -6,7 +6,6 @@ from pyramid.httpexceptions import (
 )
 from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
-from phoenixRest.models import db
 from phoenixRest.models.core.event import Event, get_current_event
 from phoenixRest.models.tickets.seatmap import Seatmap
 from phoenixRest.models.tickets.entrance import Entrance
@@ -55,7 +54,7 @@ class SeatmapInstanceViews(object):
     def __init__(self, request, uuid):
         self.request = request
 
-        self.seatmapInstance = validateUuidAndQuery(Seatmap, Seatmap.uuid, uuid)
+        self.seatmapInstance = validateUuidAndQuery(request, Seatmap, Seatmap.uuid, uuid)
 
         if self.seatmapInstance is None:
             raise HTTPNotFound("Seatmap not found")
@@ -68,7 +67,7 @@ def get_seatmap(context, request):
 def get_seatmap_availability(context, request):
     event = None
     if 'event_uuid' in request.GET:
-        event = db.query(Event).filter(Event.uuid == request.GET['event_uuid']).first()
+        event = request.db.query(Event).filter(Event.uuid == request.GET['event_uuid']).first()
         if event is None:
             request.response.status = 404
             return {
@@ -77,7 +76,7 @@ def get_seatmap_availability(context, request):
     else:
         event = get_current_event()
     
-    seatmap = db.query(Seatmap) \
+    seatmap = request.db.query(Seatmap) \
         .join(Row, Row.seatmap_uuid == Seatmap.uuid) \
         .join(Seat, Seat.row_uuid == Row.uuid) \
         .join(Ticket, Ticket.seat_uuid == Seat.uuid, isouter=True) \
@@ -105,8 +104,8 @@ def upload_background(context, request):
     extension = filename.split(".")[-1]
 
     background = SeatmapBackground(request.user, extension)
-    db.add(background)
-    db.flush()
+    request.db.add(background)
+    request.db.flush()
 
     # Copy the file
     file_path = background.get_fs_location(request)
@@ -131,7 +130,7 @@ def create_row(context, request):
     # Creating a new row
     ticket_type = None
     if "ticket_type" in request.json_body:
-        ticket_type = db.query(TicketType).filter(TicketType.uuid == request.json_body['ticket_type']).first()
+        ticket_type = request.db.query(TicketType).filter(TicketType.uuid == request.json_body['ticket_type']).first()
         if ticket_type is None:
             request.response.status = 400
             return {
@@ -140,7 +139,7 @@ def create_row(context, request):
 
     entrance = None
     if "entrance" in request.json_body:
-        entrance = db.query(Entrance).filter(Entrance.uuid == request.json_body['entrance']).first()
+        entrance = request.db.query(Entrance).filter(Entrance.uuid == request.json_body['entrance']).first()
         if entrance is None:
             request.response.status = 400
             return {
@@ -157,8 +156,8 @@ def create_row(context, request):
         ticket_type \
     )
 
-    db.add(row)
-    db.flush()
+    request.db.add(row)
+    request.db.flush()
     return row
 
 

@@ -8,7 +8,6 @@ from pyramid.httpexceptions import (
 from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
 
-from phoenixRest.models import db
 from phoenixRest.models.crew.crew import Crew
 from phoenixRest.models.tickets.payment import Payment, PaymentProvider, PaymentState
 from phoenixRest.models.tickets.ticket_type import TicketType
@@ -82,7 +81,7 @@ def stripe_hook(context, request):
         }
     # stripe payment 
     payment_id = event.data.object.id
-    payment = db.query(StripePayment).filter(StripePayment.payment_id == payment_id).first()
+    payment = request.db.query(StripePayment).filter(StripePayment.payment_id == payment_id).first()
 
     if payment is None:
         log.warn("Payment not found!")
@@ -101,14 +100,14 @@ def vipps_hook(context, request):
     transaction_info = request.json_body['transactionInfo']
     order_id = request.subpath[2]
 
-    vipps_payment = db.query(VippsPayment).filter(VippsPayment.slug == order_id).first()
+    vipps_payment = request.db.query(VippsPayment).filter(VippsPayment.slug == order_id).first()
     if not vipps_payment:
         log.warning("Tried to update a vipps payment that doesn't exist")
         raise HTTPNotFound()
     
     status = transaction_info['status']
     vipps_payment.state = status
-    db.flush()
+    request.db.flush()
 
     if status == "SALE":
         # Extra security checks
@@ -119,11 +118,11 @@ def vipps_hook(context, request):
         log.info("Successfully registered vipps sale")
     elif status == "REJECTED":
         vipps_payment.payment.state = PaymentState.failed
-        db.add(vipps_payment.payment)
+        request.db.add(vipps_payment.payment)
         log.info("Registered rejected vipps sale")
     elif status == "CANCELLED":
         vipps_payment.payment.state = PaymentState.failed
-        db.add(vipps_payment.payment)
+        request.db.add(vipps_payment.payment)
         log.info("Registered cancelled vipps sale")
     elif status == "RESERVED":
         log.info("Got a reserved transaction, capturing the amout and making the purchase")

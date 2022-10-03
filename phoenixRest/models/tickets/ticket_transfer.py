@@ -16,17 +16,10 @@ from sqlalchemy.dialects.postgresql import UUID
 
 from sqlalchemy.orm import relationship
 
-from phoenixRest.models import db
 from phoenixRest.models import Base
-
-from phoenixRest.models.core.user import User
-
-from phoenixRest.models.tickets.payment import Payment
-from phoenixRest.models.tickets.ticket_type import TicketType
 
 from datetime import datetime, timedelta
 
-import string
 import uuid
 
 class TicketTransfer(Base):

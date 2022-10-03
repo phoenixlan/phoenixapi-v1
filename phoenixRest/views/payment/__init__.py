@@ -8,10 +8,7 @@ from pyramid.httpexceptions import (
 from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
 
-from phoenixRest.models import db
-from phoenixRest.models.crew.crew import Crew
 from phoenixRest.models.tickets.payment import Payment, PaymentProvider
-from phoenixRest.models.tickets.ticket_type import TicketType
 from phoenixRest.models.tickets.store_session import StoreSession
 from phoenixRest.models.core.event import get_current_event
 
@@ -53,7 +50,7 @@ class PaymentResource(object):
 @view_config(context=PaymentResource, name='', request_method='GET', renderer='json', permission='fetch_all')
 def get_all_payments(request):
     # Returns all payments
-    return db.query(Payment).order_by(Payment.created).all()
+    return request.db.query(Payment).order_by(Payment.created).all()
 
 @view_config(context=PaymentResource, name='', request_method='POST', renderer='json', permission='create')
 @validate(json_body={'store_session': str, 'provider': str})
@@ -67,7 +64,7 @@ def create_payment(context, request):
         }
     
     # Store session
-    store_session = db.query(StoreSession).filter(StoreSession.uuid == request.json_body['store_session']).first()
+    store_session = request.db.query(StoreSession).filter(StoreSession.uuid == request.json_body['store_session']).first()
 
     if not store_session or store_session.user != request.user:
         request.response.status = 404
@@ -82,7 +79,7 @@ def create_payment(context, request):
         }
     
     # Make sure you can't create two payments for the same store session
-    existing_payment = db.query(Payment).filter(Payment.store_session == store_session).first()
+    existing_payment = request.db.query(Payment).filter(Payment.store_session == store_session).first()
     if existing_payment:
         request.response.status = 400
         return {
@@ -92,8 +89,8 @@ def create_payment(context, request):
     payment = Payment(request.user, chosen_provider, store_session.get_total(), get_current_event())
     payment.store_session = store_session
 
-    db.add(payment)
-    db.flush()
+    request.db.add(payment)
+    request.db.flush()
 
     return payment
     

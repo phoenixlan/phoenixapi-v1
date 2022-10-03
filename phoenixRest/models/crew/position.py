@@ -15,15 +15,11 @@ from sqlalchemy.dialects.postgresql import UUID
 
 from sqlalchemy.orm import relationship
 
-from phoenixRest.models import db, Base
-
-from datetime import datetime, timedelta
+from phoenixRest.models import Base
 
 import logging
 log = logging.getLogger(__name__)
 
-import secrets
-import string
 import uuid
 
 PositionAssociation = Table('user_positions', Base.metadata,
@@ -69,8 +65,8 @@ class Position(Base):
 
         }
 
-def create_or_fetch_crew_position(crew, team=None, chief=False):
-    existing = db.query(Position).filter(Position.chief == chief)
+def create_or_fetch_crew_position(request, crew, team=None, chief=False):
+    existing = request.db.query(Position).filter(Position.chief == chief)
 
     existing = existing.filter(Position.crew == crew)
     
@@ -85,8 +81,8 @@ def create_or_fetch_crew_position(crew, team=None, chief=False):
         new_position.chief = chief
         new_position.crew = crew
         new_position.team = team
-        db.add(new_position)
-        db.flush()
+        request.db.add(new_position)
+        request.db.flush()
         return new_position
     elif len(existing) == 1:
         return existing[0]

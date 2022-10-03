@@ -5,8 +5,6 @@ from pyramid.httpexceptions import (
 from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
 
-from phoenixRest.models import db
-
 from phoenixRest.models.core.event import Event
 
 from phoenixRest.models.crew.crew import Crew
@@ -53,7 +51,7 @@ class ApplicationViews(object):
 def get_applications(request):
     # TODO get for multiple applications
     # Find all applications and sort them by time created
-    applications = db.query(Application).order_by(Application.created.asc()).all()
+    applications = request.db.query(Application).order_by(Application.created.asc()).all()
     return applications
 
 @view_config(context=ApplicationViews, name='', request_method='OPTIONS', renderer='string')
@@ -63,7 +61,7 @@ def get_applications_cors(request):
 @view_config(context=ApplicationViews, name='my', request_method='GET', renderer='json', permission='self')
 def get_applications_mine(request):
     # Find all applications and sort them by time created
-    applications = db.query(Application).filter(Application.user == request.user).order_by(Application.created.asc()).all()
+    applications = request.db.query(Application).filter(Application.user == request.user).order_by(Application.created.asc()).all()
     return applications
 
 @view_config(context=ApplicationViews, name='my', request_method='OPTIONS', renderer='string')
@@ -73,7 +71,7 @@ def get_applications_mine_cors(request):
 @view_config(context=ApplicationViews, name='', request_method='PUT', renderer='json', permission='create')
 @validate(json_body={'crew_uuid': str, 'contents': str})
 def create_application(context, request):
-    crew = db.query(Crew).filter(Crew.uuid == request.json_body['crew_uuid']).first()
+    crew = request.db.query(Crew).filter(Crew.uuid == request.json_body['crew_uuid']).first()
     if crew is None:
         request.response.status = 404
         return {
@@ -93,14 +91,14 @@ def create_application(context, request):
         }
 
     # Fetch current event
-    event = db.query(Event).filter(Event.start_time > datetime.now()).order_by(Event.start_time.asc()).first()
+    event = request.db.query(Event).filter(Event.start_time > datetime.now()).order_by(Event.start_time.asc()).first()
 
 
     application = Application(user=request.user, 
                         crew=crew, 
                         event=event,
                         contents=request.json_body['contents'])
-    db.add(application)
+    request.db.add(application)
 
     request.mail_service.send_mail(request.user.email, "Mottatt søknad", "application_received.jinja2", {
         "mail": request.registry.settings["api.contact"],

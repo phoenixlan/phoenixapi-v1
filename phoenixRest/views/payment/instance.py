@@ -6,18 +6,12 @@ from pyramid.httpexceptions import (
 )
 from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
-from phoenixRest.models import db
 from phoenixRest.models.tickets.payment import Payment, PaymentState, PaymentProvider
 
 from phoenixRest.roles import ADMIN, TICKET_ADMIN
 
-from phoenixRest.utils import validate
-from phoenixRest.resource import resource
-
 from phoenixRest.features.payment.vipps import initialize_vipps_payment
 from phoenixRest.features.payment.stripe import initialize_stripe_payment
-
-from datetime import datetime
 
 import logging
 log = logging.getLogger(__name__)
@@ -36,7 +30,7 @@ class PaymentInstanceResource(object):
 
     def __init__(self, request, uuid):
         self.request = request
-        self.paymentInstance = db.query(Payment).filter(Payment.uuid == uuid).first()
+        self.paymentInstance = request.db.query(Payment).filter(Payment.uuid == uuid).first()
 
         if self.paymentInstance is None:
             raise HTTPNotFound("Payment not found")
@@ -54,7 +48,7 @@ def initiate_payment(context, request):
         }
 
     context.paymentInstance.state = PaymentState.initiated
-    db.add(context.paymentInstance)
+    request.db.add(context.paymentInstance)
     # Bootstraps the payment with our external provider
     if context.paymentInstance.provider == PaymentProvider.vipps:
         if 'fallback_url' not in request.json_body:
@@ -62,10 +56,10 @@ def initiate_payment(context, request):
             return {
                 "error": "The variable fallback_url must be provided when making payments using vipps"
             }
-        deeplinkUrl, slug = initialize_vipps_payment(context.paymentInstance, request.json_body['fallback_url'])
+        deeplinkUrl, slug = initialize_vipps_payment(request, context.paymentInstance, request.json_body['fallback_url'])
         if deeplinkUrl:
             # Since the payment is successful, insert everything. This populates payment.uuid
-            db.flush()
+            request.db.flush()
             return {'url': deeplinkUrl, 'slug': slug}
         else:
             log.warn("Failed to create vipps payment")
@@ -74,8 +68,8 @@ def initiate_payment(context, request):
                 "error": "Failed to create vipps payment"
             }
     elif context.paymentInstance.provider == PaymentProvider.stripe:
-        client_secret = initialize_stripe_payment(context.paymentInstance)
-        db.flush()
+        client_secret = initialize_stripe_payment(request, context.paymentInstance)
+        request.db.flush()
         return {'client_secret': client_secret}
     else:
         request.response.status = 400

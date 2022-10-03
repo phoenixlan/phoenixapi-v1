@@ -4,18 +4,11 @@ from pyramid.httpexceptions import (
 )
 from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
-
-from phoenixRest.models import db
-from phoenixRest.models.core.event import Event
-
-from phoenixRest.utils import validate
 from phoenixRest.resource import resource
 
 from phoenixRest.roles import ADMIN
 
 from phoenixRest.views.team.instance import TeamInstanceViews
-
-from datetime import datetime
 
 import logging
 log = logging.getLogger(__name__)

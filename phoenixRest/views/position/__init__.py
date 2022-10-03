@@ -5,17 +5,13 @@ from pyramid.httpexceptions import (
 from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
 
-from phoenixRest.models import db
 from phoenixRest.models.crew.position import Position
 
-from phoenixRest.utils import validate
 from phoenixRest.resource import resource
 
 from phoenixRest.roles import ADMIN
 
 from phoenixRest.views.position.instance import PositionInstanceResource
-
-from datetime import datetime
 
 import logging
 log = logging.getLogger(__name__)
@@ -43,5 +39,5 @@ class PositionResource(object):
 @view_config(context=PositionResource, name='', request_method='GET', renderer='json', permission='getAll')
 def get_all_positions(request):
     # Returns all avatars
-    return db.query(Position).order_by(Position.name).all()
+    return request.db.query(Position).order_by(Position.name).all()
 

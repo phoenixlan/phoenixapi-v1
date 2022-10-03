@@ -34,7 +34,7 @@ from pyramid.authorization import ACLAuthorizationPolicy
 
 from sqlalchemy import engine_from_config
 
-from phoenixRest.models import db, setup_connections
+from phoenixRest.models import setup_connections
 
 from phoenixRest.models.core.user import User
 
@@ -77,7 +77,7 @@ def user(request):
     uuid = request.authenticated_userid
     log.info("Logged in as %s" % uuid)
 
-    user = db.query(User).filter(User.uuid == uuid).first()
+    user = request.db.query(User).filter(User.uuid == uuid).first()
     if user is None:
         raise HTTPForbidden()
     return user
@@ -96,7 +96,7 @@ def mail_provider(mailProvider: MailProvider):
 def main(global_config, **settings):
     log.debug("Hello! The server is starting")
 
-    setup_connections()
+    db_connection = setup_connections()
 
     config = Configurator(settings=settings, root_factory=RootResource)
     
@@ -109,6 +109,12 @@ def main(global_config, **settings):
     config.set_authorization_policy(ACLAuthorizationPolicy())
     config.include('pyramid_jwt')
     config.set_jwt_authentication_policy(JWT_SECRET, http_header='X-Phoenix-Auth', expiration=60*60 if "DEBUG" in os.environ else 10*60, callback=add_role_principals)
+
+    # Add a db connection handle to the request object
+    def db(request):
+        return db_connection
+
+    config.add_request_method(db, reify=True)
 
     # Add the user property to the request object
     config.add_request_method(user, reify=True)

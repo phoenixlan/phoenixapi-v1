@@ -5,7 +5,6 @@ from pyramid.httpexceptions import (
 )
 from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
-from phoenixRest.models import db
 from phoenixRest.models.crew.crew import Crew
 from phoenixRest.models.crew.team import Team
 
@@ -37,7 +36,7 @@ class CrewInstanceViews(object):
 
     def __init__(self, request, uuid):
         self.request = request
-        self.crewInstance = db.query(Crew).filter(Crew.uuid == uuid).first()
+        self.crewInstance = request.db.query(Crew).filter(Crew.uuid == uuid).first()
 
         if self.crewInstance is None:
             raise HTTPNotFound("Crew not found")
@@ -45,14 +44,14 @@ class CrewInstanceViews(object):
 @view_config(context=CrewInstanceViews, name='team', request_method='GET', renderer='json', permission='team_view')
 def list_teams(context, request):
     log.info("Listing teams for crew %s" % context.crewInstance.name)
-    teams = db.query(Team).filter(Team.crew == context.crewInstance).all()
+    teams = request.db.query(Team).filter(Team.crew == context.crewInstance).all()
     return teams
 
 @view_config(context=CrewInstanceViews, name='team', request_method='PUT', renderer='json', permission='team_edit')
 @validate(json_body={'name': str, 'description': str})
 def create_team(context, request):
     team = Team(context.crewInstance, request.json_body['name'], request.json_body['description'])
-    db.add(team)
+    request.db.add(team)
     return team
 
 @view_config(context=CrewInstanceViews, name='', request_method='GET', renderer='json', permission='crew_view')

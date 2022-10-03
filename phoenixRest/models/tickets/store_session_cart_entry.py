@@ -15,13 +15,10 @@ from sqlalchemy.dialects.postgresql import UUID
 
 from sqlalchemy.orm import relationship
 
-from phoenixRest.models import db
 from phoenixRest.models import Base
 
 from phoenixRest.models.tickets.ticket_type import TicketType
 from phoenixRest.models.tickets.store_session import StoreSession
-
-from datetime import datetime, timedelta
 
 class StoreSessionCartEntry(Base):
     __tablename__ = "store_session_cart_entry"

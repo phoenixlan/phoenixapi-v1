@@ -6,7 +6,6 @@ from pyramid.httpexceptions import (
 )
 from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
-from phoenixRest.models import db
 from phoenixRest.models.core.event import Event
 from phoenixRest.models.core.user import User
 from phoenixRest.models.tickets.ticket import Ticket
@@ -14,23 +13,16 @@ from phoenixRest.models.tickets.row import Row
 from phoenixRest.models.tickets.seatmap import Seatmap
 from phoenixRest.models.tickets.ticket_type import TicketType
 
-from phoenixRest.mappers.crew import map_crew
 from phoenixRest.mappers.user import map_user_simple_with_secret_fields
 
 from phoenixRest.roles import ADMIN, EVENT_ADMIN, CHIEF, HR_ADMIN, TICKET_ADMIN, TICKET_CHECKIN
 
 from phoenixRest.utils import validate
-from phoenixRest.resource import resource
 
 from sqlalchemy import and_
 
-from datetime import datetime
-import os
-
 import logging
 log = logging.getLogger(__name__)
-
-from PIL import Image
 
 class EventInstanceResource(object):
     def __acl__(self):
@@ -63,7 +55,7 @@ class EventInstanceResource(object):
 
     def __init__(self, request, uuid):
         self.request = request
-        self.eventInstance = db.query(Event).filter(Event.uuid == uuid).first()
+        self.eventInstance = request.db.query(Event).filter(Event.uuid == uuid).first()
 
         if self.eventInstance is None:
             raise HTTPNotFound("Event not found")
@@ -75,29 +67,29 @@ def get_event(context, request):
 # Objects relating to the specific event
 @view_config(context=EventInstanceResource, name='applications', request_method='GET', renderer='json', permission='applications_get')
 def get_applications(context, request):
-    applications = db.query(Application).filter(Application.event_uuid == context.eventInstance.uuid).order_by(Application.created.asc()).all()
+    applications = request.db.query(Application).filter(Application.event_uuid == context.eventInstance.uuid).order_by(Application.created.asc()).all()
     return applications
 
 @view_config(context=EventInstanceResource, name='ticket', request_method='GET', renderer='json', permission='event_tickets_get')
 def get_tickets(context, request):
-    tickets = db.query(Ticket).filter(Ticket.event_uuid == context.eventInstance.uuid).order_by(Ticket.ticket_id).all()
+    tickets = request.db.query(Ticket).filter(Ticket.event_uuid == context.eventInstance.uuid).order_by(Ticket.ticket_id).all()
     return tickets
 
 @view_config(context=EventInstanceResource, name='new_memberships', request_method='GET', renderer='json', permission='event_memberships_get')
 def get_new_memberships(context, request):
-    users = db.query(User).join(Ticket, Ticket.owner_uuid == User.uuid).join(TicketType, Ticket.ticket_type_uuid==TicketType.uuid).filter(and_(Ticket.event_uuid == context.eventInstance.uuid, TicketType.grants_membership == True)).all()
+    users = request.db.query(User).join(Ticket, Ticket.owner_uuid == User.uuid).join(TicketType, Ticket.ticket_type_uuid==TicketType.uuid).filter(and_(Ticket.event_uuid == context.eventInstance.uuid, TicketType.grants_membership == True)).all()
     return [ map_user_simple_with_secret_fields(user, request) for user in users ]
 
 @view_config(context=EventInstanceResource, name='ticket_availability', request_method='GET', renderer='json', permission='ticket_availability_get')
 def get_ticket_availability(context, request):
     return {
-        'total': max(context.eventInstance.get_total_ticket_availability(), 0)
+        'total': max(context.eventInstance.get_total_ticket_availability(request), 0)
     }
 
 @view_config(name='ticketType', context=EventInstanceResource, request_method='PUT', renderer='json', permission='add_ticket_type')
 @validate(json_body={'ticket_type_uuid': str})
 def add_ticket_type(context, request):
-    ticket_type = db.query(TicketType).filter(TicketType.uuid == request.json_body['ticket_type_uuid']).first()
+    ticket_type = request.db.query(TicketType).filter(TicketType.uuid == request.json_body['ticket_type_uuid']).first()
     if not ticket_type:
         request.response.status = 404
         return {
@@ -111,7 +103,7 @@ def add_ticket_type(context, request):
 @view_config(context=EventInstanceResource, name='ticketType', request_method='GET', renderer='json', permission='event_ticket_type_get')
 def get_ticket_types(context, request):
     # Ticket types deduced through rows configured to only allow them
-    row_types = db.query(TicketType) \
+    row_types = request.db.query(TicketType) \
         .join(Row, TicketType.uuid == Row.ticket_type_uuid) \
         .join(Seatmap, Row.seatmap_uuid == Seatmap.uuid) \
         .join(Event, Event.seatmap_uuid == Seatmap.uuid) \

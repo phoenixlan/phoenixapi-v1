@@ -5,9 +5,7 @@ from pyramid.httpexceptions import (
 from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
 
-from phoenixRest.models import db
 from phoenixRest.models.crew.crew import Crew
-from phoenixRest.models.core.event import Event
 
 from phoenixRest.utils import validate
 from phoenixRest.resource import resource
@@ -45,7 +43,7 @@ class CrewViews(object):
 @view_config(context=CrewViews, name='', request_method='GET', renderer='json', permission='getAll')
 def get_all_crew(context, request):
     # Returns all crews
-    query = db.query(Crew)
+    query = request.db.query(Crew)
 
     log.debug("Principals: %s" % request.effective_principals)
     if "role:admin" not in request.effective_principals:
@@ -59,6 +57,6 @@ def get_all_crew(context, request):
 def create_crew(request):
     crew = Crew(name=request.json_body['name'], 
                   description=request.json_body['description'])
-    db.add(crew)
+    request.db.add(crew)
     return crew
 

@@ -7,7 +7,6 @@ from pyramid.httpexceptions import (
 )
 from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
-from phoenixRest.models import db
 from phoenixRest.models.core.user import User
 from phoenixRest.models.core.event import get_current_event
 from phoenixRest.models.tickets.ticket_transfer import TicketTransfer
@@ -16,8 +15,7 @@ from phoenixRest.models.tickets.seat import Seat
 
 from phoenixRest.roles import ADMIN, TICKET_ADMIN, TICKET_CHECKIN
 
-from phoenixRest.utils import validate, validateUuidAndQuery
-from phoenixRest.resource import resource
+from phoenixRest.utils import validate 
 
 from sqlalchemy import and_
 
@@ -63,7 +61,7 @@ class TicketInstanceResource(object):
     def __init__(self, request, ticket_id):
         self.request = request
 
-        self.ticketInstance = db.query(Ticket).filter(Ticket.ticket_id == ticket_id).first()
+        self.ticketInstance = request.db.query(Ticket).filter(Ticket.ticket_id == ticket_id).first()
 
         if self.ticketInstance is None:
             raise HTTPNotFound("Ticket not found")
@@ -76,7 +74,7 @@ def get_ticket(context, request):
 @view_config(context=TicketInstanceResource, name='seat', request_method='PUT', renderer='json', permission='seat_ticket')
 @validate(json_body={'seat_uuid': str})
 def seat_ticket(context, request):
-    seat = db.query(Seat).filter(Seat.uuid == request.json_body['seat_uuid']).first()
+    seat = request.db.query(Seat).filter(Seat.uuid == request.json_body['seat_uuid']).first()
     event = get_current_event()
 
     seating_time = event.booking_time + timedelta(seconds=event.seating_time_delta)
@@ -125,7 +123,7 @@ def set_seater(context, request):
     if 'user_email' not in request.json_body:
         seater = request.user
     else:
-        seater = db.query(User).filter(User.email == request.json_body['user_email'].lower()).first()
+        seater = request.db.query(User).filter(User.email == request.json_body['user_email'].lower()).first()
     if seater is None:
         request.response.status = 404
         return {
@@ -140,7 +138,7 @@ def set_seater(context, request):
 @view_config(context=TicketInstanceResource, name='transfer', request_method='POST', renderer='json', permission='transfer_ticket')
 @validate(json_body={'user_email': str})
 def transfer_ticket(context, request):
-    transfer_target = db.query(User).filter(User.email == request.json_body['user_email'].lower()).first()
+    transfer_target = request.db.query(User).filter(User.email == request.json_body['user_email'].lower()).first()
     if transfer_target is None:
         request.response.status = 404
         return {
@@ -150,7 +148,7 @@ def transfer_ticket(context, request):
     expiry_offset = int(request.registry.settings['ticket.transfer.expiry'])
     expiry_time = datetime.now() - timedelta(seconds=expiry_offset)
 
-    existing_transfer = db.query(TicketTransfer).filter(and_(
+    existing_transfer = request.db.query(TicketTransfer).filter(and_(
         TicketTransfer.ticket == context.ticketInstance,
         TicketTransfer.created > expiry_time)).first()
     if existing_transfer is not None and not existing_transfer.reverted:
@@ -160,9 +158,9 @@ def transfer_ticket(context, request):
         }
     
     transfer = TicketTransfer(request.user, transfer_target, context.ticketInstance)
-    db.add(transfer)
+    request.db.add(transfer)
     context.ticketInstance.owner = transfer_target
-    db.flush()
+    request.db.flush()
 
     request.mail_service.send_mail(request.user.email, "Du har overført en billett", "ticket_transferred_to_sender.jinja2", {
         "mail": request.registry.settings["api.contact"],

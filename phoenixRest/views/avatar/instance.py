@@ -6,23 +6,15 @@ from pyramid.httpexceptions import (
 )
 from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
-from phoenixRest.models import db
 from phoenixRest.models.core.avatar import Avatar, AvatarState
-
-from phoenixRest.mappers.crew import map_crew
 
 from phoenixRest.roles import ADMIN, HR_ADMIN, CHIEF
 
 from phoenixRest.utils import validate
-from phoenixRest.resource import resource
-
-from datetime import datetime
 import os
 
 import logging
 log = logging.getLogger(__name__)
-
-from PIL import Image
 
 class AvatarInstanceResource(object):
     def __acl__(self):
@@ -48,7 +40,7 @@ class AvatarInstanceResource(object):
 
     def __init__(self, request, uuid):
         self.request = request
-        self.avatarInstance = db.query(Avatar).filter(Avatar.uuid == uuid).first()
+        self.avatarInstance = request.db.query(Avatar).filter(Avatar.uuid == uuid).first()
 
         if self.avatarInstance is None:
             raise HTTPNotFound("Avatar not found")
@@ -67,7 +59,7 @@ def delete_avatar(context, request):
     os.remove(os.path.join(avatar_sd_dir, "%s.%s" % (context.avatarInstance.uuid, context.avatarInstance.extension)))
     os.remove(os.path.join(avatar_hd_dir, "%s.%s" % (context.avatarInstance.uuid, context.avatarInstance.extension)))
 
-    db.delete(context.avatarInstance)
+    request.db.delete(context.avatarInstance)
     return 'ok'
 
 @view_config(context=AvatarInstanceResource, name='', request_method='PATCH', renderer='string', permission='avatar_update')
@@ -100,5 +92,5 @@ def update_status(context, request):
     })
 
     context.avatarInstance.state = enumerated_state
-    db.add(context.avatarInstance)
+    request.db.add(context.avatarInstance)
     return 'ok'

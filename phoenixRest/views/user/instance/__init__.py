@@ -6,7 +6,6 @@ from pyramid.httpexceptions import (
 )
 from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
-from phoenixRest.models import db
 from phoenixRest.models.core.user import User
 from phoenixRest.models.core.event import Event, get_current_event
 from phoenixRest.models.core.avatar import Avatar
@@ -98,7 +97,7 @@ class UserInstanceResource(object):
     def __init__(self, request, uuid):
         self.request = request
         log.info("uuid: %s" % uuid)
-        self.userInstance = validateUuidAndQuery(User, User.uuid, uuid)
+        self.userInstance = validateUuidAndQuery(request, User, User.uuid, uuid)
 
         if self.userInstance is None:
             raise HTTPNotFound("User not found")
@@ -113,9 +112,9 @@ def get_user(context, request):
 
 @view_config(context=UserInstanceResource, name='owned_tickets', request_method='GET', renderer='json', permission='user_list_owned_tickets')
 def get_owned_tickets(context, request):
-    query = db.query(Ticket)
+    query = request.db.query(Ticket)
     if 'event' in request.GET:
-        event = db.query(Event).filter(Event.uuid == request.get['event']).first()
+        event = request.db.query(Event).filter(Event.uuid == request.get['event']).first()
         if event is None:
             request.response.status = 404
             return {
@@ -131,7 +130,7 @@ def get_owned_tickets(context, request):
 def get_ticket_transfers(context, request):
     event = None
     if 'event_uuid' in request.GET:
-        event = db.query(Event).filter(Event.uuid == request.GET['event_uuid']).first()
+        event = request.db.query(Event).filter(Event.uuid == request.GET['event_uuid']).first()
         if event is None:
             request.response.status = 404
             return {
@@ -140,7 +139,7 @@ def get_ticket_transfers(context, request):
     else:
         event = get_current_event()
 
-    transfers = db.query(TicketTransfer).filter(and_(TicketTransfer.ticket.has(Ticket.event_uuid == event.uuid), or_(
+    transfers = request.db.query(TicketTransfer).filter(and_(TicketTransfer.ticket.has(Ticket.event_uuid == event.uuid), or_(
         or_(TicketTransfer.from_user == context.userInstance),
         or_(TicketTransfer.to_user == context.userInstance)
     ))).all()
@@ -148,9 +147,9 @@ def get_ticket_transfers(context, request):
 
 @view_config(context=UserInstanceResource, name='purchased_tickets', request_method='GET', renderer='json', permission='user_list_purchased_tickets')
 def get_purchased_tickets(context, request):
-    query = db.query(Ticket)
+    query = request.db.query(Ticket)
     if 'event' in request.GET:
-        event = db.query(Event).filter(Event.uuid == request.get['event']).first()
+        event = request.db.query(Event).filter(Event.uuid == request.get['event']).first()
         if event is None:
             request.response.status = 404
             return {
@@ -163,9 +162,9 @@ def get_purchased_tickets(context, request):
 
 @view_config(context=UserInstanceResource, name='seatable_tickets', request_method='GET', renderer='json', permission='user_list_seatable_tickets')
 def get_seatable_tickets(context, request):
-    query = db.query(Ticket)
+    query = request.db.query(Ticket)
     if 'event' in request.GET:
-        event = db.query(Event).filter(Event.uuid == request.get['event']).first()
+        event = request.db.query(Event).filter(Event.uuid == request.get['event']).first()
         if event is None:
             request.response.status = 404
             return {
@@ -190,7 +189,7 @@ def get_seatable_tickets(context, request):
 
 @view_config(context=UserInstanceResource, name='payments', request_method='GET', renderer='json', permission='list_payments')
 def get_payments(context, request):
-    payments = db.query(Payment).filter(Payment.user == context.userInstance).all()
+    payments = request.db.query(Payment).filter(Payment.user == context.userInstance).all()
     return payments
 
 @view_config(context=UserInstanceResource, name='store_session', request_method='GET', renderer='json', permission='user_get_store_session')
@@ -199,7 +198,7 @@ def get_store_session(context, request):
 
     too_old = datetime.now() - timedelta(seconds=session_lifetime)
 
-    session = db.query(StoreSession).filter(or_(StoreSession.user == context.userInstance, StoreSession.created < too_old)).first()
+    session = request.db.query(StoreSession).filter(or_(StoreSession.user == context.userInstance, StoreSession.created < too_old)).first()
     if session is not None:
         return session
     raise HTTPNotFound("User does not have an active store session")
@@ -217,7 +216,7 @@ def activate_user(context, request):
         return {
             "error": "User is already activated"
         }
-    db.delete(context.userInstance.activation_code)
+    request.db.delete(context.userInstance.activation_code)
     return ""
 
 @view_config(context=UserInstanceResource, name='avatar', request_method='POST', renderer='json', permission='avatar_upload')
@@ -241,8 +240,8 @@ def upload_avatar(context, request):
 
     # Create an avatar so we can copy the file to the correct file name
     avatar = Avatar(context.userInstance, "jpg")
-    db.add(avatar)
-    db.flush()
+    request.db.add(avatar)
+    request.db.flush()
     log.info("Created new avatar %s" % avatar.uuid)
 
     # Validate the image
@@ -333,7 +332,7 @@ def get_membership_information(context, request):
     if "year" in request.GET:
         year = int(request.GET['year'])
 
-    member_granting_tickets = db.query(Ticket).join(TicketType, Ticket.ticket_type_uuid==TicketType.uuid).join(Event, Ticket.event_uuid == Event.uuid) \
+    member_granting_tickets = request.db.query(Ticket).join(TicketType, Ticket.ticket_type_uuid==TicketType.uuid).join(Event, Ticket.event_uuid == Event.uuid) \
         .filter(and_(extract('year', Event.start_time) == year, TicketType.grants_membership == True, Ticket.owner_uuid == context.userInstance.uuid)).all()
     
     return {

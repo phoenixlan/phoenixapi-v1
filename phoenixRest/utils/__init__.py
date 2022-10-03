@@ -8,8 +8,6 @@ import uuid
 import secrets
 import string
 
-from phoenixRest.models import db
-
 """
 This function assumes the views have two arguments: context, request.
 TODO: autodetect and compensate for views not having this
@@ -40,10 +38,10 @@ def validate(get=[], json_body={}, post={}):
 """
 Only attempt to query db for instance if the uuid is valid
 """
-def validateUuidAndQuery(instanceType, field, instanceUuid: str):
+def validateUuidAndQuery(request, instanceType, field, instanceUuid: str):
 	try:
 		uuid.UUID(hex=instanceUuid, version=4)
-		return db.query(instanceType).filter(field == instanceUuid).first()
+		return request.db.query(instanceType).filter(field == instanceUuid).first()
 	except:
 		return None
 

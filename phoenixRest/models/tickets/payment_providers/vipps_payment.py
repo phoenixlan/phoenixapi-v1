@@ -16,12 +16,9 @@ from sqlalchemy.dialects.postgresql import UUID
 
 from sqlalchemy.orm import relationship
 
-from phoenixRest.models import db, Base
+from phoenixRest.models import Base
 from phoenixRest.models.tickets.payment import Payment
 
-from datetime import datetime
-
-import uuid
 import string
 import secrets
 

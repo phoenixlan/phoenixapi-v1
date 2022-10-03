@@ -15,12 +15,11 @@ from sqlalchemy.dialects.postgresql import UUID
 
 from sqlalchemy.orm import relationship
 
-from phoenixRest.models import db, Base
+from phoenixRest.models import Base
 from phoenixRest.models.core.user import User
 
 from datetime import datetime, timedelta
 
-import enum
 import uuid
 
 class StoreSession(Base):

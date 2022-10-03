@@ -5,7 +5,6 @@ import os
 
 from phoenixRest.models.tickets.payment_providers.vipps_payment import VippsPayment
 from phoenixRest.models.tickets.payment import Payment
-from phoenixRest.models import db
 
 from phoenixRest.features.payment import mint_tickets
 
@@ -110,7 +109,7 @@ def capture_vipps_payment(vipps_payment):
 	
 	return response.status_code == 200
 
-def _initiatePayment(payment, vipps_payment, fallback):
+def _initiatePayment(request, payment, vipps_payment, fallback):
 	global token
 
 
@@ -153,7 +152,7 @@ def _initiatePayment(payment, vipps_payment, fallback):
 		return None
 	
 	vipps_payment.order_id = paymentMetadata['orderId']
-	db.add(vipps_payment)
+	request.db.add(vipps_payment)
 
 	return paymentMetadata['url']
 
@@ -163,7 +162,7 @@ def _cancelOrder(self):
 def _mock_vipps():
 	return "https://api.test.phoenix.no/vippsDeeplinkPlaceholder"
 
-def initialize_vipps_payment(payment: Payment, fallback_url: str):
+def initialize_vipps_payment(request, payment: Payment, fallback_url: str):
 	# Don't talk to vipps if we are running tests
 	if not "PYTEST_CURRENT_TEST" in os.environ:
 		_ensureToken()
@@ -172,10 +171,10 @@ def initialize_vipps_payment(payment: Payment, fallback_url: str):
 		raise RuntimeError('Tried to initiate vipps on a payment without store session')
 
 	vippsPayment = VippsPayment(payment)
-	db.add(vippsPayment)
+	request.db.add(vippsPayment)
 
 	if not "PYTEST_CURRENT_TEST" in os.environ:
-		deeplinkUrl = _initiatePayment(payment, vippsPayment, fallback_url)
+		deeplinkUrl = _initiatePayment(request, payment, vippsPayment, fallback_url)
 	else:
 		deeplinkUrl = _mock_vipps()
 
@@ -183,7 +182,7 @@ def initialize_vipps_payment(payment: Payment, fallback_url: str):
 		# Update the expiry. Vipps payments expire after 10 mins
 		# TODO find a source for this information
 		payment.store_session.expires = datetime.now() + timedelta(minutes=10)
-		db.add(payment)
+		request.db.add(payment)
 		# Return a payment ID
 		return deeplinkUrl, vippsPayment.slug
 	return None, None

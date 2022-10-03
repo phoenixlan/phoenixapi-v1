@@ -15,7 +15,6 @@ from sqlalchemy.dialects.postgresql import UUID
 
 from sqlalchemy.orm import relationship
 
-from phoenixRest.models import db
 from phoenixRest.models import Base
 
 from phoenixRest.models.core.user import User
@@ -23,9 +22,6 @@ from phoenixRest.models.core.user import User
 from phoenixRest.utils import randomCode
 
 from datetime import datetime, timedelta
-
-import secrets
-import string
 
 class OauthRefreshToken(Base):
     __tablename__ = "oauth_refresh_token"

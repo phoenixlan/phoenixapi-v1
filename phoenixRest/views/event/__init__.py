@@ -5,7 +5,6 @@ from pyramid.httpexceptions import (
 from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
 
-from phoenixRest.models import db
 from phoenixRest.models.core.event import Event, get_current_event
 
 from phoenixRest.utils import validate
@@ -53,7 +52,7 @@ def current(request):
 @view_config(context=EventViews, request_method='GET', renderer='json', permission='get')
 def get_events(request):
     # Find all events and sort them by start time
-    events = db.query(Event).order_by(Event.start_time.asc()).all()
+    events = request.db.query(Event).order_by(Event.start_time.asc()).all()
     return events
 
 @view_config(context=EventViews, request_method='PUT', renderer='json', permission='create')
@@ -62,8 +61,8 @@ def create_event(request):
     event = Event(start_time=datetime.fromtimestamp(request.json_body['start_time']), 
                   end_time=datetime.fromtimestamp(request.json_body['end_time']), 
                   max_participants=request.json_body['max_participants'])
-    db.add(event)
-    db.flush()
+    request.db.add(event)
+    request.db.flush()
     return event
 
 @view_config(context=EventViews, name='current', request_method='OPTIONS', renderer='string', permission='current::get')

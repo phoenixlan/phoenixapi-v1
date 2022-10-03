@@ -15,19 +15,12 @@ from sqlalchemy.dialects.postgresql import UUID
 
 from sqlalchemy.orm import relationship
 
-from phoenixRest.models import db
 from phoenixRest.models import Base
-
-from phoenixRest.models.core.user import User
 
 # We must make sure that classes that are used in relationships are loaded
 from phoenixRest.models.tickets.ticket_type import TicketType
 from phoenixRest.models.tickets.entrance import Entrance
-from phoenixRest.models.tickets.seat import Seat
 
-from datetime import datetime, timedelta
-
-import string
 import uuid
 
 class Row(Base):

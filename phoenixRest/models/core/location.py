@@ -13,16 +13,8 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import UUID
 
-from sqlalchemy.orm import relationship
-
-from phoenixRest.models import db
 from phoenixRest.models import Base
 
-from phoenixRest.models.core.event import Event
-
-from datetime import datetime, timedelta
-
-import string
 import uuid
 
 class Location(Base):

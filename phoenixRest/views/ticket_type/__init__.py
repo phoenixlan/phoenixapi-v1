@@ -4,9 +4,6 @@ from pyramid.httpexceptions import (
 )
 from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
-
-from phoenixRest.models import db
-from phoenixRest.models.tickets.seatmap import Seatmap
 from phoenixRest.models.tickets.ticket_type import TicketType
 
 from phoenixRest.utils import validate
@@ -40,14 +37,14 @@ class TicketTypeResource(object):
 
 @view_config(name='', context=TicketTypeResource, request_method='GET', renderer='json', permission='getAll')
 def get_all_ticket_types(context, request):
-    return db.query(TicketType).order_by(TicketType.name).all()
+    return request.db.query(TicketType).order_by(TicketType.name).all()
 
 @view_config(name='', context=TicketTypeResource, request_method='POST', renderer='json', permission='create')
 @validate(json_body={'name': str, 'price': int, 'refundable': bool, 'seatable': bool, 'description': str})
 def create_ticket_type(context, request):
     entrance = TicketType(request.json_body['name'])
-    db.add(entrance)
-    db.flush()
+    request.db.add(entrance)
+    request.db.flush()
     return entrance
 
 

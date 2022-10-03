@@ -5,7 +5,6 @@ from pyramid.httpexceptions import (
 )
 from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
-from phoenixRest.models import db
 from phoenixRest.models.crew.position import Position 
 from phoenixRest.models.crew.team import Team
 from phoenixRest.models.crew.crew import Crew
@@ -15,9 +14,6 @@ from phoenixRest.mappers.position import map_position_with_users
 from phoenixRest.roles import ADMIN, HR_ADMIN
 
 from phoenixRest.utils import validate
-from phoenixRest.resource import resource
-
-from datetime import datetime
 
 import logging
 log = logging.getLogger(__name__)
@@ -38,7 +34,7 @@ class PositionInstanceResource(object):
 
     def __init__(self, request, uuid):
         self.request = request
-        self.positionInstance = db.query(Position).filter(Position.uuid == uuid).first()
+        self.positionInstance = request.db.query(Position).filter(Position.uuid == uuid).first()
 
         if self.positionInstance is None:
             raise HTTPNotFound("Position not found")
@@ -54,7 +50,7 @@ def create_position(context, request):
 
     # Add crew
     if request.json_body['crew'] is not None:
-        crew = db.query(Crew).filter(Crew.uuid == request.json_body['crew']).first()
+        crew = request.db.query(Crew).filter(Crew.uuid == request.json_body['crew']).first()
         if crew is None:
             request.response.status = 404
             return {
@@ -64,7 +60,7 @@ def create_position(context, request):
 
     # Add team
     if request.json_body['team'] is not None:
-        team = db.query(Team).filter(Team.uuid == request.json_body['team']).first()
+        team = request.db.query(Team).filter(Team.uuid == request.json_body['team']).first()
 
         if team is None:
             request.response.status = 404
@@ -73,5 +69,5 @@ def create_position(context, request):
             }
 
         position.team = team
-    db.add(position)
+    request.db.add(position)
     return position 

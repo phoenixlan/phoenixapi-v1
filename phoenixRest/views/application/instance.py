@@ -6,7 +6,6 @@ from pyramid.httpexceptions import (
 )
 from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
-from phoenixRest.models import db
 from phoenixRest.models.crew.application import Application, ApplicationState
 from phoenixRest.models.crew.position import create_or_fetch_crew_position
 
@@ -37,7 +36,7 @@ class ApplicationInstanceResource(object):
 
     def __init__(self, request, uuid):
         self.request = request
-        self.applicationInstance = db.query(Application).filter(Application.uuid == uuid).first()
+        self.applicationInstance = request.db.query(Application).filter(Application.uuid == uuid).first()
 
         if self.applicationInstance is None:
             raise HTTPNotFound("Application not found")
@@ -59,10 +58,10 @@ def edit_application(context, request):
     context.applicationInstance.answer = request.json_body["answer"]
     context.applicationInstance.last_processed_by = request.user
 
-    db.add(context.applicationInstance)
+    request.db.add(context.applicationInstance)
     
     if context.applicationInstance.state == ApplicationState.accepted:
-        position = create_or_fetch_crew_position(crew=context.applicationInstance.crew, team=None)
+        position = create_or_fetch_crew_position(request, crew=context.applicationInstance.crew, team=None)
         if position is None:
             request.response.status = 500
             return {

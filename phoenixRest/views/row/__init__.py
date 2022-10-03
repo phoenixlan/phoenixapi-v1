@@ -5,18 +5,14 @@ from pyramid.httpexceptions import (
 from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
 
-from phoenixRest.models import db
 from phoenixRest.models.tickets.seatmap import Seatmap
 from phoenixRest.models.tickets.row import Row
 
-from phoenixRest.utils import validate
 from phoenixRest.resource import resource
 
 from phoenixRest.roles import ADMIN, TICKET_ADMIN
 
 from phoenixRest.views.row.instance import RowInstanceResource
-
-from datetime import datetime
 
 import logging
 log = logging.getLogger(__name__)
@@ -43,7 +39,7 @@ class RowResource(object):
 
 @view_config(name='', context=RowResource, request_method='GET', renderer='json', permission='getAll')
 def get_all_rows(context, request):
-    return db.query(Row).order_by(Row.name).all()
+    return request.db.query(Row).order_by(Row.name).all()
 
 
 
