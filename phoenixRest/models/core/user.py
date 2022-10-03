@@ -15,10 +15,9 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import UUID
 
 from sqlalchemy.orm import relationship
+from sqlalchemy import or_
 
 from phoenixRest.models import Base
-
-from phoenixRest.models.crew.position import PositionAssociation
 
 from datetime import datetime, date
 
@@ -71,8 +70,7 @@ class User(Base):
     password = Column(Text, nullable=False)
     password_type = Column(Integer, nullable=False, default=0)
 
-    positions = relationship("Position",
-                    secondary=PositionAssociation, back_populates="users")
+    position_mappings = relationship("PositionMapping", back_populates="user")
 
     created = Column(DateTime, nullable=False)
 
@@ -136,7 +134,7 @@ class User(Base):
 
             'avatar_urls': self.get_avatar_urls(request)
         }
-
+    
     def get_age(self):
         return calculate_age(self.birthdate)
 

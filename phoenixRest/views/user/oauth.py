@@ -7,10 +7,9 @@ from pyramid.httpexceptions import (
 from sqlalchemy import or_
 
 from phoenixRest.models.core.user import User
+from phoenixRest.models.core.event import get_current_event
 from phoenixRest.models.core.oauth.oauthCode import OauthCode
 from phoenixRest.models.core.oauth.refreshToken import OauthRefreshToken
-
-from phoenixRest.models.crew.position import Position, PositionAssociation
 
 from phoenixRest.utils import validate
 
@@ -23,7 +22,13 @@ def generate_token(user: User, request):
     log.warning("Generating token")
     # We now need to fetch the users permissions
     # https://stackoverflow.com/questions/952914/how-to-make-a-flat-list-out-of-list-of-lists
-    position_map = [ position.permissions for position in user.positions ]
+    # Extract positions that are for current event, or that are lifetime
+    current_event = get_current_event()
+    eligible_positions = filter(lambda position: position.event_uuid == current_event.uuid or position.event_uuid == None, user.positions)
+
+    position_map = [ position.permissions for position in eligible_positions ] 
+
+
     flat_list = [item for sublist in position_map for item in sublist]
 
     flat_set = set([entry.permission for entry in flat_list])
