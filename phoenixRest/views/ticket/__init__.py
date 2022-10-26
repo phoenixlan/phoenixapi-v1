@@ -66,7 +66,7 @@ def create_ticket(context, request):
             "error": "Ticket type not found"
         }
 
-    ticket = Ticket(receiving_user, None, ticket_type, get_current_event())
+    ticket = Ticket(receiving_user, None, ticket_type, get_current_event(request))
     request.db.add(ticket)
     request.db.flush()
 

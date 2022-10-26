@@ -32,8 +32,6 @@ from pyramid.config import Configurator
 from pyramid.events import NewRequest, NewResponse, subscriber
 from pyramid.authorization import ACLAuthorizationPolicy
 
-from sqlalchemy import engine_from_config
-
 from phoenixRest.models import setup_connections
 
 from phoenixRest.models.core.user import User
@@ -51,7 +49,6 @@ def log_request(evt):
 def set_cors(evt):
     """ Add CORS headers to the request """
     resp = evt.response
-    resp.headers['X-Phoenix-Flag'] = "PHOENIX{1nsp3c7_7h023_h34D3r2}"
     resp.headers['Access-Control-Allow-Origin'] = "*"
     resp.headers['Access-Control-Allow-Headers'] = "Content-Type, X-Phoenix-Auth"
     resp.headers['Access-Control-Allow-Methods'] = "GET, POST, PUT, DELETE, " \

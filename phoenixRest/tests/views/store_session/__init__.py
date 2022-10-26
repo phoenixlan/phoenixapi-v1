@@ -1,26 +1,22 @@
-from phoenixRest.tests.utils import initTestingDB, authenticate
-from phoenixRest.tests.testCaseClass import TestCaseClass
+# Test if we can reserve a store session
+def test_create_store_session(testapp):
+    res = testapp.get('/event/current', status=200)
+    assert res.json_body['uuid'] is not None
 
-class FunctionalStoreSessionTests(TestCaseClass):
-    # Test if we can reserve a store session
-    def test_create_store_session(self):
-        res = self.testapp.get('/event/current', status=200)
-        self.assertIsNotNone(res.json_body['uuid'])
+    token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
 
-        token, refresh = authenticate(self.testapp, 'test', 'sixcharacters')
+    res = testapp.get('/event/%s/ticketType' % res.json_body['uuid'], headers=dict({
+        'X-Phoenix-Auth': token
+    }), status=200)
 
-        res = self.testapp.get('/event/%s/ticketType' % res.json_body['uuid'], headers=dict({
-            'X-Phoenix-Auth': token
-        }), status=200)
+    # Reserve a card for the first ticket for sale, i guess
+    res = testapp.put_json('/store_session', dict({
+        'cart': [
+            {'qty': 1, 'uuid': res.json_body[0]['uuid']}
+        ]
+    }), headers=dict({
+        'X-Phoenix-Auth': token
+    }), status=200)
 
-        # Reserve a card for the first ticket for sale, i guess
-        res = self.testapp.put_json('/store_session', dict({
-            'cart': [
-                {'qty': 1, 'uuid': res.json_body[0]['uuid']}
-            ]
-        }), headers=dict({
-            'X-Phoenix-Auth': token
-        }), status=200)
-
-        self.assertIsNotNone(res.json_body['uuid'])
+    assert res.json_body['uuid'] is not None
 

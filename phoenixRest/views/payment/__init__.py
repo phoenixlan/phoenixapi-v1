@@ -86,13 +86,10 @@ def create_payment(context, request):
             "error": "You have already created a payment for this card. Please finish it!"
         }
 
-    payment = Payment(request.user, chosen_provider, store_session.get_total(), get_current_event())
+    payment = Payment(request.user, chosen_provider, store_session.get_total(), get_current_event(request))
     payment.store_session = store_session
 
     request.db.add(payment)
     request.db.flush()
 
     return payment
-    
-
-    

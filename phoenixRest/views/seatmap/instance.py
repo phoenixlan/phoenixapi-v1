@@ -74,7 +74,7 @@ def get_seatmap_availability(context, request):
                 'error': "Event not found"
             }
     else:
-        event = get_current_event()
+        event = get_current_event(request)
     
     seatmap = request.db.query(Seatmap) \
         .join(Row, Row.seatmap_uuid == Seatmap.uuid) \

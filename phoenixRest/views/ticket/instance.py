@@ -75,7 +75,7 @@ def get_ticket(context, request):
 @validate(json_body={'seat_uuid': str})
 def seat_ticket(context, request):
     seat = request.db.query(Seat).filter(Seat.uuid == request.json_body['seat_uuid']).first()
-    event = get_current_event()
+    event = get_current_event(request)
 
     seating_time = event.booking_time + timedelta(seconds=event.seating_time_delta)
 

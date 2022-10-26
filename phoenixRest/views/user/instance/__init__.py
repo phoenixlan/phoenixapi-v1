@@ -137,7 +137,7 @@ def get_ticket_transfers(context, request):
                 'error': "Event not found"
             }
     else:
-        event = get_current_event()
+        event = get_current_event(request)
 
     transfers = request.db.query(TicketTransfer).filter(and_(TicketTransfer.ticket.has(Ticket.event_uuid == event.uuid), or_(
         or_(TicketTransfer.from_user == context.userInstance),

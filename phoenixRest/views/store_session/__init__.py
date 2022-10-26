@@ -52,7 +52,7 @@ def get_active_sessions(request):
 def create_store_session(context, request):
     max_purchase_amt = int(request.registry.settings["ticket.max_purchase_amt"])
     store_session_lifetime = int(request.registry.settings["ticket.store_session_lifetime"])
-    event = get_current_event()
+    event = get_current_event(request)
 
     if datetime.now() < event.booking_time and TICKET_BYPASS_TICKETSALE_START_RESTRICTION not in request.effective_principals:
         request.response.status = 400
