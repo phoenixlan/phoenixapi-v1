@@ -1,4 +1,5 @@
 import os
+from re import S
 
 from pyramid.authorization import Allow, Everyone
 
@@ -36,7 +37,7 @@ Base = declarative_base(metadata=meta)
 def get_postgresql_url(username, password, host, db):
 	return "postgresql://%s:%s@%s/%s" % (username, password, host, db)
 
-def setup_connections(username=None, password=None, host=None):
+def setup_dbengine(username=None, password=None, host=None):
 	username = os.environ['POSTGRES_USER'] if username is None else username
 	password = os.environ['POSTGRES_PASSWORD'] if password is None else password
 	host = os.environ['DB_HOST'] if host is None else host
@@ -44,12 +45,15 @@ def setup_connections(username=None, password=None, host=None):
 
 	engine = create_engine(get_postgresql_url(username, password, host, "phoenix"))
 
+	Base.metadata.bind = engine
+	return engine
+
+def setup_session(engine):
+	log.info("Setting up db session")
 	db = scoped_session(sessionmaker(autoflush=False))
 	register(db)
 
 	db.configure(bind=engine)
-	# TODO
-	Base.metadata.bind = engine
 
 	log.info("Done setting up database connections")
 	return db

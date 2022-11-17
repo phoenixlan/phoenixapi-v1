@@ -32,7 +32,7 @@ from pyramid.config import Configurator
 from pyramid.events import NewRequest, NewResponse, subscriber
 from pyramid.authorization import ACLAuthorizationPolicy
 
-from phoenixRest.models import setup_connections
+from phoenixRest.models import setup_session, setup_dbengine
 
 from phoenixRest.models.core.user import User
 
@@ -90,10 +90,14 @@ def mail_provider(mailProvider: MailProvider):
         return mailProvider
     return inner
 
-def main(global_config, **settings):
+def main(global_config, dbengine=None, **settings):
     log.debug("Hello! The server is starting")
 
-    db_connection = setup_connections()
+    if dbengine is None:
+        log.debug("No dbengine provided, setting up my own")
+        dbengine = setup_dbengine()
+
+    db_session = setup_session(dbengine)
 
     config = Configurator(settings=settings, root_factory=RootResource)
     
@@ -109,7 +113,7 @@ def main(global_config, **settings):
 
     # Add a db connection handle to the request object
     def db(request):
-        return db_connection
+        return db_session
 
     config.add_request_method(db, reify=True)
 
