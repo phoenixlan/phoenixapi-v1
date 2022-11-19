@@ -32,8 +32,6 @@ from pyramid.config import Configurator
 from pyramid.events import NewRequest, NewResponse, subscriber
 from pyramid.authorization import ACLAuthorizationPolicy
 
-from phoenixRest.models import setup_session, setup_dbengine
-
 from phoenixRest.models.core.user import User
 
 from phoenixRest.resource import RootResource
@@ -90,14 +88,8 @@ def mail_provider(mailProvider: MailProvider):
         return mailProvider
     return inner
 
-def main(global_config, dbengine=None, **settings):
+def main(global_config, **settings):
     log.debug("Hello! The server is starting")
-
-    if dbengine is None:
-        log.debug("No dbengine provided, setting up my own")
-        dbengine = setup_dbengine()
-
-    db_session = setup_session(dbengine)
 
     config = Configurator(settings=settings, root_factory=RootResource)
     
@@ -111,11 +103,8 @@ def main(global_config, dbengine=None, **settings):
     config.include('pyramid_jwt')
     config.set_jwt_authentication_policy(JWT_SECRET, http_header='X-Phoenix-Auth', expiration=60*60 if "DEBUG" in os.environ else 10*60, callback=add_role_principals)
 
-    # Add a db connection handle to the request object
-    def db(request):
-        return db_session
-
-    config.add_request_method(db, reify=True)
+    # Add database
+    config.include('.models')
 
     # Add the user property to the request object
     config.add_request_method(user, reify=True)
