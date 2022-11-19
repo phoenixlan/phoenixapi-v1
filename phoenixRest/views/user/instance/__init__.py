@@ -238,12 +238,6 @@ def upload_avatar(context, request):
 
     _file_handle = request.POST['file'].file
 
-    # Create an avatar so we can copy the file to the correct file name
-    avatar = Avatar(context.userInstance, "jpg")
-    request.db.add(avatar)
-    request.db.flush()
-    log.info("Created new avatar %s" % avatar.uuid)
-
     # Validate the image
     min_w = int(request.registry.settings["avatar.min_w"])
     min_h = int(request.registry.settings["avatar.min_h"])
@@ -275,7 +269,13 @@ def upload_avatar(context, request):
 
     if w < min_w or h < min_h:
         raise HTTPBadRequest('Cropping box is too small')
-    
+
+    # Create an avatar so we can copy the file to the correct file name
+    avatar = Avatar(context.userInstance, "jpg")
+    request.db.add(avatar)
+    request.db.flush()
+    log.info("Created new avatar %s" % avatar.uuid)
+
     # Crop the image
     im = im.crop((x, y, x+w, y+h))
 

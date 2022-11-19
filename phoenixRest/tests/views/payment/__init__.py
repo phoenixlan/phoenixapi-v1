@@ -28,7 +28,8 @@ def _create_store_session(testapp, token):
     assert store_session is not None
     return store_session
 
-def test_ticket_sale_start_limit(testapp):
+def test_ticket_sale_start_limit(testapp, db):
+    testapp.ensure_typical_event()
     # Jeff doesn't have permission to buy tickets any time
     token, refresh = testapp.auth_get_tokens('jeff', 'sixcharacters')
 
@@ -55,6 +56,7 @@ def test_ticket_sale_start_limit(testapp):
 
 # Test if we can create a payment
 def test_payment_flow_vipps(testapp):
+    testapp.ensure_typical_event()
     token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
 
     store_session = _create_store_session(testapp, token)
@@ -136,6 +138,7 @@ def test_payment_flow_vipps(testapp):
 
 # Test if we can create a payment
 def test_payment_flow_stripe(testapp):
+    testapp.ensure_typical_event()
     token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
 
     store_session = _create_store_session(testapp, token)

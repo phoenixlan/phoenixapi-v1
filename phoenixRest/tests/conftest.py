@@ -37,7 +37,6 @@ def app(dbengine):
 def testapp(app, tm, db):
 
     return TestApp(app, extra_environ={
-        'HTTP_HOST': 'example.com',
         'tm.active': True,
         'tm.manager': tm,
         'app.dbsession': db,

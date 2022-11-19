@@ -1,5 +1,6 @@
 # Test if we can reserve a store session
 def test_create_store_session(testapp):
+    testapp.ensure_typical_event()
     res = testapp.get('/event/current', status=200)
     assert res.json_body['uuid'] is not None
 

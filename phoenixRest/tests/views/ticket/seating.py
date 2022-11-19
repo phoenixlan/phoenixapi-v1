@@ -65,7 +65,8 @@ def ensure_ticket(testapp, token, event_uuid):
     assert len(owned_tickets) > 0
     return owned_tickets[0]
 
-def test_ticket_seating(testapp):
+def test_ticket_seating(testapp, db):
+    testapp.ensure_typical_event()
     # test is an admin
     token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
 
