@@ -14,14 +14,10 @@ from sqlalchemy.dialects.postgresql import UUID
 
 from sqlalchemy.orm import relationship
 
-from phoenixRest.models import db
 from phoenixRest.models import Base
 
 from phoenixRest.models.tickets.ticket import Ticket
 
-from datetime import datetime, timedelta
-
-import string
 import uuid
 
 class SeatmapBackground(Base):

@@ -5,8 +5,6 @@ from phoenixRest.models.tickets.payment_providers.stripe_payment import StripePa
 
 from phoenixRest.features.payment import mint_tickets
 
-from phoenixRest.models import db
-
 import logging
 log = logging.getLogger(__name__)
 
@@ -14,7 +12,7 @@ STRIPE_INITIALIZED = False
 
 STRIPE_ENDPOINT_SECRET = os.environ.get('STRIPE_ENDPOINT_SECRET', 'placeholder')
 
-def initialize_stripe_payment(payment: Payment):
+def initialize_stripe_payment(request, payment: Payment):
     # If we are running in pytest, we can safely mock
     if "PYTEST_CURRENT_TEST" in os.environ:
         return "placeholder client secret"
@@ -36,7 +34,7 @@ def initialize_stripe_payment(payment: Payment):
     payment_id = intent['id']
     log.info("Created new stripe payment with ID %s" % payment_id)
 
-    db.add(StripePayment(payment, payment_id))
+    request.db.add(StripePayment(payment, payment_id))
 
     return client_secret
 

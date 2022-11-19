@@ -5,7 +5,6 @@ from pyramid.httpexceptions import (
 )
 from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
-from phoenixRest.models import db
 from phoenixRest.models.crew.team import Team
 
 from phoenixRest.utils import validate
@@ -29,11 +28,11 @@ class TeamInstanceViews(object):
 
     def __init__(self, request, uuid):
         self.request = request
-        self.teamInstance = db.query(Team).filter(Team.uuid == uuid).first()
+        self.teamInstance = request.db.query(Team).filter(Team.uuid == uuid).first()
 
         if self.teamInstance is None:
             raise HTTPNotFound("Team not found")
 
 @view_config(context=TeamInstanceViews, name='', request_method='GET', renderer='json', permission='team_view')
 def get_team(context, request):
-    return self.teamInstance
+    return context.teamInstance

@@ -5,16 +5,11 @@ from pyramid.httpexceptions import (
 )
 from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
-from phoenixRest.models import db
-from phoenixRest.models.crew.position import Position 
-from phoenixRest.models.crew.team import Team
+from phoenixRest.models.core.user import User
 
 from phoenixRest.roles import ADMIN
 
 from phoenixRest.utils import validate
-from phoenixRest.resource import resource
-
-from datetime import datetime
 
 import logging
 log = logging.getLogger(__name__)
@@ -27,7 +22,6 @@ class PositionUserInstanceResource(object):
         (Allow, ADMIN, 'remove_user')
     ]
 
-
     def __init__(self, request):
         self.request = request
 
@@ -35,7 +29,7 @@ class PositionUserInstanceResource(object):
 @view_config(context=PositionUserInstanceResource, name='', request_method='PUT', renderer='json', permission='add_to_position')
 @validate(json_body={'uuid': str})
 def add_to_position(context, request):
-    user = db.query(User).filter(User.uuid == request.json_body['uuid']).first()
+    user = request.db.query(User).filter(User.uuid == request.json_body['uuid']).first()
     if user is None:
         request.response.status = 404
         return {
@@ -43,8 +37,8 @@ def add_to_position(context, request):
         }
 
     context.__parent__.positionInstance.users.add(user)
-    db.save(context.__parent__.positionInstance)
-    return self.__parent__.positionInstance
+    request.db.save(context.__parent__.positionInstance)
+    return context.__parent__.positionInstance
 
     
 @view_config(context=PositionUserInstanceResource, request_method='DELETE', renderer='json', permission='create_position')

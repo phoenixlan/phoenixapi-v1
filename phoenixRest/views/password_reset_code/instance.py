@@ -7,23 +7,16 @@ from pyramid.httpexceptions import (
 )
 from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
-from phoenixRest.models import db
 from phoenixRest.models.core.password_reset_code import PasswordResetCode
 from phoenixRest.models.core.oauth.refreshToken import OauthRefreshToken
 
 
-from phoenixRest.roles import ADMIN, HR_ADMIN
-
 from phoenixRest.utils import validate
-from phoenixRest.resource import resource
 
 from datetime import datetime, timedelta
-import os
 
 import logging
 log = logging.getLogger(__name__)
-
-from PIL import Image
 
 class PasswordResetCodeInstanceResource(object):
     def __acl__(self):
@@ -34,7 +27,7 @@ class PasswordResetCodeInstanceResource(object):
     def __init__(self, request, code):
         self.request = request
         log.info(code)
-        self.resetCodeInstance = db.query(PasswordResetCode).filter(PasswordResetCode.code == code).first()
+        self.resetCodeInstance = request.db.query(PasswordResetCode).filter(PasswordResetCode.code == code).first()
 
         if self.resetCodeInstance is None:
             raise HTTPNotFound("Not found")
@@ -67,15 +60,15 @@ def reset_password(context, request):
             'error': 'Password and repeat password does not match'
         }
     context.resetCodeInstance.user.set_password(password)
-    db.add(context.resetCodeInstance.user)
+    request.db.add(context.resetCodeInstance.user)
 
     # Delete all refresh tokens
-    refresh_tokens = db.query(OauthRefreshToken).filter(OauthRefreshToken.user_uuid == context.resetCodeInstance.user.uuid).all()
+    refresh_tokens = request.db.query(OauthRefreshToken).filter(OauthRefreshToken.user_uuid == context.resetCodeInstance.user.uuid).all()
     for token in refresh_tokens:
-        db.delete(token)
+        request.db.delete(token)
 
     # Refresh the refresh code
-    db.delete(context.resetCodeInstance)
+    request.db.delete(context.resetCodeInstance)
 
     # Notify the user
     request.mail_service.send_mail(context.resetCodeInstance.user.email, "Passordet ditt har blitt tilbakestilt", "forgotten_notice.jinja2", {

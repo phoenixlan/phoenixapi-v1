@@ -15,7 +15,6 @@ from sqlalchemy.dialects.postgresql import UUID
 
 from sqlalchemy.orm import relationship
 
-from phoenixRest.models import db
 from phoenixRest.models import Base
 
 from phoenixRest.models.core.user import User
@@ -25,10 +24,7 @@ from phoenixRest.models.tickets.ticket_type import TicketType
 
 from phoenixRest.mappers.seat import map_seat_for_ticket
 
-from datetime import datetime, timedelta
-
-import string
-import uuid
+from datetime import datetime
 
 class Ticket(Base):
     __tablename__ = "ticket"

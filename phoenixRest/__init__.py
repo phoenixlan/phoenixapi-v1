@@ -32,10 +32,6 @@ from pyramid.config import Configurator
 from pyramid.events import NewRequest, NewResponse, subscriber
 from pyramid.authorization import ACLAuthorizationPolicy
 
-from sqlalchemy import engine_from_config
-
-from phoenixRest.models import db, setup_connections
-
 from phoenixRest.models.core.user import User
 
 from phoenixRest.resource import RootResource
@@ -51,7 +47,6 @@ def log_request(evt):
 def set_cors(evt):
     """ Add CORS headers to the request """
     resp = evt.response
-    resp.headers['X-Phoenix-Flag'] = "PHOENIX{1nsp3c7_7h023_h34D3r2}"
     resp.headers['Access-Control-Allow-Origin'] = "*"
     resp.headers['Access-Control-Allow-Headers'] = "Content-Type, X-Phoenix-Auth"
     resp.headers['Access-Control-Allow-Methods'] = "GET, POST, PUT, DELETE, " \
@@ -77,7 +72,7 @@ def user(request):
     uuid = request.authenticated_userid
     log.info("Logged in as %s" % uuid)
 
-    user = db.query(User).filter(User.uuid == uuid).first()
+    user = request.db.query(User).filter(User.uuid == uuid).first()
     if user is None:
         raise HTTPForbidden()
     return user
@@ -96,8 +91,6 @@ def mail_provider(mailProvider: MailProvider):
 def main(global_config, **settings):
     log.debug("Hello! The server is starting")
 
-    setup_connections()
-
     config = Configurator(settings=settings, root_factory=RootResource)
     
     # Set up conversion of uuid to string
@@ -109,6 +102,9 @@ def main(global_config, **settings):
     config.set_authorization_policy(ACLAuthorizationPolicy())
     config.include('pyramid_jwt')
     config.set_jwt_authentication_policy(JWT_SECRET, http_header='X-Phoenix-Auth', expiration=60*60 if "DEBUG" in os.environ else 10*60, callback=add_role_principals)
+
+    # Add database
+    config.include('.models')
 
     # Add the user property to the request object
     config.add_request_method(user, reify=True)

@@ -4,18 +4,13 @@ from pyramid.httpexceptions import (
 )
 from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
-
-from phoenixRest.models import db
 from phoenixRest.models.core.avatar import Avatar, AvatarState
 
-from phoenixRest.utils import validate
 from phoenixRest.resource import resource
 
 from phoenixRest.roles import ADMIN, CHIEF, HR_ADMIN
 
 from phoenixRest.views.avatar.instance import AvatarInstanceResource
-
-from datetime import datetime
 
 import logging
 log = logging.getLogger(__name__)
@@ -49,9 +44,9 @@ class AvatarResource(object):
 @view_config(context=AvatarResource, name='', request_method='GET', renderer='json', permission='getAll')
 def get_all_avatars(request):
     # Returns all avatars
-    return db.query(Avatar).order_by(Avatar.created).all()
+    return request.db.query(Avatar).order_by(Avatar.created).all()
 
 @view_config(context=AvatarResource, name='pending', request_method='GET', renderer='json', permission='getPending')
 def get_pending_avatars(request):
     # Returns all avatars
-    return db.query(Avatar).filter(Avatar.state == AvatarState.uploaded).order_by(Avatar.created).all()
+    return request.db.query(Avatar).filter(Avatar.state == AvatarState.uploaded).order_by(Avatar.created).all()

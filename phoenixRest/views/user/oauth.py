@@ -6,7 +6,6 @@ from pyramid.httpexceptions import (
 
 from sqlalchemy import or_
 
-from phoenixRest.models import db
 from phoenixRest.models.core.user import User
 from phoenixRest.models.core.oauth.oauthCode import OauthCode
 from phoenixRest.models.core.oauth.refreshToken import OauthRefreshToken
@@ -48,7 +47,7 @@ def generate_token(user: User, request):
 def login(request):
     login = request.json_body['login']
     password = request.json_body['password']
-    user = db.query(User).filter(or_(User.username == login, User.email == login.lower())).first()
+    user = request.db.query(User).filter(or_(User.username == login, User.email == login.lower())).first()
 
     if user is not None:
         if user.activation_code is not None:
@@ -59,7 +58,7 @@ def login(request):
         if user.verify_password(password):
             # Create a code that can be exchanged for an oauth token
             code = OauthCode(user)
-            db.add(code)
+            request.db.add(code)
             log.warning("Created oauth code: %s" % code.code)
             return {
                 'code': code.code
@@ -82,7 +81,7 @@ def token(request):
         log.info("Looking for: %s" % request.json_body['code'])
         print("Looking for: %s" % request.json_body['code'])
 
-        code = db.query(OauthCode).filter(OauthCode.code == request.json_body['code']).first()
+        code = request.db.query(OauthCode).filter(OauthCode.code == request.json_body['code']).first()
         if code is None:
             log.info("Not seen before code")
 
@@ -107,11 +106,11 @@ def token(request):
             }
 
         # The code can only be used once
-        db.delete(code)
+        request.db.delete(code)
         log.info("Deleted code from database")
 
         refresh_token = OauthRefreshToken(user, request.headers.get('User-Agent', ""))
-        db.add(refresh_token)
+        request.db.add(refresh_token)
 
         token = generate_token(user, request)
         
@@ -125,7 +124,7 @@ def token(request):
             return {
                 "error": "Missing refresh_token"
             }
-        refreshToken = db.query(OauthRefreshToken).filter(OauthRefreshToken.token == request.json_body['refresh_token']).first()
+        refreshToken = request.db.query(OauthRefreshToken).filter(OauthRefreshToken.token == request.json_body['refresh_token']).first()
         if refreshToken is None:
             # TODO rate limit
             request.response.status = 403

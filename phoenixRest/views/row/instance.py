@@ -6,7 +6,6 @@ from pyramid.httpexceptions import (
 )
 from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
-from phoenixRest.models import db
 from phoenixRest.models.tickets.seat import Seat
 from phoenixRest.models.tickets.row import Row
 
@@ -36,7 +35,7 @@ class RowInstanceResource(object):
     def __init__(self, request, uuid):
         self.request = request
 
-        self.rowInstance = validateUuidAndQuery(Row, Row.uuid, uuid)
+        self.rowInstance = validateUuidAndQuery(request, Row, Row.uuid, uuid)
 
         if self.rowInstance is None:
             raise HTTPNotFound("Row not found")
@@ -55,17 +54,17 @@ def update_row(context, request):
     if 'is_horizontal' in request.json_body:
         context.rowInstance.is_horizontal = request.json_body['is_horizontal']
     
-    db.add(context.rowInstance)
-    db.flush()
+    request.db.add(context.rowInstance)
+    request.db.flush()
     return context.rowInstance
     
 @view_config(context=RowInstanceResource, name='seat', request_method='PUT', renderer='json', permission='create_seat')
 def create_seat(context, request):
-    existing = db.query(Seat).where(Seat.row_uuid == context.rowInstance.uuid).all()
+    existing = request.db.query(Seat).where(Seat.row_uuid == context.rowInstance.uuid).all()
     seat = Seat(len(existing)+1, context.rowInstance)
 
-    db.add(seat)
-    db.flush()
+    request.db.add(seat)
+    request.db.flush()
     return seat
 
 

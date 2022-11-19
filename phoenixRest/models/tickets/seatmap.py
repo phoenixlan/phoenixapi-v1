@@ -15,19 +15,14 @@ from sqlalchemy.dialects.postgresql import UUID
 
 from sqlalchemy.orm import relationship
 
-from phoenixRest.models import db
 from phoenixRest.models import Base
 
-from phoenixRest.models.core.user import User
 from phoenixRest.mappers.seatmap_background import map_seatmap_background_no_metadata
 
+# DO NOT PRUNE
 # We must make sure that classes that are used in relationships are loaded
 from phoenixRest.models.tickets.row import Row
 
-from datetime import datetime, timedelta
-
-import secrets
-import string
 import uuid
 
 class Seatmap(Base):

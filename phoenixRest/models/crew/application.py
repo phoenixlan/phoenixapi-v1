@@ -15,7 +15,7 @@ from sqlalchemy.dialects.postgresql import UUID
 
 from sqlalchemy.orm import relationship
 
-from phoenixRest.models import db, Base
+from phoenixRest.models import Base
 
 from phoenixRest.models.core.user import User
 from phoenixRest.models.core.event import Event
@@ -23,10 +23,8 @@ from phoenixRest.models.crew.crew import Crew
 
 from phoenixRest.mappers.user import map_user_with_secret_fields
 
-from datetime import datetime, timedelta
+from datetime import datetime
 
-import secrets
-import string
 import uuid
 import enum
 

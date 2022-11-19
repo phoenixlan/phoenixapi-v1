@@ -7,7 +7,6 @@ from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
 from sqlalchemy import or_
 
-from phoenixRest.models import db
 from phoenixRest.models.core.user import Gender, User, calculate_age
 from phoenixRest.models.core.activation_code import ActivationCode
 from phoenixRest.models.core.password_reset_code import PasswordResetCode
@@ -71,7 +70,7 @@ def search_users(context, request):
         }
 
     query = request.GET['query']
-    users = db.query(User).filter(or_(
+    users = request.db.query(User).filter(or_(
         User.firstname.contains(query),
         User.lastname.contains(query),
         User.username.contains(query),
@@ -81,7 +80,7 @@ def search_users(context, request):
 
 @view_config(context=UserViews, name='', request_method='GET', renderer='json', permission='all_get')
 def all_users(context, request):
-    users = db.query(User).order_by(User.created).all()
+    users = request.db.query(User).order_by(User.created).all()
     return [map_user_simple_with_secret_fields(user, request) for user in users]
 
 #https://stackoverflow.com/questions/201323/how-can-i-validate-an-email-address-using-a-regular-expression
@@ -105,9 +104,9 @@ def register_user(context, request):
     email = request.json_body['email'].lower()
     username = request.json_body['username']
 
-    existingUsername = db.query(User).filter(User.username == username).first()
-    existingEmail = db.query(User).filter(User.email == email).first()
-    existingPhone = db.query(User).filter(User.phone == request.json_body["phone"]).first()
+    existingUsername = request.db.query(User).filter(User.username == username).first()
+    existingEmail = request.db.query(User).filter(User.email == email).first()
+    existingPhone = request.db.query(User).filter(User.phone == request.json_body["phone"]).first()
 
     if existingUsername is not None or existingEmail is not None or existingPhone is not None:
         request.response.status = 400
@@ -170,8 +169,8 @@ def register_user(context, request):
             "error": "Invalid OAuth client ID"
         }
     user.activation_code = ActivationCode(user, client_id)
-    db.add(user)
-    db.flush()
+    request.db.add(user)
+    request.db.flush()
 
     log.info("Registered new user %s %s (%s)" % (firstname, surname, email))
 
@@ -193,7 +192,7 @@ def register_user(context, request):
 @validate(get={"code": str})
 def activate_account(context, request):
     code = request.GET["code"]
-    activationCode = db.query(ActivationCode).filter(ActivationCode.code == code).first()
+    activationCode = request.db.query(ActivationCode).filter(ActivationCode.code == code).first()
 
     if activationCode is None:
         log.info("Unable to find activation code %s" % code)
@@ -203,7 +202,7 @@ def activate_account(context, request):
             'name': request.registry.settings["api.name"]
         }
     else:
-        db.delete(activationCode)
+        request.db.delete(activationCode)
         redirectUrl = None
         if activationCode.client_id is not None:
             redirectUrl = request.registry.settings["oauth.%s.redirect_url" % activationCode.client_id]
@@ -226,13 +225,13 @@ def forgot_password(context, request):
         }
     url = request.registry.settings["oauth.%s.redirect_url" % client_id]
 
-    user = db.query(User).filter(or_(User.username == request.json_body['login'], User.email == request.json_body['login'])).first()
+    user = request.db.query(User).filter(or_(User.username == request.json_body['login'], User.email == request.json_body['login'])).first()
     if not user:
         log.warn("Got a forgot password request for an account that doesn't exist")
     else:
         resetCode = PasswordResetCode(user, client_id)
-        db.add(resetCode)
-        db.flush()
+        request.db.add(resetCode)
+        request.db.flush()
         request.mail_service.send_mail(user.email, "Glemt passord", "forgotten.jinja2", {
             "mail": request.registry.settings["api.contact"],
             "resetUrl": "%s/static/forgot_reset.html?code=%s&client_id=%s&redirect_uri=%s" % (request.registry.settings["api.root"], resetCode.code, client_id, url),

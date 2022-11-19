@@ -7,19 +7,11 @@ from pyramid.httpexceptions import (
 )
 from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
-from phoenixRest.models import db
-from phoenixRest.models.core.user import User
 from phoenixRest.models.tickets.ticket_transfer import TicketTransfer
-from phoenixRest.models.tickets.row import Row
 
 from phoenixRest.roles import ADMIN, TICKET_ADMIN
 
-from phoenixRest.utils import validate, validateUuidAndQuery
-from phoenixRest.resource import resource
-
-from sqlalchemy import and_
-
-from datetime import datetime, timedelta
+from phoenixRest.utils import validateUuidAndQuery
 
 import logging
 log = logging.getLogger(__name__)
@@ -45,7 +37,7 @@ class TicketTransferInstanceResource(object):
     def __init__(self, request, uuid):
         self.request = request
 
-        self.ticketTransferInstance = validateUuidAndQuery(TicketTransfer, TicketTransfer.uuid, uuid)
+        self.ticketTransferInstance = validateUuidAndQuery(request, TicketTransfer, TicketTransfer.uuid, uuid)
 
         if self.ticketTransferInstance is None:
             raise HTTPNotFound("Ticket transfer not found")
