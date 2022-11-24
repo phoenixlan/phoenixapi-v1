@@ -35,7 +35,7 @@ class Position(Base):
     description = Column(Text)
     chief = Column(Boolean, nullable=False, default=True)
 
-    mappings = relationship("PositionMapping", back_populates="position")
+    position_mappings = relationship("PositionMapping", back_populates="position")
 
     permissions = relationship("Permission", back_populates="position")
 
@@ -52,7 +52,7 @@ class Position(Base):
 
             'crew_uuid': str(self.crew_uuid) if self.crew_uuid is not None else None,
             'team_uuid': str(self.team_uuid) if self.team_uuid is not None else None,
-            'mappings': self.mappings,
+            'position_mappings': self.position_mappings,
             'chief': self.chief,
             'permissions': self.permissions
 

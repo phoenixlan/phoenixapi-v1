@@ -15,15 +15,13 @@ from sqlalchemy.dialects.postgresql import UUID
 
 from sqlalchemy.orm import relationship
 
-from phoenixRest.models import db, Base
+from phoenixRest.models import Base
 
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import logging
 log = logging.getLogger(__name__)
 
-import secrets
-import string
 import uuid
 
 class PositionMapping(Base):
@@ -46,10 +44,12 @@ class PositionMapping(Base):
         self.position = position
         self.event = event
         self.created = datetime.now()
-
+    
+    def __json__(self, request):
         return {
-            'position_uuid': str(self.position_uuid),
-            'user_uuid': str(self.user_uuid),
-            'event_uuid': str(self.event_uuid),
+            'uuid': self.uuid,
+            'position_uuid': self.position_uuid,
+            'user_uuid': self.user_uuid,
+            'event_uuid': self.event_uuid,
             'created': int(self.created.timestamp())
         }

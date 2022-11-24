@@ -1,4 +1,5 @@
 from .ticket import map_ticket_simple
+from .position_mapping import map_position_mapping_with_position
 
 def map_user_with_secret_fields(user, request):
     return {
@@ -21,7 +22,7 @@ def map_user_with_secret_fields(user, request):
         'tos_level': user.tos_level,
         'created': int(user.created.timestamp()),
 
-        'positions': user.positions,
+        'position_mappings': [ map_position_mapping_with_position(mapping) for mapping in user.position_mappings ],
         'avatar_uuid': user.avatar.uuid if user.avatar is not None else None,
         'avatar_urls': user.get_avatar_urls(request),
     }
@@ -37,7 +38,7 @@ def map_user_public_with_positions(user, request):
         'gender': str(user.gender),
 
         'avatar_urls': user.get_avatar_urls(request),
-        'positions': user.positions
+        'position_mappings': (map_position_mapping_with_position(mapping) for mapping in user.position_mappings),
     }
 
 
