@@ -39,7 +39,7 @@ class AgendaViews(object):
 @view_config(context=AgendaViews, request_method='GET', renderer='json', permission='get')
 def get_agenda_entries(request):
     # Find all events and sort them by start time
-    entries = request.db.query(AgendaEntry).filter(AgendaEntry.event == get_current_event()).order_by(AgendaEntry.time.asc()).all()
+    entries = request.db.query(AgendaEntry).filter(AgendaEntry.event == get_current_event(request)).order_by(AgendaEntry.time.asc()).all()
     return entries 
 
 @view_config(context=AgendaViews, request_method='PUT', renderer='json', permission='create')
