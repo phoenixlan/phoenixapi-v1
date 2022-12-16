@@ -1,9 +1,6 @@
 # Test creating applications, and that the user is qualified to do so
 from wsgiref.util import application_uri
 
-import logging
-log = logging.getLogger(__name__)
-
 def create_application(testapp, token, application_crew):
     # Get the current user, ensure there is no avatar
     currentUser = testapp.get('/user/current', headers=dict({
