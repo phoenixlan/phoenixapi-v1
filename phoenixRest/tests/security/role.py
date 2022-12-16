@@ -7,9 +7,6 @@ from phoenixRest.models.crew.position_mapping import PositionMapping
 import json
 import base64
 
-import logging
-log = logging.getLogger(__name__)
-
 # Tests that roles are correctly given out depending on current event
 def test_role_event_assignment(testapp, db):
     last_event = testapp.get_last_event(db)
@@ -40,11 +37,6 @@ def test_role_event_assignment(testapp, db):
     current_user = testapp.get('/user/current', headers=dict({
         'X-Phoenix-Auth': token
         }), status=200).json_body
-
-    log.info("Current event: %s" % current_event.uuid)
-    log.info("Last event: %s" % last_event.uuid)
-
-    log.info(json.dumps(current_user))
     
     # First ensure that position mappings show up properly
     current_mappings = list(filter(lambda mapping: mapping['event_uuid'] == str(current_event.uuid), current_user['position_mappings']))
@@ -54,7 +46,6 @@ def test_role_event_assignment(testapp, db):
 
     # Now parse the jwt token we got
     token_payload = json.loads(base64.b64decode(token.split(".")[1]+"=="))
-    log.info(token_payload)
 
     # Did we have the expected roles?
     expected_roles = ['user:%s' % current_user['uuid'], 'test1', 'member']
