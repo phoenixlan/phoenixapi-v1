@@ -8,6 +8,8 @@ from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
 from phoenixRest.models.crew.application import Application, ApplicationState
 from phoenixRest.models.crew.position import create_or_fetch_crew_position
+from phoenixRest.models.crew.position_mapping import PositionMapping
+from phoenixRest.models.core.event import get_current_event
 
 from phoenixRest.roles import ADMIN, CHIEF
 
@@ -67,7 +69,8 @@ def edit_application(context, request):
             return {
                 'error': "Unable to get position"
             }
-        position.users.append(context.applicationInstance.user)
+        mapping = PositionMapping(context.applicationInstance.user, position, get_current_event(request))
+        position.position_mappings.append(mapping)
 
     # Send mail
     name = request.registry.settings["api.name"]
