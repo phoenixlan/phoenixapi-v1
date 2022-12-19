@@ -70,7 +70,7 @@ def create_ticket(context, request):
     request.db.add(ticket)
     request.db.flush()
 
-    request.mail_service.send_mail(receiving_user.email, "Du har mottatt en billett", "ticket_received.jinja2", {
+    request.service_manager.get_service('email').send_mail(receiving_user.email, "Du har mottatt en billett", "ticket_received.jinja2", {
         "mail": request.registry.settings["api.contact"],
         "domain": request.registry.settings["api.mainpage"],
         "type": ticket_type.name,

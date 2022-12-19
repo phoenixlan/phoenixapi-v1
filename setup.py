@@ -31,7 +31,8 @@ requires = [
     'sentry-sdk',
     'Pillow',
     'stripe',
-    'mistune'
+    'mistune',
+    'pika'
 ]
 
 setup(name='phoenixRest',

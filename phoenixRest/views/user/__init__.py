@@ -203,7 +203,7 @@ def register_user(context, request):
     log.info("Registered new user %s %s (%s)" % (firstname, surname, email))
 
     # Now send activation e-mail
-    request.mail_service.send_mail(request.json_body["email"], "Registrert konto", "registration.jinja2", {
+    request.service_manager.get_service('email').send_mail(request.json_body["email"], "Registrert konto", "registration.jinja2", {
         "mail": request.registry.settings["api.contact"],
         "activationUrl": "%s/user/activate?code=%s" % (request.registry.settings["api.root"], user.activation_code.code),
         "name": request.registry.settings["api.name"]
@@ -310,7 +310,7 @@ def forgot_password(context, request):
         resetCode = PasswordResetCode(user, client_id)
         request.db.add(resetCode)
         request.db.flush()
-        request.mail_service.send_mail(user.email, "Glemt passord", "forgotten.jinja2", {
+        request.service_manager.get_service('email').send_mail(user.email, "Glemt passord", "forgotten.jinja2", {
             "mail": request.registry.settings["api.contact"],
             "resetUrl": "%s/static/forgot_reset.html?code=%s&client_id=%s&redirect_uri=%s" % (request.registry.settings["api.root"], resetCode.code, client_id, url),
             "name": request.registry.settings["api.name"],

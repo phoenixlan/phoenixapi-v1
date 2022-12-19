@@ -101,7 +101,7 @@ def edit_application(context, request):
     # Send mail
     name = request.registry.settings["api.name"]
     log.info("Registered change in application - sending e-mail")
-    request.mail_service.send_mail(context.applicationInstance.user.email, "Vedrørende din crew-søknad til %s" % name, "application_response.jinja2", {
+    request.service_manager.get_service('email').send_mail(context.applicationInstance.user.email, "Vedrørende din crew-søknad til %s" % name, "application_response.jinja2", {
         "mail": request.registry.settings["api.contact"],
         "accepted": context.applicationInstance.state == ApplicationState.accepted,
         "accepted_crew": accepted_crew,
