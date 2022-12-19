@@ -3,13 +3,16 @@ log = logging.getLogger(__name__)
 
 from jinja2 import Environment, PackageLoader, select_autoescape
 
+from phoenixRest.services.service import Service
 
-class MailProvider:
-    def __init__(self) -> None:
+class MailService(Service):
+    def __init__(self, service_manager) -> None:
         self.env = Environment(
             loader=PackageLoader("phoenixRest", "mailTemplates"),
             autoescape=select_autoescape()
         )
+        super().__init__(service_manager)
+    
     def send_mail(self, to: str, subject: str, bodyFile: str, variables: dict):
         template = self.env.get_template(bodyFile)
         self._send_mail_impl(to, subject, template.render(variables))
