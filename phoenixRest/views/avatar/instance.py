@@ -84,7 +84,7 @@ def update_status(context, request):
     if enumerated_state == AvatarState.accepted:
         title = "Avataren ble godkjent"
 
-    request.mail_service.send_mail(context.avatarInstance.user.email, title, "avatar_state_changed.jinja2", {
+    request.service_manager.get_service('email').send_mail(context.avatarInstance.user.email, title, "avatar_state_changed.jinja2", {
         "mail": request.registry.settings["api.contact"],
         "accepted": enumerated_state == AvatarState.accepted,
         "name": request.registry.settings["api.name"],

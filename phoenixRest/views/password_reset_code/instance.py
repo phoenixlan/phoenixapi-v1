@@ -71,7 +71,7 @@ def reset_password(context, request):
     request.db.delete(context.resetCodeInstance)
 
     # Notify the user
-    request.mail_service.send_mail(context.resetCodeInstance.user.email, "Passordet ditt har blitt tilbakestilt", "forgotten_notice.jinja2", {
+    request.service_manager.get_service('email').send_mail(context.resetCodeInstance.user.email, "Passordet ditt har blitt tilbakestilt", "forgotten_notice.jinja2", {
         "mail": request.registry.settings["api.contact"],
         "name": request.registry.settings["api.name"],
         "domain": request.registry.settings["api.mainpage"]
