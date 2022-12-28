@@ -59,9 +59,15 @@ from phoenixRest.models.tickets import (
     ticket_transfer,
     seatmap_background
 )
+
 from phoenixRest.models.tickets.payment_providers import (
     vipps_payment,
     stripe_payment
+)
+
+from phoenixRest.models.utils import (
+    discord_mapping,
+    discord_mapping_oauth_state
 )
 
 

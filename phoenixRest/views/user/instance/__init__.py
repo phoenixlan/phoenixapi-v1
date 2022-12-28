@@ -16,11 +16,16 @@ from phoenixRest.models.tickets.payment import Payment
 from phoenixRest.models.tickets.store_session import StoreSession
 from phoenixRest.models.tickets.ticket_transfer import TicketTransfer
 
+from phoenixRest.models.utils.discord_mapping_oauth_state import DiscordMappingOauthState
+from phoenixRest.models.utils.discord_mapping import DiscordMapping
+
 from phoenixRest.mappers.user import map_user_with_secret_fields, map_user_public_with_positions
 from phoenixRest.mappers.ticket import map_ticket_simple
 
 from phoenixRest.utils import validate, validateUuidAndQuery
 from phoenixRest.resource import resource
+
+from phoenixRest.features.discord import DISCORD_OAUTH_REDIRECT_URI, DISCORD_CLIENT_ID, DISCORD_ENABLED, DISCORD_SCOPES
 
 from phoenixRest.roles import HR_ADMIN, ADMIN, TICKET_ADMIN, TICKET_CHECKIN
 
@@ -28,7 +33,7 @@ from sqlalchemy import and_, or_, extract
 
 from datetime import datetime, timedelta
 
-import shutil
+import urllib
 import os
 
 from PIL import Image
@@ -67,6 +72,14 @@ class UserInstanceResource(object):
             (Allow, ADMIN, 'list_payments'),
             (Allow, TICKET_ADMIN, 'list_payments'),
 
+            # Who can see discord user mappings?
+            (Allow, HR_ADMIN, 'get_discord_mapping'),
+            (Allow, ADMIN, 'get_discord_mapping'),
+
+            # Who can remove a Discord mapping?
+            (Allow, HR_ADMIN, 'delete_discord_mapping'),
+            (Allow, ADMIN, 'delete_discord_mapping'),
+
             # Who can activate users on others behalf
             (Allow, ADMIN, 'activate_user'),
             # Who can view if an user is activated and activate their user?
@@ -91,6 +104,12 @@ class UserInstanceResource(object):
                 (Allow, "%s" % self.userInstance.uuid, 'avatar_upload'),
                 # Users can view their own payments
                 (Allow, "%s" % self.userInstance.uuid, 'list_payments'),
+                # Users can see their own discord mappings
+                (Allow, "%s" % self.userInstance.uuid, 'get_discord_mapping'),
+                # Users can create their own discord mappings
+                (Allow, "%s" % self.userInstance.uuid, 'create_discord_mapping'),
+                # Users can delete their own discord mappings
+                (Allow, "%s" % self.userInstance.uuid, 'delete_discord_mapping'),
             ]
         return acl
 
@@ -337,4 +356,55 @@ def get_membership_information(context, request):
     
     return {
         'is_member': len(member_granting_tickets) > 0
+    }
+
+@view_config(context=UserInstanceResource, name='discord_mapping', request_method='GET', renderer='json', permission='get_discord_mapping')
+def get_discord_mapping(context, request):
+    if context.userInstance.discord_mapping is None:
+        request.response.status = 404
+        return {
+            "error": "No discord mapping"
+        }
+    return context.userInstance.discord_mapping
+
+@view_config(context=UserInstanceResource, name='discord_mapping', request_method='DELETE', renderer='json', permission='delete_discord_mapping')
+def remove_discord_mapping(context, request):
+    if context.userInstance.discord_mapping is None:
+        request.response.status = 404
+        return {
+            "error": "No discord mapping"
+        }
+    
+    request.mail_service.send_mail(context.userInstance.email, "Tilkobling til Discord-konto er fjernet", "discord_oauth_removed.jinja2", {
+        "mail": request.registry.settings["api.contact"],
+        "name": request.registry.settings["api.name"]
+    })
+    
+    request.db.delete(context.userInstance.discord_mapping)
+    return {}
+
+# Creates the URL which the user needs to visit in order to authenticate with Discord.
+@view_config(context=UserInstanceResource, name='discord_mapping', request_method='POST', renderer='json', permission='create_discord_mapping')
+def create_discord_mapping_oauth_url(context, request):
+    if not DISCORD_ENABLED:
+        request.response.status = 400
+        log.warn("User tried to initiate Discord mapping flow, but Discord functionality is not enabled on this server")
+        return {
+            "error": "Discord functionality not enabled on this server"
+        }
+    # Create a state variable
+    discord_mapping_state = DiscordMappingOauthState(context.userInstance)
+    request.db.add(discord_mapping_state)
+
+    # Initialize discord oauth variables
+    client_id = DISCORD_CLIENT_ID
+    state = discord_mapping_state.code
+    redirect_uri = urllib.parse.quote_plus(DISCORD_OAUTH_REDIRECT_URI)
+    return {
+        "url": "https://discord.com/oauth2/authorize?response_type=code&client_id=%s&scope=%s&state=%s&redirect_uri=%s&prompt=consent" % (
+            client_id,
+            DISCORD_SCOPES,
+            state,
+            redirect_uri
+        )
     }

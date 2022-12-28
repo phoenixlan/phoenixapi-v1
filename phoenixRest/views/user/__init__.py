@@ -11,7 +11,12 @@ from phoenixRest.models.core.user import Gender, User, calculate_age
 from phoenixRest.models.core.activation_code import ActivationCode
 from phoenixRest.models.core.password_reset_code import PasswordResetCode
 
+from phoenixRest.models.utils.discord_mapping_oauth_state import DiscordMappingOauthState
+from phoenixRest.models.utils.discord_mapping import DiscordMapping
+
 from phoenixRest.mappers.user import map_user_simple_with_secret_fields, map_user_with_secret_fields
+
+from phoenixRest.features.discord import discord_exchange_code, discord_get_user
 
 from phoenixRest.utils import validate
 from phoenixRest.resource import resource
@@ -26,7 +31,6 @@ import re
 import logging
 log = logging.getLogger(__name__)
 
-
 @resource(name='user')
 class UserViews(object):
     __acl__ = [
@@ -39,7 +43,8 @@ class UserViews(object):
         (Allow, TICKET_ADMIN, 'search'),
 
         (Allow, Everyone, 'register'),
-        (Allow, Everyone, 'activate_user')
+        (Allow, Everyone, 'activate_user'),
+        (Allow, Everyone, 'connect_discord'),
 
         # Authenticated pages
         #(Allow, Authenticated, Authenticated),
@@ -49,7 +54,7 @@ class UserViews(object):
         self.request = request
 
     def __getitem__(self, key):
-        if key in ['current', 'register', 'activate', 'search', 'forgot']:
+        if key in ['connect_discord', 'current', 'register', 'activate', 'search', 'forgot']:
             raise KeyError('')
         node = UserInstanceResource(self.request, key)
         
@@ -209,6 +214,56 @@ def activate_account(context, request):
         return {
             'success': True,
             'url': redirectUrl,
+            'mail': request.registry.settings["api.contact"],
+            'name': request.registry.settings["api.name"]
+        }
+
+
+@view_config(context=UserViews, name='connect_discord', request_method='GET', renderer='templates/connect_discord.jinja2', permission='connect_discord')
+@validate(get={"state": str, "code": str})
+def connect_discord(context, request):
+    code = request.GET["code"]
+    state = request.GET["state"]
+    oauth_state = request.db.query(DiscordMappingOauthState) \
+        .filter(DiscordMappingOauthState.code == state).first()
+
+    if oauth_state is None:
+        log.warn("Invalid oauth state %s" % code)
+        return {
+            'success': False,
+            'mail': request.registry.settings["api.contact"],
+            'name': request.registry.settings["api.name"]
+        }
+    elif oauth_state.has_expired():
+        log.info("Expired oauth state %s" % code)
+        return {
+            'success': False,
+            'mail': request.registry.settings["api.contact"],
+            'name': request.registry.settings["api.name"]
+        }
+    else:
+        request.db.delete(oauth_state)
+
+        # Get current user ID
+        tokens = discord_exchange_code(code)
+        token = tokens['access_token']
+
+        user = discord_get_user(token)
+
+        # Send an email
+        request.mail_service.send_mail(oauth_state.user.email, "Tilkoblet Discord-konto", "discord_oauth_added.jinja2", {
+            "discord_acc": "%s#%s" % (user["username"], user["discriminator"]),
+            "mail": request.registry.settings["api.contact"],
+            "name": request.registry.settings["api.name"]
+        })
+
+        # Save the mapping
+        user_id = user["id"]
+        mapping = DiscordMapping(oauth_state.user, user_id, tokens['refresh_token'], tokens['access_token'], tokens['expires_in'])
+        request.db.add(mapping)
+
+        return {
+            'success': True,
             'mail': request.registry.settings["api.contact"],
             'name': request.registry.settings["api.name"]
         }
