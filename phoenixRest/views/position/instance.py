@@ -6,10 +6,12 @@ from pyramid.httpexceptions import (
 from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
 from phoenixRest.models.crew.position import Position 
+from phoenixRest.models.crew.position_mapping import PositionMapping
 from phoenixRest.models.crew.team import Team
 from phoenixRest.models.crew.crew import Crew
+from phoenixRest.models.core.user import User
 
-from phoenixRest.mappers.position import map_position_with_users
+from phoenixRest.mappers.position import map_position_with_position_mappings
 
 from phoenixRest.roles import ADMIN, HR_ADMIN
 
@@ -21,16 +23,19 @@ log = logging.getLogger(__name__)
 
 class PositionInstanceResource(object):
     def __acl__(self):
-        return [
-        (Allow, ADMIN, 'get_position'),
-        (Allow, HR_ADMIN, 'get_position'),
-        (Allow, ADMIN, 'create_position'),
-        (Allow, HR_ADMIN, 'create_position'),
+        position_users = self.request.db.query(User).join(PositionMapping) \
+            .filter(PositionMapping.position_uuid == self.positionInstance.uuid).all()
 
-        (Allow, ADMIN, 'add_to_position'),
-        (Allow, HR_ADMIN, 'add_to_position')
+        return [
+            (Allow, ADMIN, 'get_position'),
+            (Allow, HR_ADMIN, 'get_position'),
+            (Allow, ADMIN, 'create_position'),
+            (Allow, HR_ADMIN, 'create_position'),
+
+            (Allow, ADMIN, 'add_to_position'),
+            (Allow, HR_ADMIN, 'add_to_position')
         # Everyone may look at their own
-        ] + [(Allow, 'user:%s' % user.uuid, 'get_position') for user in self.positionInstance.users]
+        ] + [(Allow, 'user:%s' % user.uuid, 'get_position') for user in position_users]
 
     def __init__(self, request, uuid):
         self.request = request
@@ -41,7 +46,7 @@ class PositionInstanceResource(object):
 
 @view_config(context=PositionInstanceResource, name='', request_method='GET', renderer='json', permission='get_position')
 def get_position(context, request):
-    return map_position_with_users(context.positionInstance, request)
+    return map_position_with_position_mappings(context.positionInstance, request)
     
 @view_config(context=PositionInstanceResource, name='', request_method='PUT', renderer='json', permission='create_position')
 @validate(json_body={'name': str, 'description': str})

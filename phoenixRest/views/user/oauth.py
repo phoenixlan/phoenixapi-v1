@@ -4,13 +4,14 @@ from pyramid.httpexceptions import (
     HTTPBadRequest
 )
 
-from sqlalchemy import or_
+from sqlalchemy import or_, and_
 
 from phoenixRest.models.core.user import User
+from phoenixRest.models.crew.position_mapping import PositionMapping
+from phoenixRest.models.crew.position import Position
+from phoenixRest.models.core.event import get_current_event
 from phoenixRest.models.core.oauth.oauthCode import OauthCode
 from phoenixRest.models.core.oauth.refreshToken import OauthRefreshToken
-
-from phoenixRest.models.crew.position import Position, PositionAssociation
 
 from phoenixRest.utils import validate
 
@@ -23,13 +24,25 @@ def generate_token(user: User, request):
     log.warning("Generating token")
     # We now need to fetch the users permissions
     # https://stackoverflow.com/questions/952914/how-to-make-a-flat-list-out-of-list-of-lists
-    position_map = [ position.permissions for position in user.positions ]
+    # Extract positions that are for current event, or that are lifetime
+    current_event = get_current_event(request)
+
+    current_positions = request.db.query(Position).join(PositionMapping).filter(and_(
+        PositionMapping.user == user, 
+        or_(
+            PositionMapping.event == None,
+            PositionMapping.event == current_event
+        )
+    )).all()
+
+    position_map = [ position.permissions for position in current_positions ] 
+
     flat_list = [item for sublist in position_map for item in sublist]
 
     flat_set = set([entry.permission for entry in flat_list])
 
     # Add permissions caused by positions
-    for position in user.positions:
+    for position in current_positions:
         if position.crew is not None:
             flat_set.add("member")
         if position.chief and position.crew is not None:

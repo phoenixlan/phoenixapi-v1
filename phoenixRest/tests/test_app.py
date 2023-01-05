@@ -1,7 +1,11 @@
 import webtest
 
+from datetime import datetime
+
 import logging
 log = logging.getLogger(__name__)
+
+from phoenixRest.models.core.event import Event
 
 class TestApp(webtest.TestApp):
     def auth_get_tokens(self, username, password):
@@ -37,6 +41,16 @@ class TestApp(webtest.TestApp):
                 'X-Phoenix-Auth': token
             }), status=200)
     
+    def get_last_event(self, db):
+        return db.query(Event) \
+            .filter(Event.end_time < datetime.now()) \
+            .order_by(Event.start_time.desc()).first()
+
+    def get_current_event(self, db):
+        return db.query(Event) \
+            .filter(Event.end_time > datetime.now()) \
+            .order_by(Event.start_time.asc()).first()
+
     def get_user(self, token):
         res = self.get('/user/current', headers=dict({
             'X-Phoenix-Auth': token

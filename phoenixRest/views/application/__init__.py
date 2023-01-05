@@ -99,6 +99,7 @@ def create_application(context, request):
                         event=event,
                         contents=request.json_body['contents'])
     request.db.add(application)
+    request.db.flush()
 
     request.mail_service.send_mail(request.user.email, "Mottatt søknad", "application_received.jinja2", {
         "mail": request.registry.settings["api.contact"],

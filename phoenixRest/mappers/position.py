@@ -1,4 +1,5 @@
-def map_position_with_users(position, request):
+from .position_mapping import map_position_mapping_with_user
+def map_position_with_position_mappings(position, request):
 	return {
         'uuid': position.uuid,
         'name': position.name,
@@ -6,7 +7,7 @@ def map_position_with_users(position, request):
 
         'crew_uuid': position.crew_uuid,
         'team_uuid': position.team_uuid,
-        'users': position.users,
+        'position_mappings': [ map_position_mapping_with_user(position_mapping) for position_mapping in position.position_mappings ],
         'chief': position.chief,
         'permissions': position.permissions
 

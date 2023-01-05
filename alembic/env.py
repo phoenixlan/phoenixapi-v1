@@ -40,6 +40,7 @@ from phoenixRest.models.core.oauth import (
 from phoenixRest.models.crew import (
     crew,
     position,
+    position_mapping,
     team,
     permission,
     application

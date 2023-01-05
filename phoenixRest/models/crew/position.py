@@ -1,4 +1,3 @@
-"""Payment object"""
 from sqlalchemy import (
     Column,
     DateTime,
@@ -22,11 +21,6 @@ log = logging.getLogger(__name__)
 
 import uuid
 
-PositionAssociation = Table('user_positions', Base.metadata,
-    Column('user_uuid', UUID(as_uuid=True), ForeignKey('user.uuid')),
-    Column('position_uuid', UUID(as_uuid=True), ForeignKey('position.uuid'))
-)
-
 class Position(Base):
     __tablename__ = "position"
     uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
@@ -41,8 +35,7 @@ class Position(Base):
     description = Column(Text)
     chief = Column(Boolean, nullable=False, default=True)
 
-    users = relationship("User",
-                    secondary=PositionAssociation, back_populates="positions")
+    position_mappings = relationship("PositionMapping", back_populates="position")
 
     permissions = relationship("Permission", back_populates="position")
 
@@ -59,7 +52,7 @@ class Position(Base):
 
             'crew_uuid': str(self.crew_uuid) if self.crew_uuid is not None else None,
             'team_uuid': str(self.team_uuid) if self.team_uuid is not None else None,
-            'users': [str(user.uuid) for user in self.users],
+            'position_mappings': self.position_mappings,
             'chief': self.chief,
             'permissions': self.permissions
 
