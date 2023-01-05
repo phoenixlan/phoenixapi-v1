@@ -82,6 +82,8 @@ class User(Base):
 
     activation_code = relationship("ActivationCode", uselist=False, back_populates="user")
 
+    discord_mapping = relationship("DiscordMapping", uselist=False, back_populates="user")
+
     def __init__(self, username: str, email: str, password: str,
             firstname: str, lastname: str, birthdate: date, gender: Gender,
             phone: str, address: str, postal_code: str):

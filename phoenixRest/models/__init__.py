@@ -33,6 +33,12 @@ meta = MetaData(naming_convention={
 
 Base = declarative_base(metadata=meta)
 
+# Enforce include order of DB models
+from phoenixRest.models.core.user import User
+
+from phoenixRest.models.utils.discord_mapping import DiscordMapping
+from phoenixRest.models.utils.discord_mapping_oauth_state import DiscordMappingOauthState
+
 
 def get_postgresql_url(username, password, host, db):
     return "postgresql://%s:%s@%s/%s" % (username, password, host, db)

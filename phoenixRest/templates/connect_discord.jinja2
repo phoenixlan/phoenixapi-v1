@@ -1,0 +1,18 @@
+<html>
+    <head>
+        <title>{{name}} - Tilkobling av Discord-konto</title>
+    </head>
+    <body>
+    {% if success %}
+        {% if url %}
+        <p>Discord-kontoen din er tilkoblet, vi tar deg videre</p>
+        <meta http-equiv="refresh" content="1; URL={{ url }}" />
+        {% else %}
+        <p>Discord-kontoen din er nå tilkoblet.</p>
+        {% endif %}
+    {% else %}
+    <h1>Kunne ikke koble til Discord</h1>
+    <p>Dette er antageligvis et problem på vår side. Dersom problemet fortsetter, kontakt oss: <a href="mailto:{{ mail }}">{{ mail }}</a><p>
+    {% endif %}
+    </body>
+</html>
