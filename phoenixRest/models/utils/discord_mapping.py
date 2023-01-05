@@ -32,6 +32,7 @@ class DiscordMapping(Base):
     discord_access_token_expiry = Column(DateTime, nullable=False)
 
     discord_username = Column(Text, nullable=False)
+    discord_avatar = Column(Text, nullable=False)
     discord_username_last_check = Column(DateTime, nullable=False)
 
     created = Column(DateTime, nullable=False)
@@ -47,6 +48,7 @@ class DiscordMapping(Base):
 
         user_obj = discord_get_user(self.discord_access_token)
         self.discord_username = discord_username_from_obj(user_obj)
+        self.discord_avatar = user_obj['avatar']
         self.discord_username_last_check = datetime.now()
 
     def __json__(self, request):
@@ -61,6 +63,7 @@ class DiscordMapping(Base):
             log.info("Fetching discord username again")
             user_obj = discord_get_user(self.discord_access_token)
             self.discord_username = discord_username_from_obj(user_obj)
+            self.discord_avatar = user_obj['avatar']
             self.discord_username_last_check = datetime.now()
         else:
             log.info("Using cached Discord username")
