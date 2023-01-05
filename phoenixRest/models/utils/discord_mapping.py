@@ -70,6 +70,7 @@ class DiscordMapping(Base):
 
         return {
             "discord_id": self.discord_id,
-            "username": self.discord_username
+            "username": self.discord_username,
+            "avatar": self.discord_avatar
         }
         
