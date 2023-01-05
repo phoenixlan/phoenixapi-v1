@@ -6,7 +6,7 @@ def test_auth(testapp):
         }), status=200)
     assert 'code' in res.json_body
     code = res.json_body['code']
-    assert len(code) == 10
+    assert len(code) == 20
     print("Testing with code: %s" % code)
 
     # Now try getting a token and refresh token
