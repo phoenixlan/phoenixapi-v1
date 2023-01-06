@@ -9,7 +9,7 @@ from phoenixRest.models.crew.position import Position
 
 from phoenixRest.resource import resource
 
-from phoenixRest.roles import ADMIN
+from phoenixRest.roles import ADMIN, MEMBER
 
 from phoenixRest.views.position.instance import PositionInstanceResource
 
@@ -20,12 +20,8 @@ log = logging.getLogger(__name__)
 @resource(name='position')
 class PositionResource(object):
     __acl__ = [
-        (Allow, Everyone, 'getAll'),
+        (Allow, MEMBER, 'getAll'),
         (Allow, ADMIN, 'create'),
-
-        # Authenticated pages
-        #(Allow, Authenticated, Authenticated),
-        #(Deny, Everyone, Authenticated),
     ]
     def __init__(self, request):
         self.request = request

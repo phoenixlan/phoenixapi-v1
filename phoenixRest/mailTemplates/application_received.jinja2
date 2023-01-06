@@ -2,7 +2,13 @@
     <body>
         <p>Hei!</p>
 
-        <p>Dette er en bekreftelse på at du har søkt {{ crew.name }} hos {{ name }}.</a>
+        <p>Dette er en bekreftelse på at du har søkt crew hos {{ name }}. Vi har mottatt søknad for følgende crew:</p>
+
+        <ol>
+        {% for crew in crew_list %}
+            <li>{{ crew.name }}</li>
+        {% endfor %}
+        </ol>
 
         <p>En chief vil snart gå igjennom søknaden din.</p>
 

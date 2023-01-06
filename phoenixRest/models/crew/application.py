@@ -1,16 +1,11 @@
-"""Payment object"""
 from sqlalchemy import (
     Column,
     DateTime,
     ForeignKey,
-    Integer,
-    UniqueConstraint,
     Text,
-    Integer,
-    Boolean,
-    Enum,
-    Table
+    Enum
 )
+from sqlalchemy.ext.orderinglist import ordering_list
 from sqlalchemy.dialects.postgresql import UUID
 
 from sqlalchemy.orm import relationship
@@ -19,7 +14,6 @@ from phoenixRest.models import Base
 
 from phoenixRest.models.core.user import User
 from phoenixRest.models.core.event import Event
-from phoenixRest.models.crew.crew import Crew
 
 from phoenixRest.mappers.user import map_user_with_secret_fields
 
@@ -38,14 +32,14 @@ class Application(Base):
     __tablename__ = "application"
     uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
 
-    crew_uuid = Column(UUID(as_uuid=True), ForeignKey("crew.uuid"), nullable=False)
-    crew = relationship("Crew")
-
     event_uuid = Column(UUID(as_uuid=True), ForeignKey("event.uuid"), nullable=False)
     event = relationship("Event")
 
     user_uuid = Column(UUID(as_uuid=True), ForeignKey("user.uuid"), nullable=False)
     user = relationship("User", foreign_keys=[user_uuid])
+
+    crews = relationship("ApplicationCrewMapping", order_by="ApplicationCrewMapping.list_order",
+                            collection_class=ordering_list('list_order'), back_populates="application")
 
     contents = Column(Text, nullable=False)
 
@@ -53,17 +47,17 @@ class Application(Base):
 
     # Answer from application processor
     answer = Column(Text, nullable=False)
+
     # Last application processor
     last_processed_by_uuid = Column(UUID(as_uuid=True), ForeignKey("user.uuid"), nullable=True)
     last_processed_by = relationship("User", foreign_keys=[last_processed_by_uuid])
 
     state = Column(Enum(ApplicationState), nullable=False)
 
-    # TODO application status
-
-    def __init__(self, user: User, crew: Crew, event: Event, contents: str):
+    def __init__(self, user: User, crews, event: Event, contents: str):
         self.user = user
-        self.crew = crew
+
+        self.crews = crews
 
         self.event = event
 
@@ -77,8 +71,8 @@ class Application(Base):
     def __json__(self, request):
         return {
             'uuid': str(self.uuid),
-            'crew': self.crew,
-            'event_uuid': str(self.event_uuid),
+            'crews': self.crews,
+            'event': self.event,
             'user': map_user_with_secret_fields(self.user, request),
             'last_processed_by': self.last_processed_by,
             'contents': self.contents,

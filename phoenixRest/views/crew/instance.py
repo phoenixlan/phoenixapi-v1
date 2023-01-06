@@ -10,7 +10,7 @@ from phoenixRest.models.crew.team import Team
 
 from phoenixRest.mappers.crew import map_crew
 
-from phoenixRest.roles import ADMIN, MEMBER
+from phoenixRest.roles import ADMIN, MEMBER, HR_ADMIN
 
 from phoenixRest.utils import validate
 from phoenixRest.resource import resource
@@ -26,6 +26,8 @@ class CrewInstanceViews(object):
         return [
         (Allow, Authenticated, 'team_view'),
         (Allow, MEMBER, 'crew_view'),
+        (Allow, ADMIN, 'crew_view'),
+        (Allow, HR_ADMIN, 'crew_view'),
         (Allow, ADMIN, 'team_edit'),
         (Allow, 'chief:%s' % self.crewInstance.uuid, 'team_edit'),
 
