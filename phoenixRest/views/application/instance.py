@@ -6,6 +6,7 @@ from pyramid.httpexceptions import (
 )
 from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
+from phoenixRest.models.crew.crew import Crew
 from phoenixRest.models.crew.application import Application, ApplicationState
 from phoenixRest.models.crew.position import create_or_fetch_crew_position
 from phoenixRest.models.crew.position_mapping import PositionMapping
@@ -55,28 +56,55 @@ def edit_application(context, request):
         return {
             "error": "Invalid state"
         }
-    
+    # We can accept applications multiple times(if we accept multiple crew applications). But not if the application is rejected
+    if request.json_body['state'] == "accepted" and context.applicationInstance.state == ApplicationState.rejected:
+        request.response.status = 400
+        return {
+            "error": "Cannot approve an application that has been denied"
+        }
+
     context.applicationInstance.state = ApplicationState.accepted if request.json_body["state"] == "accepted" else ApplicationState.rejected
     context.applicationInstance.answer = request.json_body["answer"]
     context.applicationInstance.last_processed_by = request.user
 
     request.db.add(context.applicationInstance)
     
+    accepted_crew = None
     if context.applicationInstance.state == ApplicationState.accepted:
-        position = create_or_fetch_crew_position(request, crew=context.applicationInstance.crew, team=None)
+        # Fetch the accepted crew
+        accepted_crew = request.db.query(Crew).filter(Crew.uuid == request.json_body['crew_uuid']).first()
+        if accepted_crew is None:
+            request.response.status = 404
+            return {
+                "error": "Accepted crew doesn't exist"
+            }
+        # Mark the application-crew mapping as accepted
+        for mapping in context.applicationInstance.crews:
+            if mapping.crew == accepted_crew:
+                if mapping.accepted:
+                    request.response.stauts = 400
+                    return {
+                        "error": "Application has already been accepted for this crew"
+                    }
+                mapping.accepted = True
+        
+        position = create_or_fetch_crew_position(request, crew=accepted_crew, team=None)
         if position is None:
             request.response.status = 500
             return {
                 'error': "Unable to get position"
             }
+
         mapping = PositionMapping(context.applicationInstance.user, position, get_current_event(request))
         position.position_mappings.append(mapping)
 
     # Send mail
     name = request.registry.settings["api.name"]
+    log.info("Registered change in application - sending e-mail")
     request.mail_service.send_mail(context.applicationInstance.user.email, "Vedrørende din crew-søknad til %s" % name, "application_response.jinja2", {
         "mail": request.registry.settings["api.contact"],
         "accepted": context.applicationInstance.state == ApplicationState.accepted,
+        "accepted_crew": accepted_crew,
         "name": name,
         "application": context.applicationInstance,
         "domain": request.registry.settings["api.mainpage"]

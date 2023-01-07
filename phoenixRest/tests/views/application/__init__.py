@@ -1,7 +1,7 @@
 # Test creating applications, and that the user is qualified to do so
 from wsgiref.util import application_uri
 
-def create_application(testapp, token, application_crew):
+def create_application(testapp, token, application_crews: list):
     # Get the current user, ensure there is no avatar
     currentUser = testapp.get('/user/current', headers=dict({
         'X-Phoenix-Auth': token
@@ -17,7 +17,7 @@ def create_application(testapp, token, application_crew):
 
     # We need the list of crews so we can apply for one
     res = testapp.put_json('/application', dict({
-        'crew_uuid': application_crew,
+        'crews': application_crews,
         'contents': 'I want to join please'
     }), headers=dict({
         'X-Phoenix-Auth': token
@@ -33,13 +33,14 @@ def test_create_accept_appliations(testapp):
     token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
     applicant_token, refresh = testapp.auth_get_tokens('greg', 'sixcharacters')
 
-    application_crew = list(filter(lambda crew: crew["is_applyable"], testapp.get('/crew', status=200).json_body))[0]['uuid']
+    application_crew_candidates = list(filter(lambda crew: crew["is_applyable"], testapp.get('/crew', status=200).json_body))
 
-    application_uuid = create_application(testapp, applicant_token, application_crew)
+    application_uuid = create_application(testapp, applicant_token, [application_crew_candidates[0]['uuid'], application_crew_candidates[1]['uuid']])
 
     # Try to accept the application
     res = testapp.patch_json('/application/%s' % application_uuid, dict({
         'answer': 'That\'s a very poggers application',
+        'crew_uuid': application_crew_candidates[0]['uuid'],
         'state': 'accepted'
     }), headers=dict({
         'X-Phoenix-Auth': token
@@ -63,7 +64,7 @@ def test_create_accept_appliations(testapp):
 
     correct_mappings = list(filter(lambda mapping: mapping['event_uuid'] == current_event['uuid'], applicant_user['position_mappings']))
     assert len(correct_mappings) == 1
-    assert correct_mappings[0]['position']['crew_uuid'] == application_crew
+    assert correct_mappings[0]['position']['crew_uuid'] == application_crew_candidates[0]['uuid']
     
 def test_create_reject_appliations(testapp):
     # Log in as the test user
@@ -72,7 +73,7 @@ def test_create_reject_appliations(testapp):
 
     application_crew = list(filter(lambda crew: crew["is_applyable"], testapp.get('/crew', status=200).json_body))[0]['uuid']
 
-    application_uuid = create_application(testapp, applicant_token, application_crew)
+    application_uuid = create_application(testapp, applicant_token, [application_crew])
 
     # Try to accept the application
     res = testapp.patch_json('/application/%s' % application_uuid, dict({

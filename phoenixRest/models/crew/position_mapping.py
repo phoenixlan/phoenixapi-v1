@@ -3,13 +3,7 @@ from sqlalchemy import (
     Column,
     DateTime,
     ForeignKey,
-    Integer,
-    UniqueConstraint,
-    Text,
-    Integer,
-    Boolean,
-    Enum,
-    Table
+    UniqueConstraint
 )
 from sqlalchemy.dialects.postgresql import UUID
 
@@ -28,16 +22,20 @@ class PositionMapping(Base):
     __tablename__ = "user_positions"
     uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
 
-    position_uuid = Column(UUID(as_uuid=True), ForeignKey("position.uuid"), nullable=False, primary_key=True)
+    position_uuid = Column(UUID(as_uuid=True), ForeignKey("position.uuid"), nullable=False)
     position = relationship("Position", back_populates="position_mappings", uselist=False)
 
-    user_uuid = Column(UUID(as_uuid=True), ForeignKey("user.uuid"), nullable=False, primary_key=True)
+    user_uuid = Column(UUID(as_uuid=True), ForeignKey("user.uuid"), nullable=False)
     user = relationship("User", back_populates="position_mappings", uselist=False)
 
     event_uuid = Column(UUID(as_uuid=True), ForeignKey("event.uuid"), nullable=True)
     event = relationship("Event")
 
     created = Column(DateTime, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint('position_uuid', 'user_uuid', name='_user_positionmapping_uic'),
+    )
 
     def __init__(self, user, position, event=None):
         self.user = user

@@ -43,7 +43,8 @@ from phoenixRest.models.crew import (
     position_mapping,
     team,
     permission,
-    application
+    application,
+    application_crew_mapping
 )
 
 from phoenixRest.models.tickets import (

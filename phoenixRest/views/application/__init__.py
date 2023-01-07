@@ -9,6 +9,7 @@ from phoenixRest.models.core.event import Event
 
 from phoenixRest.models.crew.crew import Crew
 from phoenixRest.models.crew.application import Application
+from phoenixRest.models.crew.application_crew_mapping import ApplicationCrewMapping
 
 from phoenixRest.utils import validate
 from phoenixRest.resource import resource
@@ -69,34 +70,53 @@ def get_applications_mine_cors(request):
     return ""
 
 @view_config(context=ApplicationViews, name='', request_method='PUT', renderer='json', permission='create')
-@validate(json_body={'crew_uuid': str, 'contents': str})
+@validate(json_body={'crews': list, 'contents': str})
 def create_application(context, request):
-    crew = request.db.query(Crew).filter(Crew.uuid == request.json_body['crew_uuid']).first()
-    if crew is None:
-        request.response.status = 404
-        return {
-            "error": "Crew not found"
-        }
-
-    if not crew.is_applyable:
-        request.response.status = 400
-        return {
-            "error": "You applied to a crew that is not applyable"
-        }
-    
     if request.user.avatar is None:
         request.response.status = 400
         return {
             "error": "You must upload an avatar before you can apply for crew"
         }
 
+    if len(request.json_body['crews']) > 3:
+        request.response.status = 400
+        return {
+            "error": "Too many crews"
+        }
+    elif len(request.json_body['crews']) == 0:
+        request.response.status = 400
+        return {
+            "error": "You need to apply to at least one crew"
+        }
+
+    if len(set(request.json_body['crews'])) != len(request.json_body['crews']):
+        request.response.status = 400
+        return {
+            "error": "Duplicates are not allowed"
+        }
+    
+    crew_list = list(map(lambda crew: request.db.query(Crew).filter(Crew.uuid == crew).first(), request.json_body['crews']))
+
+    if None in crew_list:
+        request.response.status = 404
+        return {
+            "error": "Crew not found"
+        }
+    
+    for crew in crew_list:
+        if not crew.is_applyable:
+            request.response.status = 400
+            return {
+                "error": "You cannot apply to %s" % crew.name
+            }
+    
     # Fetch current event
     event = request.db.query(Event).filter(Event.start_time > datetime.now()).order_by(Event.start_time.asc()).first()
 
 
     application = Application(user=request.user, 
-                        crew=crew, 
                         event=event,
+                        crews=list(map(lambda crew: ApplicationCrewMapping(crew), crew_list)),
                         contents=request.json_body['contents'])
     request.db.add(application)
     request.db.flush()
@@ -104,7 +124,7 @@ def create_application(context, request):
     request.mail_service.send_mail(request.user.email, "Mottatt søknad", "application_received.jinja2", {
         "mail": request.registry.settings["api.contact"],
         "name": request.registry.settings["api.name"],
-        "crew": crew
+        "crew_list": crew_list
     })
 
     return application
