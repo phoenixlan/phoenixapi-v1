@@ -1,7 +1,8 @@
 def map_event_simple(event):
     return {
         'uuid': str(event.uuid),
-        'age_limit_inclusive': event.age_limit_inclusive,
+        'participant_age_limit_inclusive': event.participant_age_limit_inclusive,
+        'crew_age_limit_inclusive': event.crew_age_limit_inclusive,
         'booking_time': int(event.booking_time.timestamp()),
         'priority_seating_time_delta': event.priority_seating_time_delta,
         'seating_time_delta': event.seating_time_delta,
