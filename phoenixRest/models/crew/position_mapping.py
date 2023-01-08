@@ -34,7 +34,7 @@ class PositionMapping(Base):
     created = Column(DateTime, nullable=False)
 
     __table_args__ = (
-        UniqueConstraint('position_uuid', 'user_uuid', name='_user_positionmapping_uic'),
+        UniqueConstraint('position_uuid', 'user_uuid', 'event_uuid', name='_user_positionmapping_uic'),
     )
 
     def __init__(self, user, position, event=None):
