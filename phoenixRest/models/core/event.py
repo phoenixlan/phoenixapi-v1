@@ -57,7 +57,8 @@ class Event(Base):
     theme = Column(Text)
     max_participants = Column(Integer, nullable=False)
 
-    age_limit_inclusive = Column(Integer, nullable=False, server_default="-1")
+    participant_age_limit_inclusive = Column(Integer, nullable=False, server_default="-1")
+    crew_age_limit_inclusive = Column(Integer, nullable=False, server_default="-1")
 
     location_uuid = Column(UUID(as_uuid=True), ForeignKey("location.uuid"), nullable=True)
     location = relationship("Location")
@@ -83,7 +84,8 @@ class Event(Base):
         return {
             'name': str(self.name),
             'uuid': str(self.uuid),
-            'age_limit_inclusive': self.age_limit_inclusive,
+            'participant_age_limit_inclusive': self.participant_age_limit_inclusive,
+            'crew_age_limit_inclusive': self.crew_age_limit_inclusive,
             'booking_time': int(self.booking_time.timestamp()),
             'priority_seating_time_delta': self.priority_seating_time_delta,
             'seating_time_delta': self.seating_time_delta,
