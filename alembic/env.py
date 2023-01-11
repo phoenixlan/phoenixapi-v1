@@ -24,6 +24,7 @@ from phoenixRest.models import (
 
 from phoenixRest.models.core import (
     user,
+    user_consent,
     event,
     avatar,
     agenda_entry,

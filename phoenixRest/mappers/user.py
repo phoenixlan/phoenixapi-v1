@@ -25,6 +25,8 @@ def map_user_with_secret_fields(user, request):
         'position_mappings': [ map_position_mapping_with_position(mapping) for mapping in user.position_mappings ],
         'avatar_uuid': user.avatar.uuid if user.avatar is not None else None,
         'avatar_urls': user.get_avatar_urls(request),
+
+        'consents': user.consents
     }
 
 def map_user_public_with_positions(user, request):
