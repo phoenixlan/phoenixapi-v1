@@ -34,6 +34,8 @@
 
 	let tosAccepted = false;
 
+	let eventNoticeConsented = false;
+
 	let dateOfBirth = '';
 
 	const STATES = {
@@ -83,7 +85,8 @@
 			guardianPhone,
 			address,
 			zip,
-			clientId: GET_PARAMS['client_id']
+			clientId: GET_PARAMS['client_id'],
+			event_notice_consent: eventNoticeConsented
 		}
 		console.log(payload);
 		
@@ -104,7 +107,7 @@
 				error = resp.error
 			} catch(e) {
 				registerState = STATES.failure;
-				error = `En ukjent feil har oppstått, kontakt info@phoenix.no: ${e}`
+				error = `En ukjent feil har oppstått, kontakt info@phoenixlan.no: ${e}`
 			}
 		}
 	}
@@ -218,8 +221,9 @@
 					message="Obligatorisk dersom du er under 18 år"
 				/>
 				<Checkbox bind:checked={tosAccepted}>Jeg godtar brukervilkårene for Phoenix LAN</Checkbox>
+				<p>Brukervilkår finner du <a href="tos.html" target="_blank">her.</a></p>
+				<Checkbox bind:checked={eventNoticeConsented}>Send meg en e-post med påminnelse om kommende arrangementer</Checkbox>
 			</form>
-			<p>Brukervilkår finner du <a href="tos.html" target="_blank">her.</a></p>
 
 			{#if registerState == STATES.failure}
 			<div class="registerError">
