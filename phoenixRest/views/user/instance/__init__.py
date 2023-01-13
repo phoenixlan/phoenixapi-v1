@@ -182,8 +182,8 @@ def get_purchased_tickets(context, request):
 @view_config(context=UserInstanceResource, name='seatable_tickets', request_method='GET', renderer='json', permission='user_list_seatable_tickets')
 def get_seatable_tickets(context, request):
     query = request.db.query(Ticket)
-    if 'event' in request.GET:
-        event = request.db.query(Event).filter(Event.uuid == request.get['event']).first()
+    if 'event_uuid' in request.GET:
+        event = request.db.query(Event).filter(Event.uuid == request.GET['event_uuid']).first()
         if event is None:
             request.response.status = 404
             return {
@@ -191,8 +191,9 @@ def get_seatable_tickets(context, request):
             }
         query = query.join(TicketType, Ticket.ticket_type_uuid == TicketType.uuid).filter(and_(
             TicketType.seatable == True,
+            Ticket.event == event,
             or_(
-                and_(Ticket.seater== context.userInstance, Ticket.event == event), 
+                Ticket.seater== context.userInstance,
                 and_(Ticket.seater == None, Ticket.owner == context.userInstance)
             )
         ))
