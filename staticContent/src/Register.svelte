@@ -24,6 +24,7 @@
 	let passwordRepeat = "";
 
 	let email = "";
+	let emailRepeat = "";
 
 	let genderRadio = "male";
 
@@ -80,6 +81,7 @@
 			passwordRepeat,
 			dateOfBirth: dateOfBirth,
 			email,
+			emailRepeat,
 			gender: genderRadio,
 			phone,
 			guardianPhone,
@@ -170,13 +172,23 @@
 					label="E-post addresse"
 					message="Din e-post addresse"
 				/>
+				<Textfield
+					type="email"
+					name="emailrepeat"
+					autocomplete="on"
+					required
+					bind:value={emailRepeat}
+					label="Gjenta E-post addresse"
+					message="Skriv inn e-post addressen din igjen for å forebygge skriveleif"
+				/>
 				<div class="gender">
 					<Radio bind:group={genderRadio} color="#1976d2" value="male"><span>Mann</span></Radio>
 					<Radio bind:group={genderRadio} color="#1976d2" value="female"><span>Kvinne</span></Radio>
 				</div>
 				<!-- Birthdate -->
-				<Datefield
+				<Textfield
 					label="Fødselsdag"
+					type="date"
 					bind:value={dateOfBirth}
 					isAllowed={
 						(date) => {
