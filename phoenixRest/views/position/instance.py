@@ -7,15 +7,11 @@ from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
 from phoenixRest.models.crew.position import Position 
 from phoenixRest.models.crew.position_mapping import PositionMapping
-from phoenixRest.models.crew.team import Team
-from phoenixRest.models.crew.crew import Crew
 from phoenixRest.models.core.user import User
 
 from phoenixRest.mappers.position import map_position_with_position_mappings
 
 from phoenixRest.roles import ADMIN, HR_ADMIN
-
-from phoenixRest.utils import validate
 
 import logging
 log = logging.getLogger(__name__)
@@ -48,31 +44,3 @@ class PositionInstanceResource(object):
 def get_position(context, request):
     return map_position_with_position_mappings(context.positionInstance, request)
     
-@view_config(context=PositionInstanceResource, name='', request_method='PUT', renderer='json', permission='create_position')
-@validate(json_body={'name': str, 'description': str})
-def create_position(context, request):
-    position = Position(request.json_body['name'], request.json_body['description'])
-
-    # Add crew
-    if request.json_body['crew'] is not None:
-        crew = request.db.query(Crew).filter(Crew.uuid == request.json_body['crew']).first()
-        if crew is None:
-            request.response.status = 404
-            return {
-                "error": "Crew not found"
-            }
-        position.crew = crew
-
-    # Add team
-    if request.json_body['team'] is not None:
-        team = request.db.query(Team).filter(Team.uuid == request.json_body['team']).first()
-
-        if team is None:
-            request.response.status = 404
-            return {
-                "error": "Team not found"
-            }
-
-        position.team = team
-    request.db.add(position)
-    return position 
