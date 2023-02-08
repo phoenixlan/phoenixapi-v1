@@ -22,8 +22,13 @@ log = logging.getLogger(__name__)
 class PositionMappingInstanceResource(object):
     def __acl__(self):
         return [
+            (Allow, ADMIN, 'get_mapping'),
+            (Allow, HR_ADMIN, 'get_mapping'),
+
             (Allow, ADMIN, 'delete_mapping'),
             (Allow, HR_ADMIN, 'delete_mapping'),
+
+            (Allow, "%s" % self.positionMappingInstance.user.uuid, 'get_mapping')
         ]
 
     def __init__(self, request, uuid):
@@ -34,6 +39,10 @@ class PositionMappingInstanceResource(object):
 
         if self.positionMappingInstance is None:
             raise HTTPNotFound("Position mapping not found")
+
+@view_config(context=PositionMappingInstanceResource, request_method='GET', renderer='json', permission='get_mapping')
+def get_position_mapping(context, request):
+    return context.positionMappingInstance
 
 @view_config(context=PositionMappingInstanceResource, request_method='DELETE', renderer='string', permission='delete_mapping')
 def delete_position_mapping(context, request):

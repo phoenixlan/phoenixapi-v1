@@ -77,4 +77,6 @@ def create_mapping(context, request):
 
     position.position_mappings.append(mapping)
     request.db.add(mapping)
+    request.db.flush()
+
     return mapping

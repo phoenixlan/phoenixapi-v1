@@ -1,3 +1,4 @@
+import json
 import os
 import uuid
 
@@ -70,7 +71,6 @@ def add_role_principals(userid, request):
 
 def user(request):
     uuid = request.authenticated_userid
-    log.info("Logged in as %s" % uuid)
 
     user = request.db.query(User).filter(User.uuid == uuid).first()
     if user is None:

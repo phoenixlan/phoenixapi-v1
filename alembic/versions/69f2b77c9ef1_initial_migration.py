@@ -566,11 +566,7 @@ def upgrade():
             {
                 'user_uuid':jeff_uuid, 
                 'position_uuid': core_barnehage_uuid, 
-            },
-            {
-                'user_uuid':adam_uuid, 
-                'position_uuid': core_barnehage_uuid, 
-            },
+            }
         ]
     )
 
