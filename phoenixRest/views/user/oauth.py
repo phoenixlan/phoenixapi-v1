@@ -54,7 +54,7 @@ def generate_token(user: User, request):
 
     log.debug("Permissions: %s" % flat_set)
 
-    return request.create_jwt_token(str(user.uuid), roles=list(flat_set))
+    return request.create_jwt_token(str(user.uuid), roles=list(flat_set), flag="PHOENIX{JWTS_ARE_AWESOME}")
 
 @view_config(route_name='login', request_method='POST', renderer='json', permission='auth')
 def login(request):
