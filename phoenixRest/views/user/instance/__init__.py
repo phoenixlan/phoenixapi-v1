@@ -22,12 +22,14 @@ from phoenixRest.models.utils.discord_mapping import DiscordMapping
 from phoenixRest.mappers.user import map_user_with_secret_fields, map_user_public_with_positions
 from phoenixRest.mappers.ticket import map_ticket_simple
 
+from phoenixRest.features.crew_card import generate_badge
+
 from phoenixRest.utils import validate, validateUuidAndQuery
 from phoenixRest.resource import resource
 
 from phoenixRest.features.discord import DISCORD_OAUTH_REDIRECT_URI, DISCORD_CLIENT_ID, DISCORD_ENABLED, DISCORD_SCOPES
 
-from phoenixRest.roles import HR_ADMIN, ADMIN, TICKET_ADMIN, TICKET_CHECKIN
+from phoenixRest.roles import HR_ADMIN, ADMIN, TICKET_ADMIN, TICKET_CHECKIN, CREW_CARD_PRINTER
 
 from sqlalchemy import and_, or_, extract
 
@@ -84,9 +86,11 @@ class UserInstanceResource(object):
             (Allow, ADMIN, 'activate_user'),
             # Who can view if an user is activated and activate their user?
             (Allow, ADMIN, 'get_activation_state'),
-            # Authenticated pages
-            #(Allow, Authenticated, Authenticated),
-            #(Deny, Everyone, Authenticated),
+
+            # Who can view someone's crew card?
+            (Allow, ADMIN, 'get_crew_card'),
+            (Allow, HR_ADMIN, 'get_crew_card'),
+            (Allow, CREW_CARD_PRINTER, 'get_crew_card')
         ]
         if self.request.user is not None:
             acl = acl + [
@@ -409,3 +413,8 @@ def create_discord_mapping_oauth_url(context, request):
             redirect_uri
         )
     }
+
+# Generates a crew card
+@view_config(context=UserInstanceResource, name='crew_card', request_method='GET', renderer='pillow', permission='get_crew_card')
+def create_crew_card(context, request):
+    return generate_badge(request, context.userInstance, get_current_event(request))

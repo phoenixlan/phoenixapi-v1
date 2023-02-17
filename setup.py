@@ -24,6 +24,7 @@ requires = [
     'webtest',
     'pycodestyle',
     'pytest',
+    'qrcode',
     'requests',
     'uuid',
     'sentry-sdk',
