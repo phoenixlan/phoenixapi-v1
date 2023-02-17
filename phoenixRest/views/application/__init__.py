@@ -5,7 +5,7 @@ from pyramid.httpexceptions import (
 from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
 
-from phoenixRest.models.core.event import Event
+from phoenixRest.models.core.event import Event, get_current_event
 
 from phoenixRest.models.crew.crew import Crew
 from phoenixRest.models.crew.application import Application
@@ -111,8 +111,7 @@ def create_application(context, request):
             }
     
     # Fetch current event
-    event = request.db.query(Event).filter(Event.start_time > datetime.now()).order_by(Event.start_time.asc()).first()
-
+    event = get_current_event(request)
 
     application = Application(user=request.user, 
                         event=event,
