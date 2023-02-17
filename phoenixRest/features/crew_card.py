@@ -78,6 +78,6 @@ def generate_badge(request, user, event):
     back_img = background.copy() 
     back_img.paste(logo,( 302, 50))
     back_img.paste(photo,( 200, 550))
-    back_img.paste(qrid, (802, 1400))
+    back_img.paste(qrid, (802, 1380))
 
     return back_img
