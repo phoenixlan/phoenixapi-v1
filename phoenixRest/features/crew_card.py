@@ -58,6 +58,7 @@ def generate_badge(request, user, event):
         title = candidate_mappings[0].position.get_title()
 
     event_name = event.name
+    age = "%s år" % user.get_age()
     
     if user.avatar is None:
         raise RuntimeError("Unable to generate crew card - no avatar")
@@ -73,6 +74,7 @@ def generate_badge(request, user, event):
     draw.rectangle([(0,3000), (width, 1790)] , fill=(crew_farge))
     draw.text((200, 1200), name, font=fnt, fill=(0,0,0)) 
     draw.text((200, 1280), title, font=fnt, fill=(0,0,0))
+    draw.text((200, 1360), age, font=fnt, fill=(0,0,0))
     draw.text((30,1670 ), event_name, font=fnt, fill=(0,0,0))
     #draw.text((530,1815 ), crew, font=fnt, fill=(0,0,0))
     back_img = background.copy() 
