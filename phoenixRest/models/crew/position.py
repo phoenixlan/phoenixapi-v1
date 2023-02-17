@@ -57,6 +57,13 @@ class Position(Base):
             'permissions': self.permissions
 
         }
+    
+    def get_title(self):
+        if self.team:
+            if self.crew is None:
+                raise RuntimeError("User is member of a team but not a crew?")
+            return "%s i %s" % (("Lagleder av " if self.chief else "Medlem av " + self.team.name), self.crew.name)
+        return "%s av %s" % (("Lagleder" if self.chief else "Medlem"), self.crew.name)
 
 def create_or_fetch_crew_position(request, crew, team=None, chief=False):
     existing = request.db.query(Position).filter(Position.chief == chief)
