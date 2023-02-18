@@ -40,7 +40,7 @@ def map_user_public_with_positions(user, request):
         'gender': str(user.gender),
 
         'avatar_urls': user.get_avatar_urls(request),
-        'position_mappings': (map_position_mapping_with_position(mapping) for mapping in user.position_mappings),
+        'position_mappings': [map_position_mapping_with_position(mapping) for mapping in user.position_mappings],
     }
 
 
