@@ -30,6 +30,7 @@ class TicketInstanceResource(object):
         acl = [
             (Allow, ADMIN, 'view_ticket'),
             (Allow, TICKET_ADMIN, 'view_ticket'),
+            (Allow, TICKET_CHECKIN, 'view_ticket'),
             (Allow, ADMIN, 'seat_ticket'),
             (Allow, TICKET_ADMIN, 'seat_ticket'),
             (Allow, ADMIN, 'set_seater'),
