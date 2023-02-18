@@ -127,7 +127,11 @@ class UserInstanceResource(object):
 
 @view_config(context=UserInstanceResource, name='', request_method='GET', renderer='json', permission='user_view')
 def get_user(context, request):
-    if ADMIN in request.effective_principals or HR_ADMIN in request.effective_principals or request.user.uuid == context.userInstance.uuid:
+    if TICKET_CHECKIN in request.effective_principals or \
+        ADMIN in request.effective_principals or \
+        HR_ADMIN in request.effective_principals or \
+        request.user.uuid == context.userInstance.uuid:
+
         log.warning("Sending more details about a user because the query person is an admin or owns the account")
         return map_user_with_secret_fields(context.userInstance, request)
     return map_user_public_with_positions(context.userInstance, request)
