@@ -30,7 +30,8 @@ from phoenixRest.models.core import (
     agenda_entry,
     activation_code,
     password_reset_code,
-    location
+    location,
+    infoscreen_entry
 )
 
 from phoenixRest.models.core.oauth import (
