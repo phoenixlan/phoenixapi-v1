@@ -8,7 +8,7 @@
 
  * Å behandle den personlige informasjonen du gir fra deg er viktig for oss. Vi krever kun den informasjonen som er nødvendig for at vi kan arrangere LAN'et. Dersom du er under 18 betyr det kontaktinformasjon for foresatte, slik at ungdomsarbeidere kan nå dem dersom noe skjer, eller for å gi infoskriv.
  * Radar Event(eieren av Phoenix LAN) er medlem av hyperion, og din personlige informasjon vil derfor bli delt med hyperion dersom du blir medlem.
- * Du har som forbruker retten til dataportabilitet og retten til å bli slettet. Du kan få en kopi av dataen vi har om deg ved å kontakte phoenix på info@phoenixlan.no.
+ * Du har som forbruker retten til dataportabilitet og retten til å bli slettet. Du kan få en kopi av dataen vi har om deg ved å kontakte phoenix på [info@phoenix.no](mailto:info@phoenix.no).
 
 # Bruk av data
 
