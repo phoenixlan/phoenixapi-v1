@@ -159,18 +159,7 @@ def get_owned_tickets(context, request):
 
 @view_config(context=UserInstanceResource, name='ticket_vouchers', request_method='GET', renderer='json', permission='user_list_ticket_vouchers')
 def get_ticket_vouchers(context, request):
-    query = request.db.query(TicketVoucher)
-    if 'event_uuid' in request.GET:
-        event = request.db.query(Event).filter(Event.uuid == request.get['event']).first()
-        if event is None:
-            request.response.status = 404
-            return {
-                'error': 'Event not found'
-            }
-        query = query.filter(and_(TicketVoucher.recipient_user == context.userInstance, Ticket.event == event))
-    else:
-        query = query.filter(TicketVoucher.recipient_user == context.userInstance)
-    return query.all()
+    return request.db.query(TicketVoucher).filter(TicketVoucher.recipient_user == context.userInstance).all()
 
 # We only care about transfers from this event
 @view_config(context=UserInstanceResource, name='ticket_transfers', request_method='GET', renderer='json', permission='user_list_ticket_transfers')

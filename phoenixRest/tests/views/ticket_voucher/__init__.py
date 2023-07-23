@@ -35,6 +35,17 @@ def test_ticket_voucher_flow(testapp):
     }), status=200).json_body
     assert len(jeff_owned_vouchers) == 0
 
+    # Ensure there are no global ticket vouchers
+    global_vouchers = testapp.get('/ticket_voucher' , headers=dict({
+        'X-Phoenix-Auth': sender_token
+    }), status=200).json_body
+    assert len(global_vouchers) == 0
+
+    # Ensure people cannot look at the global voucher list
+    testapp.get('/ticket_voucher' , headers=dict({
+        'X-Phoenix-Auth': receiver_token
+    }), status=403)
+
     # Ensure a third party cannot see jeff's ticket vouchers
     jeff_owned_vouchers = testapp.get('/user/%s/ticket_vouchers' % receiver_user['uuid'], headers=dict({
         'X-Phoenix-Auth': third_party_token
@@ -60,6 +71,12 @@ def test_ticket_voucher_flow(testapp):
     }), status=200).json_body
     assert len(jeff_owned_vouchers) == 1
     assert jeff_owned_vouchers[0]['is_used'] == False
+
+    # Ensure there is now a global ticket voucher
+    global_vouchers = testapp.get('/ticket_voucher' , headers=dict({
+        'X-Phoenix-Auth': sender_token
+    }), status=200).json_body
+    assert len(global_vouchers) == 1
 
     # Check that jeff hasn't gotten a ticket yet
     jeff_owned_tickets_post = testapp.get('/user/%s/owned_tickets' % receiver_user['uuid'], headers=dict({

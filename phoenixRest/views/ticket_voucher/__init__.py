@@ -16,6 +16,8 @@ from phoenixRest.resource import resource
 
 from phoenixRest.roles import ADMIN, TICKET_ADMIN
 
+from sqlalchemy import and_, or_, extract
+
 import logging
 log = logging.getLogger(__name__)
 
@@ -24,6 +26,9 @@ class TicketVoucherResource(object):
     __acl__ = [
         (Allow, ADMIN, 'create'),
         (Allow, TICKET_ADMIN, 'create'),
+
+        (Allow, ADMIN, 'get'),
+        (Allow, TICKET_ADMIN, 'get'),
     ]
     def __init__(self, request):
         self.request = request
@@ -33,6 +38,10 @@ class TicketVoucherResource(object):
         node.__parent__ = self
         node.__name__ = key
         return node
+
+@view_config(name='', context=TicketVoucherResource, request_method='GET', renderer='json', permission='get')
+def get_vouchers(context, request):
+    return request.db.query(TicketVoucher).all()
 
 @view_config(name='', context=TicketVoucherResource, request_method='POST', renderer='json', permission='create')
 @validate(json_body={'recipient_user_uuid': str, 'ticket_type_uuid': str, 'last_use_event_uuid': str})
