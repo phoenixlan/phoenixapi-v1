@@ -67,8 +67,8 @@ class TicketVoucher(Base):
 
             'created': int(self.created.timestamp()),
             'used': int(self.used.timestamp()) if self.used is not None else None,
-            'expired': self.is_expired(request),
+            'expired': self.is_expired(),
         }
 
-    def is_expired(self, request):
+    def is_expired(self):
         return self.last_use_event.end_time < datetime.now()

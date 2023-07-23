@@ -52,7 +52,7 @@ def burn_voucher(context, request):
             'error': "The voucher has already been used"
         }
     
-    if context.ticketVoucherInstance.last_use_event.end_time < datetime.now():
+    if context.ticketVoucherInstance.is_expired():
         request.response.status = 400
         return {
             'error': "The has expired - contact support"
