@@ -122,6 +122,9 @@ def upload_background(context, request):
     os.rename(temp_file_path, file_path)
 
     context.seatmapInstance.background = background
+    return {
+        "status": "ok"
+    }
 
 
 @view_config(context=SeatmapInstanceViews, name='row', request_method='PUT', renderer='json', permission='create_row')

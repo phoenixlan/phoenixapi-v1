@@ -1,0 +1,12 @@
+<html>
+    <body>
+        <p>Hei!</p>
+
+        <p>Du har brukt billett-gavekortet {{ ticket_voucher.uuid }}, og fikk billetten {{ ticket_voucher.ticket.ticket_id }} hos {{ name }} ({{ domain }})</p>
+{% if ticket_voucher.ticket_type.seatable %}
+        <p><b>Husk å velge sete!</b> Du trenger sete for å delta. Dette gjør du på {{ domain }}</p>
+{% endif %}
+
+        <p>Dersom du gjorde dette med et uhell eller har spørsmål, kontakt <a href="mailto:{{mail}}">{{mail}}</a></p>
+    </body>
+</html>

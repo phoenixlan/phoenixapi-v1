@@ -16,7 +16,6 @@ from phoenixRest.utils import validateUuidAndQuery
 import logging
 log = logging.getLogger(__name__)
 
-
 class TicketTransferInstanceResource(object):
     def __acl__(self):
         acl = [
@@ -66,8 +65,6 @@ def revert_transfer(context, request):
         "sender": request.user,
         "ticket": context.ticketTransferInstance.ticket
     })
-
-
-
-
-
+    return {
+        "status": "ok"
+    }
