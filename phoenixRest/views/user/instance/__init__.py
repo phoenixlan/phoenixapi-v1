@@ -347,9 +347,9 @@ def upload_avatar(context, request):
     avatar_hd_w = int(request.registry.settings["avatar.hd_w"])
     avatar_hd_h = int(request.registry.settings["avatar.hd_h"])
 
-    im.resize((avatar_thumb_w,avatar_thumb_h), Image.ANTIALIAS).save(avatar_thumb_path, "JPEG", quality=80)
-    im.resize((avatar_sd_w,avatar_sd_h), Image.ANTIALIAS).save(avatar_sd_path, "JPEG", quality=100)
-    im.resize((avatar_hd_w,avatar_hd_h), Image.ANTIALIAS).save(avatar_hd_path, "JPEG", quality=100)
+    im.resize((avatar_thumb_w,avatar_thumb_h), Image.LANCZOS).save(avatar_thumb_path, "JPEG", quality=80)
+    im.resize((avatar_sd_w,avatar_sd_h), Image.LANCZOS).save(avatar_sd_path, "JPEG", quality=100)
+    im.resize((avatar_hd_w,avatar_hd_h), Image.LANCZOS).save(avatar_hd_path, "JPEG", quality=100)
 
 
     return avatar
