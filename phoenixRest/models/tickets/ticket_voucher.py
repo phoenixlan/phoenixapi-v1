@@ -67,7 +67,8 @@ class TicketVoucher(Base):
 
             'created': int(self.created.timestamp()),
             'used': int(self.used.timestamp()) if self.used is not None else None,
-            'expired': self.is_expired(),
+            'is_used': True if self.used is not None else False,
+            'is_expired': self.is_expired(),
         }
 
     def is_expired(self):

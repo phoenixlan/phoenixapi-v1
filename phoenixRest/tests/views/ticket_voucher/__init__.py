@@ -29,6 +29,22 @@ def test_ticket_voucher_flow(testapp):
         'X-Phoenix-Auth': sender_token 
     }), status=200).json_body
 
+    # Ensure jeff has no ticket vouchers
+    jeff_owned_vouchers = testapp.get('/user/%s/ticket_vouchers' % receiver_user['uuid'], headers=dict({
+        'X-Phoenix-Auth': receiver_token
+    }), status=200).json_body
+    assert len(jeff_owned_vouchers) == 0
+
+    # Ensure a third party cannot see jeff's ticket vouchers
+    jeff_owned_vouchers = testapp.get('/user/%s/ticket_vouchers' % receiver_user['uuid'], headers=dict({
+        'X-Phoenix-Auth': third_party_token
+    }), status=403)
+
+    # Ensure an admin can see jeffs vouchers
+    jeff_owned_vouchers = testapp.get('/user/%s/ticket_vouchers' % receiver_user['uuid'], headers=dict({
+        'X-Phoenix-Auth': sender_token
+    }), status=200).json_body
+
     # Give jeff a voucher
     voucher = testapp.post_json('/ticket_voucher', dict({
         'ticket_type_uuid': ticket_type['uuid'],
@@ -37,6 +53,13 @@ def test_ticket_voucher_flow(testapp):
     }), headers=dict({
         'X-Phoenix-Auth': sender_token
     }), status=200).json_body
+
+    # Ensure jeff has a ticket voucher
+    jeff_owned_vouchers = testapp.get('/user/%s/ticket_vouchers' % receiver_user['uuid'], headers=dict({
+        'X-Phoenix-Auth': sender_token 
+    }), status=200).json_body
+    assert len(jeff_owned_vouchers) == 1
+    assert jeff_owned_vouchers[0]['is_used'] == False
 
     # Check that jeff hasn't gotten a ticket yet
     jeff_owned_tickets_post = testapp.get('/user/%s/owned_tickets' % receiver_user['uuid'], headers=dict({
@@ -64,6 +87,13 @@ def test_ticket_voucher_flow(testapp):
 
     assert post_burn_voucher['ticket'] is not None
     assert post_burn_voucher['ticket']['event']['uuid'] == current_event['uuid']
+
+    # Assert the ticket voucher is now burned
+    jeff_owned_vouchers = testapp.get('/user/%s/ticket_vouchers' % receiver_user['uuid'], headers=dict({
+        'X-Phoenix-Auth': sender_token 
+    }), status=200).json_body
+    assert len(jeff_owned_vouchers) == 1
+    assert jeff_owned_vouchers[0]['is_used'] == True
 
 def test_expired_voucher_flow(testapp, db):
     testapp.ensure_typical_event()
@@ -102,6 +132,7 @@ def test_expired_voucher_flow(testapp, db):
         'X-Phoenix-Auth': sender_token
     }), status=200).json_body
 
+    assert voucher['is_expired'] == True
 
     # Ensure that you cannot burn an expired voucher
     post_burn_voucher = testapp.post_json('/ticket_voucher/%s/burn' % voucher['uuid'], dict({

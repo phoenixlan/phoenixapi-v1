@@ -11,6 +11,7 @@ from phoenixRest.models.core.event import Event, get_current_event
 from phoenixRest.models.core.avatar import Avatar
 from phoenixRest.models.tickets.ticket import Ticket
 from phoenixRest.models.tickets.ticket_type import TicketType
+from phoenixRest.models.tickets.ticket_voucher import TicketVoucher
 from phoenixRest.models.tickets.payment import Payment
 
 from phoenixRest.models.tickets.store_session import StoreSession
@@ -67,6 +68,9 @@ class UserInstanceResource(object):
             # Seatable tickets are either owned by the user or "lended" to them by another for the sake of seating
             (Allow, ADMIN, 'user_list_seatable_tickets'),
             (Allow, TICKET_ADMIN, 'user_list_seatable_tickets'),
+            # Who can list ticket vouchers
+            (Allow, ADMIN, 'user_list_ticket_vouchers'),
+            (Allow, TICKET_ADMIN, 'user_list_ticket_vouchers'),
             # Ticket transfers
             (Allow, ADMIN, 'user_list_ticket_transfers'),
             (Allow, TICKET_ADMIN, 'user_list_ticket_transfers'),
@@ -102,6 +106,7 @@ class UserInstanceResource(object):
                 (Allow, "%s" % self.userInstance.uuid, 'user_list_seatable_tickets'),
                 # Users can see their own ticket transfers
                 (Allow, "%s" % self.userInstance.uuid, 'user_list_ticket_transfers'),
+                (Allow, "%s" % self.userInstance.uuid, 'user_list_ticket_vouchers'),
                 # Users can view their own store session
                 (Allow, "%s" % self.userInstance.uuid, 'user_get_store_session'),
                 # Users can upload their own avatar
@@ -150,6 +155,21 @@ def get_owned_tickets(context, request):
         query = query.filter(and_(Ticket.owner == context.userInstance, Ticket.event == event))
     else:
         query = query.filter(Ticket.owner == context.userInstance)
+    return query.all()
+
+@view_config(context=UserInstanceResource, name='ticket_vouchers', request_method='GET', renderer='json', permission='user_list_ticket_vouchers')
+def get_ticket_vouchers(context, request):
+    query = request.db.query(TicketVoucher)
+    if 'event_uuid' in request.GET:
+        event = request.db.query(Event).filter(Event.uuid == request.get['event']).first()
+        if event is None:
+            request.response.status = 404
+            return {
+                'error': 'Event not found'
+            }
+        query = query.filter(and_(TicketVoucher.recipient_user == context.userInstance, Ticket.event == event))
+    else:
+        query = query.filter(TicketVoucher.recipient_user == context.userInstance)
     return query.all()
 
 # We only care about transfers from this event
