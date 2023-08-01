@@ -11,6 +11,7 @@ from phoenixRest.models.core.event import Event, get_current_event
 from phoenixRest.models.core.avatar import Avatar
 from phoenixRest.models.tickets.ticket import Ticket
 from phoenixRest.models.tickets.ticket_type import TicketType
+from phoenixRest.models.tickets.ticket_voucher import TicketVoucher
 from phoenixRest.models.tickets.payment import Payment
 
 from phoenixRest.models.tickets.store_session import StoreSession
@@ -67,6 +68,9 @@ class UserInstanceResource(object):
             # Seatable tickets are either owned by the user or "lended" to them by another for the sake of seating
             (Allow, ADMIN, 'user_list_seatable_tickets'),
             (Allow, TICKET_ADMIN, 'user_list_seatable_tickets'),
+            # Who can list ticket vouchers
+            (Allow, ADMIN, 'user_list_ticket_vouchers'),
+            (Allow, TICKET_ADMIN, 'user_list_ticket_vouchers'),
             # Ticket transfers
             (Allow, ADMIN, 'user_list_ticket_transfers'),
             (Allow, TICKET_ADMIN, 'user_list_ticket_transfers'),
@@ -102,6 +106,7 @@ class UserInstanceResource(object):
                 (Allow, "%s" % self.userInstance.uuid, 'user_list_seatable_tickets'),
                 # Users can see their own ticket transfers
                 (Allow, "%s" % self.userInstance.uuid, 'user_list_ticket_transfers'),
+                (Allow, "%s" % self.userInstance.uuid, 'user_list_ticket_vouchers'),
                 # Users can view their own store session
                 (Allow, "%s" % self.userInstance.uuid, 'user_get_store_session'),
                 # Users can upload their own avatar
@@ -151,6 +156,10 @@ def get_owned_tickets(context, request):
     else:
         query = query.filter(Ticket.owner == context.userInstance)
     return query.all()
+
+@view_config(context=UserInstanceResource, name='ticket_vouchers', request_method='GET', renderer='json', permission='user_list_ticket_vouchers')
+def get_ticket_vouchers(context, request):
+    return request.db.query(TicketVoucher).filter(TicketVoucher.recipient_user == context.userInstance).all()
 
 # We only care about transfers from this event
 @view_config(context=UserInstanceResource, name='ticket_transfers', request_method='GET', renderer='json', permission='user_list_ticket_transfers')
@@ -347,9 +356,9 @@ def upload_avatar(context, request):
     avatar_hd_w = int(request.registry.settings["avatar.hd_w"])
     avatar_hd_h = int(request.registry.settings["avatar.hd_h"])
 
-    im.resize((avatar_thumb_w,avatar_thumb_h), Image.ANTIALIAS).save(avatar_thumb_path, "JPEG", quality=80)
-    im.resize((avatar_sd_w,avatar_sd_h), Image.ANTIALIAS).save(avatar_sd_path, "JPEG", quality=100)
-    im.resize((avatar_hd_w,avatar_hd_h), Image.ANTIALIAS).save(avatar_hd_path, "JPEG", quality=100)
+    im.resize((avatar_thumb_w,avatar_thumb_h), Image.LANCZOS).save(avatar_thumb_path, "JPEG", quality=80)
+    im.resize((avatar_sd_w,avatar_sd_h), Image.LANCZOS).save(avatar_sd_path, "JPEG", quality=100)
+    im.resize((avatar_hd_w,avatar_hd_h), Image.LANCZOS).save(avatar_hd_path, "JPEG", quality=100)
 
 
     return avatar
