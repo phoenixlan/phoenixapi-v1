@@ -39,7 +39,7 @@ class Friendship(Base):
         return {
             "uuid": self.uuid,
             "recipient_user": self.recipient_user,
-            "accepted": int(self.accepted.timestamp() if self.accepted is not None else None),
-            "revoked": int(self.revoked.timestamp() if self.revoked is not None else None),
+            "accepted": int(self.accepted.timestamp()) if self.accepted is not None else None,
+            "revoked": int(self.revoked.timestamp()) if self.revoked is not None else None,
             "created": int(self.created.timestamp()),
         }
