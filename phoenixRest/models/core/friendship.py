@@ -6,7 +6,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
-from phoenixRest import Base
+from phoenixRest.models import Base
 
 import uuid
 
