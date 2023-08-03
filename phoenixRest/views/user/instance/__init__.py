@@ -7,6 +7,7 @@ from pyramid.httpexceptions import (
 from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
 from phoenixRest.models.core.user import User
+from phoenixRest.models.core.friendship import Friendship
 from phoenixRest.models.core.event import Event, get_current_event
 from phoenixRest.models.core.avatar import Avatar
 from phoenixRest.models.crew.application import Application
@@ -148,6 +149,21 @@ def get_user(context, request):
         return map_user_with_secret_fields(context.userInstance, request)
     return map_user_public_with_positions(context.userInstance, request)
 
+@view_config(context=UserInstanceResource, name='friendships', request_method='GET', renderer='json', permission='')
+def get_friendships(context, request):
+    query = request.db.query(Friendship)\
+    .filter(and_(
+        and_(Friendship.accepted is not None, Friendship.revoked is None),
+        or_(Friendship.recipient_user == context.userInstance, Friendship.source_user == context.userInstance))
+    ).all()
+    
+@view_config(context=UserInstanceResource, name='friend_requests', request_method='GET', renderer='json', permission='')
+def get_friend_requests(context, request):
+    query = request.db.query(Friendship)\
+    .filter(and_(
+            and_(Friendship.accepted is None, Friendship.revoked is not None),
+            or_(Friendship.recipient_user == context.userInstance, Friendship.source_user == context.userInstance))
+    ).all()
 
 @view_config(context=UserInstanceResource, name='owned_tickets', request_method='GET', renderer='json', permission='user_list_owned_tickets')
 def get_owned_tickets(context, request):
