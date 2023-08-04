@@ -25,24 +25,28 @@ class FriendRequestResource(object):
     """
 
 @view_config(name="", context=FriendRequestResource, request_method="POST", renderer="json", permission="")
-@validate(json_body={"recipient_user_email": str})
+@validate(json_body={"user_email": str})
 def create_friend_request(context, request):
-    #TODO:
-    """
-    is_friend = request.db.query(Friendship).filter(and_(Friendship.revoked is None, and_(Friendship.)))
-    if is_friend:
+    active_friendship = request.db.query(Friendship).filter(
+        and_(
+            Friendship.revoked is not None, #? V
+            and_(Friendship.source_user == request.user, Friendship.source_user == recipient_user_email)
+        )
+    )
+    if active_friendship:
         request.status = 400
         return {
             "error": "user already has friendship with recipient_user"
         }
-    """
-    recipient_user = request.db.query(User).filter(User.email == request.json_body["user_email"]).first()
+
+    recipient_user_email = request.json_body["user_email"]
+    recipient_user = request.db.query(User).filter(User.email == recipient_user_email).first()
     if not recipient_user:
         request.response.status = 404
         return {
             "error": "recipient_user not found"
         }
-                                  #? V                        None eller null() ?#
+                                  #? V
     friend_request = Friendship(request.user, recipient_user, None, None)
     request.db.add(friend_request)
     request.db.flush()
