@@ -151,19 +151,19 @@ def get_user(context, request):
 
 @view_config(context=UserInstanceResource, name='friendships', request_method='GET', renderer='json', permission='')
 def get_friendships(context, request):
-    query = request.db.query(Friendship)\
-    .filter(and_(
+    query = request.db.query(Friendship).filter(and_(
         and_(Friendship.accepted is not None, Friendship.revoked is None),
         or_(Friendship.recipient_user == context.userInstance, Friendship.source_user == context.userInstance))
     ).all()
+    return query
     
 @view_config(context=UserInstanceResource, name='friend_requests', request_method='GET', renderer='json', permission='')
 def get_friend_requests(context, request):
-    query = request.db.query(Friendship)\
-    .filter(and_(
-            and_(Friendship.accepted is None, Friendship.revoked is not None),
-            or_(Friendship.recipient_user == context.userInstance, Friendship.source_user == context.userInstance))
+    query = request.db.query(Friendship).filter(and_(
+        and_(Friendship.accepted is None, Friendship.revoked is not None),
+        or_(Friendship.recipient_user == context.userInstance, Friendship.source_user == context.userInstance))
     ).all()
+    return query
 
 @view_config(context=UserInstanceResource, name='owned_tickets', request_method='GET', renderer='json', permission='user_list_owned_tickets')
 def get_owned_tickets(context, request):
