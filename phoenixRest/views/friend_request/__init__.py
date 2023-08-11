@@ -1,20 +1,24 @@
 from pyramid.view import view_config, view_defaults
 
+from pyramid.authorization import Allow, Everyone
+
 from phoenixRest.models.core.user import User
 from phoenixRest.models.core.friendship import Friendship
 
 from phoenixRest.utils import validate
 from phoenixRest.resource import resource
 
+from phoenixRest.roles import ADMIN
+
 from sqlalchemy import and_, or_, extract, null
 
 @resource(name='friend_request')
 class FriendRequestResource(object):
-    def __acl__(self):
-        acl = [
-            
-        ]
-        
+    __acl__ = [
+        (Allow, ADMIN, 'create'),
+        (Allow, Everyone, 'create'),
+    ]   
+         
     def __init__(self, request):
         self.request = request  
         
@@ -24,20 +28,20 @@ class FriendRequestResource(object):
         node.__name__ = key
         return node
 
-@view_config(name="", context=FriendRequestResource, request_method="POST", renderer="json", permission="")
+@view_config(name="", context=FriendRequestResource, request_method="POST", renderer="json", permission="create")
 @validate(json_body={"user_email": str})
 def create_friend_request(context, request):
     recipient_user_email = request.json_body["user_email"]
     recipient_user = request.db.query(User).filter(User.email == recipient_user_email).first()
     if not recipient_user:
-        request.response.status = 404
+        request.response.status = 400
         return {
             "error": "recipient_user not found"
         }
     
     has_active_friendship = request.db.query(Friendship).filter(
         and_(
-            Friendship.revoked is not None, #? V
+            Friendship.revoked is not None,
             and_(Friendship.source_user == request.user, Friendship.recipient_user == recipient_user)
         )
     )

@@ -38,6 +38,7 @@ class Friendship(Base):
     def __json__(self, request):
         return {
             "uuid": self.uuid,
+            "source_user": self.source_user,
             "recipient_user": self.recipient_user,
             "accepted": int(self.accepted.timestamp()) if self.accepted is not None else None,
             "revoked": int(self.revoked.timestamp()) if self.revoked is not None else None,
