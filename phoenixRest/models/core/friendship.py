@@ -22,18 +22,16 @@ class Friendship(Base):
     recipient_user_uuid = Column(UUID(as_uuid=True), ForeignKey("user.uuid"), nullable=False)
     recipient_user = relationship("User", foreign_keys=[recipient_user_uuid])
     
-    accepted = Column(DateTime, nullable=True)
-    
-    revoked = Column(DateTime, nullable=True)
-    
     created = Column(DateTime, nullable=False)
     
-    def __init__(self, source_user, recipient_user, accepted, revoked):
+    accepted = Column(DateTime, nullable=True)
+    revoked = Column(DateTime, nullable=True)
+    
+    
+    def __init__(self, source_user, recipient_user):
         self.source_user = source_user
         self.recipient_user = recipient_user
         self.created = datetime.now()
-        self.accepted = accepted
-        self.revoked = revoked
         
     def __json__(self, request):
         return {

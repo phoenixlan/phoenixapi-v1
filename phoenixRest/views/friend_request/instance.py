@@ -20,16 +20,15 @@ class FriendRequestInstanceResource(object):
         recipient_user_uuid = self.friendRequestInstance.recipient_user.uuid
         acl = [
             (Allow, ADMIN, "view")
-            (Allow, f"{source_user_uuid}", "view"),
-            (Allow, f"{recipient_user_uuid}", "view"),
+            (Allow, str(source_user_uuid), "view"),
+            (Allow, str(recipient_user_uuid), "view"),
             
             (Allow, ADMIN, "revoke")
-            (Allow, f"{source_user_uuid}", "revoke"),
-            (Allow, f"{recipient_user_uuid}", "revoke"),
+            (Allow, str(source_user_uuid), "revoke"),
+            (Allow, str(recipient_user_uuid), "revoke"),
             
-            (Allow, ADMIN, "accept")
-            (Deny, f"{source_user_uuid}", "accept"),
-            (Allow, f"{recipient_user_uuid}", "accept"),
+            (Deny,  str(source_user_uuid), "accept"),
+            (Allow, str(recipient_user_uuid), "accept"),
             
             
         ]
@@ -61,12 +60,12 @@ def accept_friendship(context, request):
     if context.friendRequestInstance.revoked is not None:
         request.status = 400
         return {
-            "error": "friend_request already revoked, cannot accept"
+            "error": "This friend request has already been revoked"
         }
     elif context.friendRequestInstance.accepted is not None:
         request.status = 400
         return {
-            "error": "friend_request already accepted"
+            "error": "This friend request has already been accepted"
         }
     
     context.friendRequestInstance.accepted = datetime.now()
