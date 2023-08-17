@@ -14,9 +14,9 @@ mkdir /uploads && chown phoenixRest /uploads
 
 COPY ./docker/common/wait-for-it.sh /srv/phoenixRest/
 
-USER phoenixRest
+#USER phoenixRest
 EXPOSE 8080
 ENV PYRAMID_DEBUG_AUTHORIZATION=1 PYRAMID_DEBUG_ROUTEMATCH=1 
 
 ENTRYPOINT ["bash", "/srv/phoenixRest/docker-startup.sh"]
-CMD ["pserve", "paste_develop.ini", "--reload"]
+CMD ["gunicorn", "--workers=1", "--paste", "paste_develop.ini", "-b", ":8080", "--reload"]

@@ -2,7 +2,7 @@
     <body>
         <p>Hei!</p>
 
-        <p>Du har brukt billett-gavekortet {{ ticket_voucher.uuid }}, og fikk billetten {{ ticket_voucher.ticket.ticket_id }} hos {{ name }} ({{ domain }})</p>
+        <p>Du har brukt et billett-gavekort (gavekort-id <code>{{ ticket_voucher.uuid }}</code>), og fikk billettnr #{{ ticket_voucher.ticket.ticket_id }} hos {{ name }} ({{ domain }})</p>
 {% if ticket_voucher.ticket_type.seatable %}
         <p><b>Husk å velge sete!</b> Du trenger sete for å delta. Dette gjør du på {{ domain }}</p>
 {% endif %}
