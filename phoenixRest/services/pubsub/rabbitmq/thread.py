@@ -10,6 +10,14 @@ pika_logger = logging.getLogger("pika")
 pika_logger.setLevel(logging.DEBUG)
 
 class RabbitmqThread(threading.Thread):
+    """Runs a RabbitMQ Pika ioloop in a second thread,
+    allowing you to keep a single connection alive.
+
+    This is a lot of responsibility, as once messages are handed off to PubsubService they are expected to be delivered.
+    Failure to do so can cause serious issues, like users not receiving the info they need.
+    
+    It is therefore important that as much validation is done as possibe from the request thread,
+    and that """
 
     def __init__(self, host, credentials):
         super().__init__()
@@ -26,6 +34,7 @@ class RabbitmqThread(threading.Thread):
 
         self._should_stop = False
 
+        # Feature-to-come. Pyramid view handlers can't define positions so we have to do it for them here
         self._active_queues = ['position-updates']
         # Used to communicate between the threads
         self._pending_queues = []
@@ -37,8 +46,9 @@ class RabbitmqThread(threading.Thread):
             if queuename in self._active_queues or queuename in self._pending_queues:
                 raise RuntimeError("Tried to register queue name that already exists: %s" % queuename)
             self._pending_queues.append(queuename)
-            # TODO signal the thread
-            if self._channel is not None:
+
+            # If the connection is up
+            if self._channel is not None and self._running:
                 self._connection.ioloop.add_callback_threadsafe(self._poll)
             
     
@@ -49,6 +59,8 @@ class RabbitmqThread(threading.Thread):
         if type(payload) is not dict:
             raise RuntimeError("Provided message is not a dictionary: %s" % payload)
         
+        # We do this just to ensure that the payload can be strigified before it is passed to another thread
+        # If dumps fails in the other thread, the exception will not be caught properly.
         try:
             json.dumps(payload)
         except:
@@ -93,7 +105,7 @@ class RabbitmqThread(threading.Thread):
     def run(self):
         """Main function that handles rabbitmq in a separate thread"""
         log.info("Started RabbitMQ thread")
-        # Ensure that if someone called send_message or ensure_queue during connection, things are handled properly
+        # Run in a loop so we can automatically reconnect
         while not self._should_stop:
             # Set up the connection
             self._connection = self._connect()
