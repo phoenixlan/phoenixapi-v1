@@ -41,11 +41,9 @@ def setup_service_manager(settings):
 
     # Mail
     mail_provider = MailService(service_manager)
-    log.info(settings["service.mail.provider"])
     if "service.mail.provider" in settings:
-        log.info("yes")
         if settings["service.mail.provider"] == "pubsub":
-            log.info("mail")
+            log.info("Using pubsub for sending mails")
             mail_provider = PubsubMailService(service_manager, settings)
     
     service_manager.register_service("email", mail_provider)
