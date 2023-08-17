@@ -21,4 +21,4 @@ USER phoenixRest
 EXPOSE 8080
 
 ENTRYPOINT ["sh", "/srv/phoenixRest/docker-startup.sh"]
-CMD ["gunicorn", "--workers=5", "--paste", "paste_prod.ini", "-b", ":8080"]
+CMD ["gunicorn", "--workers=6", "--paste", "paste_prod.ini", "-b", ":8080"]
