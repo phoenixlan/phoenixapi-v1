@@ -13,7 +13,7 @@ WORKDIR /srv/phoenixRest
 COPY . /srv/phoenixRest
 COPY --from=0 /srv/phoenix/public/static /srv/phoenixRest/phoenixRest/static
 
-RUN rm -r staticContent && apk add --no-cache postgresql-libs libpng libjpeg; \
+RUN rm -r staticContent && apk add --no-cache postgresql-libs libpng libjpeg tk; \
 apk add --no-cache --virtual .build-deps build-base libffi-dev postgresql-dev jpeg-dev zlib-dev libpng-dev; \
 rm -r docker && pip install -e . && pip install psycopg2; \
 mv alembic-docker.ini alembic.ini; \
