@@ -7,7 +7,7 @@ rm -r docker
 echo "Installing dependencies(Alpine)"
 
 # Runtime dependencies
-apk add --no-cache postgresql-libs libpng libjpeg;
+apk add --no-cache postgresql-libs tk libpng libjpeg;
 # Build-time dependencies
 apk add --no-cache --virtual .build-deps build-base libffi-dev postgresql-dev jpeg-dev zlib-dev libpng-dev;
 
