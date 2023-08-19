@@ -2,7 +2,7 @@ FROM node:16
 COPY staticContent /srv/phoenix
 RUN cd /srv/phoenix && yarn && yarn build
 
-FROM python:3.8-alpine
+FROM python:3.10-alpine
 
 RUN mkdir -p /srv/phoenixRest && addgroup -S phoenixRest && adduser -S phoenixRest -G phoenixRest; \
 chown phoenixRest:phoenixRest /srv/phoenixRest; \

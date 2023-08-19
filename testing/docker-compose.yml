@@ -18,7 +18,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    command: pytest phoenixRest/tests
+    command: pytest --cov=phoenixRest --cov-config=.coveragerc phoenixRest/tests
     environment:
       DEBUG: "yes"
     env_file: 

@@ -24,12 +24,14 @@ requires = [
     'webtest',
     'pycodestyle',
     'pytest',
+    'pytest-cov',
     'qrcode',
     'requests',
     'uuid',
     'sentry-sdk',
     'Pillow',
     'stripe',
+    'mistune'
 ]
 
 setup(name='phoenixRest',

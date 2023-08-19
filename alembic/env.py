@@ -29,6 +29,7 @@ from phoenixRest.models.core import (
     avatar,
     agenda_entry,
     activation_code,
+    consent_reversal_code,
     password_reset_code,
     location
 )
