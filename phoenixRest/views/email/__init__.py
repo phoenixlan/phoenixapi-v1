@@ -6,6 +6,7 @@ from pyramid.httpexceptions import (
 from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
 from phoenixRest.models.core.user import User
+from phoenixRest.models.core.consent_withdrawal_code import ConsentWithdrawalCode
 from phoenixRest.models.core.user_consent import UserConsent, ConsentType
 from phoenixRest.models.core.event import Event, get_current_event
 from phoenixRest.models.tickets.ticket import Ticket
@@ -112,6 +113,7 @@ def get_mail_details_by_category(request, category, user):
             if user.uuid == request.user.uuid:
                 created_time = datetime.now()
                 consent_occasion = "sending av denne e-posten"
+                consent_withdrawal_url = "(Ingen URL)"
             else:
                 if len(consents) == 0:
                     raise RuntimeError("User has no consent, something went wrong?")
@@ -123,11 +125,31 @@ def get_mail_details_by_category(request, category, user):
 
                 created_time = consent.created
                 consent_occasion = "registrering" if consent.source == "register" else "annen annledning: %s" % consent.source,
+
+                # Calculate the consent withdrawal url
+                withdrawal_codes = request.db.query(ConsentWithdrawalCode) \
+                    .filter(and_(
+                        ConsentWithdrawalCode.user == user,
+                        ConsentWithdrawalCode.consent_type == ConsentType.event_notification
+                    )).all()
+                
+                if len(withdrawal_codes) > 1:
+                    raise RuntimeError("User has more than one withdrawal code. This should not be possible")
+                
+                withdrawal_code = None
+                if len(withdrawal_codes) == 0:
+                    withdrawal_code = ConsentWithdrawalCode(user, ConsentType.event_notification)
+                    request.db.add(withdrawal_code)
+                    request.db.flush()
+                else:
+                    withdrawal_code = withdrawal_codes[0]
+                
+                consent_withdrawal_url = withdrawal_code.get_withdrawal_url(request)
             
             return "gdpr_mail.jinja2", {
                 "consent_time": created_time,
                 "consent_occasion": consent_occasion,
-                "consent_withdrawal_url": "todo"
+                "consent_withdrawal_url": consent_withdrawal_url
             }
         case MailType.participant_info | MailType.crew_info:
             return "necessary_mail.jinja2", {}

@@ -1,5 +1,6 @@
 from phoenixRest.models.core.event import Event
 from phoenixRest.models.core.user_consent import UserConsent, ConsentType
+from phoenixRest.models.core.consent_withdrawal_code import ConsentWithdrawalCode
 from phoenixRest.models.core.user import User
 from phoenixRest.models.crew.position import Position
 
@@ -221,6 +222,9 @@ def test_consent_mail_dryrun(db, testapp):
         'X-Phoenix-Auth': sender_token
     }), status=200).json_body['count']
 
+    # Check how many consent withdrawal codes exist
+    consent_withdrawal_codes_pre = db.query(ConsentWithdrawalCode).all()
+
     consenting_user_result = testapp.post_json('/email/dryrun', dict({
         'recipient_category': "event_notification",
         'subject': "hello",
@@ -267,6 +271,11 @@ def test_consent_mail_dryrun(db, testapp):
 
     assert crew_mail_test_pre == crew_mail_test_post
     assert participant_mail_count_pre == participant_mail_count_post
+
+    # Check how many consent codes we have now
+    consent_withdrawal_codes_post = db.query(ConsentWithdrawalCode).all()
+
+    assert len(consent_withdrawal_codes_post) == len(consent_withdrawal_codes_pre) + 1
 
 def test_invalid_mail_category_dryrun(testapp):
     testapp.ensure_typical_event()
