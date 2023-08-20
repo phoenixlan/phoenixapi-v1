@@ -64,6 +64,6 @@ def use_consent_withdrawal_code(context, request):
         request.response.status = 400
         request.db.delete(context.consent_withdrawal_code_instance)
         return {
-            "message": "No consent exists - already removed?"
+            "error": "No consent exists - already removed?"
         }
     

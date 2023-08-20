@@ -10,7 +10,7 @@ from sqlalchemy import (
     Enum,
     Table
 )
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID, ENUM
 
 from sqlalchemy.orm import relationship
 
@@ -28,7 +28,7 @@ class ConsentWithdrawalCode(Base):
 
     uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
 
-    consent_type = Column(Enum(ConsentType), nullable=False)
+    consent_type = Column(ENUM(ConsentType, create_type=False), nullable=False)
 
     user_uuid = Column(UUID(as_uuid=True), ForeignKey("user.uuid"), primary_key=False, nullable=False)
     user = relationship("User")
@@ -48,5 +48,5 @@ class ConsentWithdrawalCode(Base):
         }
     
     def get_withdrawal_url(self, request):
-        return "%s/user/withdrawConsent?uuid=%s" % (request.registry.settings["api.root"], self.uuid)
+        return "%s/static/withdrawConsent.html?uuid=%s" % (request.registry.settings["api.root"], self.uuid)
 
