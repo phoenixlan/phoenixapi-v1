@@ -23,7 +23,7 @@ from datetime import datetime
 import uuid
 
 class ConsentWithdrawalCode(Base):
-    """Represnts an code that can be used to withdraw marketing consent from an e-mail without logging in"""
+    """Represnts a code that can be used to withdraw marketing consent from an e-mail without logging in"""
     __tablename__ = "consent_withdrawal_code"
 
     uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
@@ -31,7 +31,7 @@ class ConsentWithdrawalCode(Base):
     consent_type = Column(ENUM(ConsentType, create_type=False), nullable=False)
 
     user_uuid = Column(UUID(as_uuid=True), ForeignKey("user.uuid"), primary_key=False, nullable=False)
-    user = relationship("User")
+    user = relationship("User", foreign_keys=[user_uuid])
 
     created = Column(DateTime, nullable=False)
 
