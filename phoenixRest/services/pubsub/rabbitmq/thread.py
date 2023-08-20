@@ -6,8 +6,8 @@ import json
 import logging
 log = logging.getLogger(__name__)
 
-pika_logger = logging.getLogger("pika")
-pika_logger.setLevel(logging.DEBUG)
+#pika_logger = logging.getLogger("pika")
+#pika_logger.setLevel(logging.DEBUG)
 
 class RabbitmqThread(threading.Thread):
     """Runs a RabbitMQ Pika ioloop in a second thread,
@@ -66,7 +66,7 @@ class RabbitmqThread(threading.Thread):
         except:
             raise RuntimeError("Payload is not json-able: %s" % payload)
 
-        log.debug(f"Submitting message to {channel}")
+        log.debug(f"Submitting message to channel {channel}, {json.dumps(payload)}")
         with self._lock:
             if channel not in self._active_queues and channel not in self._pending_queues:
                 raise RuntimeError("Tried to send a message to a queue that is not registered")
@@ -100,6 +100,7 @@ class RabbitmqThread(threading.Thread):
                     properties=pika.BasicProperties(
                         delivery_mode=pika.spec.PERSISTENT_DELIVERY_MODE
                     ))
+            self._pending_messages.clear()
 
 
     def run(self):

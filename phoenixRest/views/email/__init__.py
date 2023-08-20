@@ -221,6 +221,7 @@ def send_mail(context, request):
     for recipient in recipients:
         template_file, template_context = get_mail_details_by_category(request, category, recipient)
 
+        log.info("Sending mail for recipient %s" % recipient.uuid)
         request.service_manager.get_service('email').send_mail(recipient.email, email_subject, template_file, {
             "mail": request.registry.settings["api.contact"],
             "name": request.registry.settings["api.name"],
