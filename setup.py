@@ -36,6 +36,7 @@ requires = [
 
 setup(name='phoenixRest',
       install_requires=requires,
+      packages=["phoenixRest"],
       entry_points="""\
       [paste.app_factory]
       main = phoenixRest:main
