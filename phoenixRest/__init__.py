@@ -37,8 +37,7 @@ from phoenixRest.models.core.user import User
 
 from phoenixRest.resource import RootResource
 
-from phoenixRest.features.mailProvider.mailgun import MailgunMailProvider
-from phoenixRest.features.mailProvider import MailProvider
+from phoenixRest.services import ServiceManager, setup_service_manager
 
 @subscriber(NewRequest)
 def log_request(evt):
@@ -83,9 +82,9 @@ def get_root(request):
 def uuid_adapter(obj, request):
     return str(obj)
 
-def mail_provider(mailProvider: MailProvider):
+def service_manager(manager: ServiceManager):
     def inner(request):
-        return mailProvider
+        return manager
     return inner
 
 def main(global_config, **settings):
@@ -112,17 +111,9 @@ def main(global_config, **settings):
     # Add the user property to the request object
     config.add_request_method(user, reify=True)
 
-    provider = MailProvider()
-    
-    log.info(settings)
-    log.info(settings["service.mail.provider"])
-    if "service.mail.provider" in settings:
-        log.info("yes")
-        if settings["service.mail.provider"] == "mailgun":
-            log.info("mail")
-            provider = MailgunMailProvider()
-    
-    config.add_request_method(mail_provider(provider), reify=True, name="mail_service")
+    initiated_service_manager = setup_service_manager(settings)
+
+    config.add_request_method(service_manager(initiated_service_manager), reify=True, name="service_manager")
     
     if "DEBUG" in os.environ:
         log.info("WARNING: Enabling debug")

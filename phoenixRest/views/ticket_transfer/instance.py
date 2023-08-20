@@ -51,14 +51,14 @@ def revert_transfer(context, request):
     context.ticketTransferInstance.reverted = True
     context.ticketTransferInstance.ticket.owner = context.ticketTransferInstance.from_user
 
-    request.mail_service.send_mail(context.ticketTransferInstance.from_user.email, "Du har angret på en billett-overføring", "ticket_transfer_reverted_to_sender.jinja2", {
+    request.service_manager.get_service('email').send_mail(context.ticketTransferInstance.from_user.email, "Du har angret på en billett-overføring", "ticket_transfer_reverted_to_sender.jinja2", {
         "mail": request.registry.settings["api.contact"],
         "name": request.registry.settings["api.name"],
         "domain": request.registry.settings["api.mainpage"],
         "ticket": context.ticketTransferInstance.ticket
     })
 
-    request.mail_service.send_mail(context.ticketTransferInstance.to_user.email, "Senderen har angret på overføringen av en billett til deg", "ticket_transfer_reverted_to_recipient.jinja2", {
+    request.service_manager.get_service('email').send_mail(context.ticketTransferInstance.to_user.email, "Senderen har angret på overføringen av en billett til deg", "ticket_transfer_reverted_to_recipient.jinja2", {
         "mail": request.registry.settings["api.contact"],
         "name": request.registry.settings["api.name"],
         "domain": request.registry.settings["api.mainpage"],

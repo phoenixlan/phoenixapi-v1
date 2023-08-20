@@ -20,7 +20,7 @@ def mint_tickets(request, payment: Payment):
         log.info("Minted %s tickets of type %s for user %s" % (entry.amount, entry.ticket_type.name, payment.user_uuid))
 
     # Send a mail
-    request.mail_service.send_mail(payment.user.email, "Kvittering for kjøp av billetter", "tickets_minted.jinja2", {
+    request.service_manager.get_service('email').send_mail(payment.user.email, "Kvittering for kjøp av billetter", "tickets_minted.jinja2", {
         "mail": request.registry.settings["api.contact"],
         "name": request.registry.settings["api.name"],
         "payment": payment,

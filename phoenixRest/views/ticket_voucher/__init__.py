@@ -71,7 +71,7 @@ def create_voucher(context, request):
     request.db.add(voucher)
     request.db.flush()
 
-    request.mail_service.send_mail(recipient_user.email, "Du har mottatt et billett-gavekort", "ticket_voucher_received.jinja2", {
+    request.service_manager.get_service('email').send_mail(recipient_user.email, "Du har mottatt et billett-gavekort", "ticket_voucher_received.jinja2", {
         "mail": request.registry.settings["api.contact"],
         "name": request.registry.settings["api.name"],
         "domain": request.registry.settings["api.mainpage"],

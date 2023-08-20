@@ -68,7 +68,7 @@ def burn_voucher(context, request):
     request.db.flush()
     log.info(f"Minted ticket {ticket.ticket_id} by burning voucher {context.ticketVoucherInstance.uuid} for user {context.ticketVoucherInstance.recipient_user.uuid}")
 
-    request.mail_service.send_mail(context.ticketVoucherInstance.recipient_user, "Du har brukt et billett-gavekort", "ticket_voucher_burned.jinja2", {
+    request.service_manager.get_service('email').send_mail(context.ticketVoucherInstance.recipient_user.email, "Du har brukt et billett-gavekort", "ticket_voucher_burned.jinja2", {
         "mail": request.registry.settings["api.contact"],
         "name": request.registry.settings["api.name"],
         "domain": request.registry.settings["api.mainpage"],

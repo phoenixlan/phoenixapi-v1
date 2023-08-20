@@ -163,7 +163,7 @@ def transfer_ticket(context, request):
     context.ticketInstance.owner = transfer_target
     request.db.flush()
 
-    request.mail_service.send_mail(request.user.email, "Du har overført en billett", "ticket_transferred_to_sender.jinja2", {
+    request.service_manager.get_service('email').send_mail(request.user.email, "Du har overført en billett", "ticket_transferred_to_sender.jinja2", {
         "mail": request.registry.settings["api.contact"],
         "name": request.registry.settings["api.name"],
         "domain": request.registry.settings["api.mainpage"],
@@ -172,7 +172,7 @@ def transfer_ticket(context, request):
         "ticket": context.ticketInstance
     })
 
-    request.mail_service.send_mail(transfer_target.email, "Du har blitt overført en billett", "ticket_transferred_to_recipient.jinja2", {
+    request.service_manager.get_service('email').send_mail(transfer_target.email, "Du har blitt overført en billett", "ticket_transferred_to_recipient.jinja2", {
         "mail": request.registry.settings["api.contact"],
         "name": request.registry.settings["api.name"],
         "domain": request.registry.settings["api.mainpage"],

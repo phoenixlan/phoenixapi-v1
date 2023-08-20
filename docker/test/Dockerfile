@@ -21,4 +21,4 @@ USER phoenixRest
 EXPOSE 8080
 
 ENTRYPOINT ["sh", "/srv/phoenixRest/docker-startup.sh"]
-CMD ["pserve", "paste_test.ini"]
+CMD ["gunicorn", "--workers=6", "--paste", "paste_test.ini", "-b", ":8080"]

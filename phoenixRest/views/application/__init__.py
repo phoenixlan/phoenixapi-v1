@@ -120,7 +120,7 @@ def create_application(context, request):
     request.db.add(application)
     request.db.flush()
 
-    request.mail_service.send_mail(request.user.email, "Mottatt søknad", "application_received.jinja2", {
+    request.service_manager.get_service('email').send_mail(request.user.email, "Mottatt søknad", "application_received.jinja2", {
         "mail": request.registry.settings["api.contact"],
         "name": request.registry.settings["api.name"],
         "crew_list": crew_list
