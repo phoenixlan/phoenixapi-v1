@@ -44,7 +44,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Install packages
-        run: pip install wheel && pip install -e . && pip install psycopg2
+        run: rm -r docker && pip install wheel && pip install -e . && pip install psycopg2
       - name: Run DB migrations
         run: /usr/local/bin/alembic upgrade heads
       - name: Run tests
