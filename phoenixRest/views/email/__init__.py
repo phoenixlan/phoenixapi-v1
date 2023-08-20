@@ -56,7 +56,7 @@ def get_recipients_by_category(request, category, argument):
             if current_event.participant_age_limit_inclusive != -1:
                 # Calculate what date you need to be born after to not be too old
                 # on the day of the event start
-                calculated_age_limit = datetime.now() - timedelta(years=current_event.participant_age_limit_inclusive+1)
+                calculated_age_limit = current_event.start_time - timedelta(days=365*(current_event.participant_age_limit_inclusive+1))
 
                 query = query.filter(User.birthdate >= calculated_age_limit)
             

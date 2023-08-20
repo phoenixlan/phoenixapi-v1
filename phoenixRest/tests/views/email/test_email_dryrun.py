@@ -306,3 +306,36 @@ def test_invalid_mail_category_dryrun(testapp):
     }), headers=dict({
         'X-Phoenix-Auth': sender_token
     }), status=400)
+
+def test_consent_mail_age_limit(db, testapp):
+    testapp.ensure_typical_event()
+
+    # test is an admin
+    sender_token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
+    jeff_token, refresh = testapp.auth_get_tokens('jeff', 'sixcharacters')
+
+    sender_user = testapp.get_user(sender_token)
+    jeff_user = testapp.get_user(jeff_token)
+
+    # Get current event, set an age limit
+    current_event = testapp.get_current_event(db)
+    current_event.participant_age_limit_inclusive = 300
+    db.add(current_event)
+    db.flush()
+
+    # Add record reflecting that Jeff consented to marketing mail
+    jeff_user_obj = db.query(User).filter(User.uuid == jeff_user['uuid']).first()
+    consent = UserConsent(jeff_user_obj, ConsentType.event_notification, "test")
+    db.add(consent)
+    db.flush()
+
+    # Check that the count changed
+    consenting_user_result = testapp.post_json('/email/dryrun', dict({
+        'recipient_category': "event_notification",
+        'subject': "hello",
+        'body': "# Foo bar\nHello"
+    }), headers=dict({
+        'X-Phoenix-Auth': sender_token
+    }), status=200).json_body
+
+    assert consenting_user_result['count'] == 2 # Only the current user
