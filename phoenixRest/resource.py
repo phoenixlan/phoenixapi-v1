@@ -28,7 +28,6 @@ class RootResource(object):
 
     def __getitem__(self, key):
         """Look up a traversal node"""
-        log.debug("TRAVERSE: TRYING TO FIND %s" % key)
         node = self.nodes[key](self.request)
         node.__parent__ = self
         node.__name__ = key
