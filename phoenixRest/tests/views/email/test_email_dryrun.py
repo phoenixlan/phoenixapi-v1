@@ -277,6 +277,22 @@ def test_consent_mail_dryrun(db, testapp):
 
     assert len(consent_withdrawal_codes_post) == len(consent_withdrawal_codes_pre) + 1
 
+    # Call dry run again, verify that the code count didn't change
+    # We care that the consent code being used stays the same for the same recipient category
+    consenting_user_result = testapp.post_json('/email/dryrun', dict({
+        'recipient_category': "event_notification",
+        'subject': "hello",
+        'body': "# Foo bar\nHello"
+    }), headers=dict({
+        'X-Phoenix-Auth': sender_token
+    }), status=200).json_body
+
+    assert consenting_user_result['count'] == 2 # Only the current user
+
+    consent_withdrawal_codes_post = db.query(ConsentWithdrawalCode).all()
+
+    assert len(consent_withdrawal_codes_post) == len(consent_withdrawal_codes_pre) + 1
+
 def test_invalid_mail_category_dryrun(testapp):
     testapp.ensure_typical_event()
 
