@@ -100,6 +100,7 @@ class RabbitmqThread(threading.Thread):
                     properties=pika.BasicProperties(
                         delivery_mode=pika.spec.PERSISTENT_DELIVERY_MODE
                     ))
+            self._pending_messages.clear()
 
 
     def run(self):
