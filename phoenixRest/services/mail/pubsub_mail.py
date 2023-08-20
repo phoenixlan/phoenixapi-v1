@@ -17,6 +17,7 @@ class PubsubMailService(MailService):
         self.sender = "Phoenix LAN"
     
     def _send_mail_impl(self, to: str, subject: str, body: str):
+        log.info("Sending mail to %s, subj %s" % (to, subject))
         data = {"from": "%s<%s>" % (self.sender, self.from_address),
                 "to": [to],
                 "subject": subject,
