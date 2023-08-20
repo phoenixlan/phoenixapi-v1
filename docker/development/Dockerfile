@@ -1,4 +1,4 @@
-FROM python:3.8
+FROM python:3.10
 
 RUN mkdir -p /srv/phoenixRest && groupadd -r phoenixRest && useradd -r -g phoenixRest phoenixRest; \
 chown phoenixRest:phoenixRest /srv/phoenixRest

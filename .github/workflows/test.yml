@@ -8,7 +8,7 @@ on:
 jobs:
   run_tests:
     runs-on: ubuntu-latest
-    container: "python:3.8"
+    container: "python:3.10-alpine"
     env:
       POSTGRES_USER: phoenix
       POSTGRES_PASSWORD: testing
@@ -44,7 +44,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Install packages
-        run: pip install wheel && pip install -e . && pip install psycopg2
+        run: ./install-deps-alpine.sh
       - name: Run DB migrations
         run: /usr/local/bin/alembic upgrade heads
       - name: Run tests
