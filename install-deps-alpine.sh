@@ -20,9 +20,5 @@ pip install psycopg2
 echo "Cleaning up..."
 mv alembic-docker.ini alembic.ini
 
-# Set up uploads directory
-mkdir /uploads 
-chown phoenixRest /uploads
-
 # Uninstall build dependencies
 apk del .build-deps

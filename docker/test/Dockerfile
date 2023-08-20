@@ -13,7 +13,7 @@ WORKDIR /srv/phoenixRest
 COPY . /srv/phoenixRest
 COPY --from=0 /srv/phoenix/public/static /srv/phoenixRest/phoenixRest/static
 
-RUN ./install-deps-alpine.sh
+RUN ./install-deps-alpine.sh && mkdir /uploads && chown phoenixRest /uploads
 
 COPY ./docker/common/wait-for-it.sh /srv/phoenixRest/
 
