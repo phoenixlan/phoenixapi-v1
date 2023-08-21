@@ -83,6 +83,9 @@ def _get_payment_str(payment):
 	return ", ".join(["%s %s-billett%s" % (entry.amount, entry.ticket_type.name, "er" if entry.amount > 1 else "") for entry in payment.store_session.cart_entries])
 
 def capture_vipps_payment(vipps_payment):
+	if not "PYTEST_CURRENT_TEST" in os.environ:
+		_ensureToken()
+
 	payload = {
 		"merchantInfo": {
 			"merchantSerialNumber": MERCHANT_SERIAL_NUMBER,
