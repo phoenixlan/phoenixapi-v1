@@ -39,7 +39,7 @@ from datetime import datetime, timedelta
 import urllib
 import os
 
-from PIL import Image
+from PIL import Image, ImageOps
 
 import logging
 log = logging.getLogger(__name__)
@@ -281,6 +281,7 @@ def upload_avatar(context, request):
 
     _file_handle.seek(0)
     im = Image.open(_file_handle)
+    im = ImageOps.exif_transpose(im)
   
     # Size of the image in pixels (size of orginal image)
     # (This is not mandatory)
