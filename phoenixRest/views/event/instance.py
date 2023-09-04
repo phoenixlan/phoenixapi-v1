@@ -8,6 +8,8 @@ from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
 from phoenixRest.models.core.event import Event
 from phoenixRest.models.core.user import User
+from phoenixRest.models.crew.application import Application
+from phoenixRest.models.crew.application_crew_mapping import ApplicationCrewMapping
 from phoenixRest.models.tickets.ticket import Ticket
 from phoenixRest.models.tickets.row import Row
 from phoenixRest.models.tickets.seatmap import Seatmap
@@ -20,6 +22,7 @@ from phoenixRest.roles import ADMIN, EVENT_ADMIN, CHIEF, HR_ADMIN, TICKET_ADMIN,
 from phoenixRest.utils import validate
 
 from sqlalchemy import and_
+from sqlalchemy.orm import joinedload
 
 import logging
 log = logging.getLogger(__name__)
@@ -66,8 +69,17 @@ def get_event(context, request):
 
 # Objects relating to the specific event
 @view_config(context=EventInstanceResource, name='applications', request_method='GET', renderer='json', permission='applications_get')
-def get_applications(context, request):
-    applications = request.db.query(Application).filter(Application.event_uuid == context.eventInstance.uuid).order_by(Application.created.asc()).all()
+def get_all_applications(context, request):
+    # TODO get for multiple applications
+    # Find all applications and sort them by time created
+    applications = request.db \
+        .query(Application) \
+        .filter(Application.event_uuid == context.eventInstance.uuid) \
+        .options(joinedload(Application.user)) \
+        .options(joinedload(Application.event)) \
+        .options(joinedload(Application.crews).joinedload(ApplicationCrewMapping.crew)) \
+        .order_by(Application.created.asc()).all()
+
     return applications
 
 @view_config(context=EventInstanceResource, name='ticket', request_method='GET', renderer='json', permission='event_tickets_get')

@@ -4,8 +4,12 @@ from pyramid.httpexceptions import (
 )
 from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
+from sqlalchemy import and_
+from sqlalchemy.orm import joinedload
 
 from phoenixRest.models.core.event import Event, get_current_event
+from phoenixRest.models.core.user import User
+from phoenixRest.models.core.avatar import Avatar
 
 from phoenixRest.models.crew.crew import Crew
 from phoenixRest.models.crew.application import Application
@@ -49,25 +53,28 @@ class ApplicationViews(object):
         return node
 
 @view_config(context=ApplicationViews, name='', request_method='GET', renderer='json', permission='list')
-def get_applications(request):
+def get_all_applications(request):
     # TODO get for multiple applications
     # Find all applications and sort them by time created
-    applications = request.db.query(Application).order_by(Application.created.asc()).all()
-    return applications
+    applications = request.db \
+        .query(Application) \
+        .options(joinedload(Application.user)) \
+        .options(joinedload(Application.event)) \
+        .options(joinedload(Application.crews).joinedload(ApplicationCrewMapping.crew)) \
+        .order_by(Application.created.asc()).all()
 
-@view_config(context=ApplicationViews, name='', request_method='OPTIONS', renderer='string')
-def get_applications_cors(request):
-    return ""
+    return applications
 
 @view_config(context=ApplicationViews, name='my', request_method='GET', renderer='json', permission='self')
 def get_applications_mine(request):
     # Find all applications and sort them by time created
-    applications = request.db.query(Application).filter(Application.user == request.user).order_by(Application.created.asc()).all()
+    applications = request.db.query(Application) \
+        .filter(and_(
+            Application.user == request.user,
+            Application.hidden == False
+        )) \
+        .order_by(Application.created.asc()).all()
     return applications
-
-@view_config(context=ApplicationViews, name='my', request_method='OPTIONS', renderer='string')
-def get_applications_mine_cors(request):
-    return ""
 
 @view_config(context=ApplicationViews, name='', request_method='PUT', renderer='json', permission='create')
 @validate(json_body={'crews': list, 'contents': str})

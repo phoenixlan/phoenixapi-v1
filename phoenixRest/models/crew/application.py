@@ -3,6 +3,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Text,
+    Boolean,
     Enum
 )
 from sqlalchemy.ext.orderinglist import ordering_list
@@ -33,7 +34,7 @@ class Application(Base):
     uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
 
     event_uuid = Column(UUID(as_uuid=True), ForeignKey("event.uuid"), nullable=False)
-    event = relationship("Event")
+    event = relationship("Event", foreign_keys=[event_uuid])
 
     user_uuid = Column(UUID(as_uuid=True), ForeignKey("user.uuid"), nullable=False)
     user = relationship("User", foreign_keys=[user_uuid])
@@ -47,6 +48,8 @@ class Application(Base):
 
     # Answer from application processor
     answer = Column(Text, nullable=False)
+
+    hidden = Column(Boolean, nullable=False, default=False)
 
     # Last application processor
     last_processed_by_uuid = Column(UUID(as_uuid=True), ForeignKey("user.uuid"), nullable=True)
@@ -73,7 +76,7 @@ class Application(Base):
             'uuid': str(self.uuid),
             'crews': self.crews,
             'event': self.event,
-            'user': map_user_with_secret_fields(self.user, request),
+            'user': self.user,
             'last_processed_by': self.last_processed_by,
             'contents': self.contents,
             'created': int(self.created.timestamp()),
