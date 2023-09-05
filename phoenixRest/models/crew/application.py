@@ -81,5 +81,6 @@ class Application(Base):
             'contents': self.contents,
             'created': int(self.created.timestamp()),
             'state': str(self.state),
+            'hidden': self.hidden,
             'answer': None if self.state == ApplicationState.created else self.answer
         }

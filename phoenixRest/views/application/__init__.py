@@ -33,8 +33,8 @@ class ApplicationViews(object):
         (Allow, CHIEF, 'list'),
         (Allow, ADMIN, 'list'),
 
-        (Allow, Everyone, 'self'),
-        (Allow, Everyone, 'create'),
+        (Allow, Authenticated, 'self'),
+        (Allow, Authenticated, 'create'),
 
         # Authenticated pages
         #(Allow, Authenticated, Authenticated),

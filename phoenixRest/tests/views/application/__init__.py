@@ -105,6 +105,8 @@ def hide_application(testapp, token, application_crews: list):
     token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
     applicant_token, refresh = testapp.auth_get_tokens('greg', 'sixcharacters')
 
+    user = testapp.get_user(token)
+
     application_crew_candidates = list(filter(lambda crew: crew["is_applyable"], testapp.get('/crew', status=200).json_body))
 
     my_application_list = testapp.get('/application/my' % application_uuid, headers=dict({
@@ -115,7 +117,14 @@ def hide_application(testapp, token, application_crews: list):
 
     application_uuid = create_application(testapp, applicant_token, [application_crew_candidates[0]['uuid'], application_crew_candidates[1]['uuid']])
 
-    my_application_list = testapp.get('/application/my' % application_uuid, headers=dict({
+    my_application_list = testapp.get('/application/my', headers=dict({
+        'X-Phoenix-Auth': applicant_token
+    }), status=200).json_body
+
+    assert len(my_application_list) == 1
+
+    # Check that you can get applications through user uuid
+    my_application_list = testapp.get('/user/%s/applications' % user['uuid'], headers=dict({
         'X-Phoenix-Auth': applicant_token
     }), status=200).json_body
 
