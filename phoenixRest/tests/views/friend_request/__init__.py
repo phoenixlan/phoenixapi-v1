@@ -20,6 +20,12 @@ def test_friend_request(testapp:TestApp):
     
     assert friend_request_uuid != None
     
+    # Greg views all friend requests
+    res = testapp.get(f'/user/{greg["uuid"]}/friendships', headers=dict({
+        'X-Phoenix-Auth': greg_user_token
+    }), status=200).json_body
+    assert len(res) == 1
+    
     # Greg tries to accept the friend request, but fails
     res = testapp.post(f'/friend_request/{friend_request_uuid}/accept', headers=dict({
         'X-Phoenix-Auth': greg_user_token
@@ -41,9 +47,38 @@ def test_friend_request(testapp:TestApp):
         'X-Phoenix-Auth': jeff_user_token
     }), status=200)
     
-    # Greg has a sudden change of heart and decides to revoke the friendship
+    # Greg has a sudden change of heart and decides to delete the friendship
     res = testapp.delete(f'/friend_request/{friend_request_uuid}', headers=dict({
         'X-Phoenix-Auth': greg_user_token
+    }), status=200)
+    
+    # Greg views all friendships
+    res = testapp.get(f'/user/{greg["uuid"]}/friendships', headers=dict({
+        'X-Phoenix-Auth': greg_user_token
+    }), status=200).json_body
+    assert len(res) == 0
+       
+    #? We try the oposite scenario where jeff deletes the friendship
+    
+    # Greg sends a friend request to jeff
+    res = testapp.post_json('/friend_request', dict({
+        "user_email":"jeff@example.com"
+    }), headers=dict({
+        'X-Phoenix-Auth': greg_user_token
+    }), status=200)
+
+    friend_request_uuid = res.json_body["uuid"]
+    
+    assert friend_request_uuid != None
+    
+    # Jeff accepts the friend request
+    res = testapp.post(f'/friend_request/{friend_request_uuid}/accept', headers=dict({
+        'X-Phoenix-Auth': jeff_user_token
+    }), status=200)
+    
+    # Jeff has a sudden change of heart and decides to revoke the friendship
+    res = testapp.delete(f'/friend_request/{friend_request_uuid}', headers=dict({
+        'X-Phoenix-Auth': jeff_user_token
     }), status=200)
     
     # Greg views all friendships
@@ -57,3 +92,4 @@ def test_friend_request(testapp:TestApp):
         'X-Phoenix-Auth': jeff_user_token
     }), status=200).json_body
     assert len(res) == 0
+    
