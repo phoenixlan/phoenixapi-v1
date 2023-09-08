@@ -4,6 +4,7 @@ from pyramid.authorization import Allow, Authenticated
 
 from phoenixRest.models.core.user import User
 from phoenixRest.models.core.friendship import Friendship
+from phoenixRest.views.friend_request.instance import FriendRequestInstanceResource
 
 from phoenixRest.utils import validate
 from phoenixRest.resource import resource
@@ -20,7 +21,7 @@ class FriendRequestResource(object):
         self.request = request  
         
     def __getitem__(self, key):
-        node = FriendRequestResource(self.request, key)
+        node = FriendRequestInstanceResource(self.request, key)
         node.__parent__ = self
         node.__name__ = key
         return node
@@ -38,10 +39,10 @@ def create_friend_request(context, request):
     
     has_active_friendship = request.db.query(Friendship).filter(
         and_(
-            Friendship.revoked is not None,
-            and_(Friendship.source_user == request.user, Friendship.recipient_user == recipient_user)
+            and_(Friendship.source_user == request.user, Friendship.recipient_user == recipient_user),
+            Friendship.accepted is not None
         )
-    )
+    ).first()
     if has_active_friendship:
         request.status = 400
         return {

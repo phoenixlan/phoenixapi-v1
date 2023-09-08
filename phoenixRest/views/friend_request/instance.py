@@ -16,22 +16,21 @@ from datetime import datetime
 
 class FriendRequestInstanceResource(object):
     def __acl__(self):
-        source_user_uuid = self.friendRequestInstance.source_user.uuid
-        recipient_user_uuid = self.friendRequestInstance.recipient_user.uuid
+        source_user_uuid = str(self.friendRequestInstance.source_user.uuid)
+        recipient_user_uuid = str(self.friendRequestInstance.recipient_user.uuid)
         acl = [
-            (Allow, ADMIN, "view")
-            (Allow, str(source_user_uuid), "view"),
-            (Allow, str(recipient_user_uuid), "view"),
+            (Allow, ADMIN, "view"),
+            (Allow, source_user_uuid, "view"),
+            (Allow, recipient_user_uuid, "view"),
             
-            (Allow, ADMIN, "revoke")
-            (Allow, str(source_user_uuid), "revoke"),
-            (Allow, str(recipient_user_uuid), "revoke"),
+            (Allow, ADMIN, "revoke"),
+            (Allow, source_user_uuid, "revoke"),
+            (Allow, recipient_user_uuid, "revoke"),
             
-            (Deny,  str(source_user_uuid), "accept"),
-            (Allow, str(recipient_user_uuid), "accept"),
-            
-            
+            (Deny,  source_user_uuid, "accept"),   
+            (Allow, recipient_user_uuid, "accept")
         ]
+        return acl
     def __init__(self, request, uuid):
         self.request = request
         
@@ -40,11 +39,18 @@ class FriendRequestInstanceResource(object):
             raise HTTPNotFound("friend_request with specified uuid not found")
         
 @view_config(name="", context=FriendRequestInstanceResource, request_method="GET", renderer="json", permission="view")
-def view_friendship(context, request):
+def view_friend_request(context, request):
     return context.friendRequestInstance
 
 @view_config(name="", context=FriendRequestInstanceResource, request_method="DELETE", renderer="json", permission="revoke")
-def revoke_friendship(context, request):
+def revoke_friend_request(context, request):
+    
+    if (request.user.uuid == context.friendRequestInstance.source_user_uuid):
+        request.db.delete(context.friendRequestInstance)
+        return {
+            "message": "Success"
+        }
+        
     if context.friendRequestInstance.revoked is not None:
         request.status = 400
         return {
@@ -52,11 +58,12 @@ def revoke_friendship(context, request):
         }
         
     context.friendRequestInstance.revoked = datetime.now()
-    
-    return context.friendRequestInstance
+    return {
+        "message": "Success"
+    }
 
-@view_config(name="", context=FriendRequestInstanceResource, request_method="POST", renderer="json", permission="accept")
-def accept_friendship(context, request):
+@view_config(name="accept", context=FriendRequestInstanceResource, request_method="POST", renderer="json", permission="accept")
+def accept_friend_request(context, request):
     if context.friendRequestInstance.revoked is not None:
         request.status = 400
         return {
