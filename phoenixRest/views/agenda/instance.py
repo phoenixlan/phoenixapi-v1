@@ -112,6 +112,8 @@ def modify_agenda_entry(context, request):
     if 'deviating_location' in request.json_body:
         if type(request.json_body['deviating_location']) == str:
             context.agendaInstance.deviating_location = request.json_body['deviating_location']
+        elif request.json_body['deviating_location'] == None:
+            context.agendaInstance.deviating_location = None
         else:
             request.response.status = 400
             return {
@@ -121,6 +123,8 @@ def modify_agenda_entry(context, request):
     if 'deviating_information' in request.json_body:
         if type(request.json_body['deviating_information']) == str:
             context.agendaInstance.deviating_information = request.json_body['deviating_information']
+        elif request.json_body['deviating_information'] == None:
+            context.agendaInstance.deviating_information = None
         else:
             request.response.status = 400
             return {
