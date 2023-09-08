@@ -29,7 +29,7 @@ class FriendRequestResource(object):
 @view_config(name="", context=FriendRequestResource, request_method="POST", renderer="json", permission="create")
 @validate(json_body={"user_email": str})
 def create_friend_request(context, request):
-    recipient_user_email = request.json_body["user_email"]
+    recipient_user_email = request.json_body["user_email"].lower()
     recipient_user = request.db.query(User).filter(User.email == recipient_user_email).first()
     if not recipient_user:
         request.response.status = 400
@@ -38,10 +38,7 @@ def create_friend_request(context, request):
         }
     
     has_active_friendship = request.db.query(Friendship).filter(
-        and_(
-            and_(Friendship.source_user == request.user, Friendship.recipient_user == recipient_user),
-            Friendship.accepted is not None
-        )
+        and_(Friendship.source_user == request.user, Friendship.recipient_user == recipient_user)
     ).first()
     if has_active_friendship:
         request.status = 400
