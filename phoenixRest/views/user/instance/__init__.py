@@ -9,6 +9,7 @@ from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 from phoenixRest.models.core.user import User
 from phoenixRest.models.core.event import Event, get_current_event
 from phoenixRest.models.core.avatar import Avatar
+from phoenixRest.models.crew.application import Application
 from phoenixRest.models.tickets.ticket import Ticket
 from phoenixRest.models.tickets.ticket_type import TicketType
 from phoenixRest.models.tickets.ticket_voucher import TicketVoucher
@@ -30,7 +31,7 @@ from phoenixRest.resource import resource
 
 from phoenixRest.features.discord import DISCORD_OAUTH_REDIRECT_URI, DISCORD_CLIENT_ID, DISCORD_ENABLED, DISCORD_SCOPES
 
-from phoenixRest.roles import HR_ADMIN, ADMIN, TICKET_ADMIN, TICKET_CHECKIN, CREW_CARD_PRINTER
+from phoenixRest.roles import HR_ADMIN, ADMIN, TICKET_ADMIN, TICKET_CHECKIN, CREW_CARD_PRINTER, CHIEF
 
 from sqlalchemy import and_, or_, extract
 
@@ -78,6 +79,10 @@ class UserInstanceResource(object):
             (Allow, ADMIN, 'list_payments'),
             (Allow, TICKET_ADMIN, 'list_payments'),
 
+            # Applications?
+            (Allow, ADMIN, 'get_applications'),
+            (Allow, CHIEF, 'get_applications'),
+
             # Who can see discord user mappings?
             (Allow, HR_ADMIN, 'get_discord_mapping'),
             (Allow, ADMIN, 'get_discord_mapping'),
@@ -119,6 +124,8 @@ class UserInstanceResource(object):
                 (Allow, "%s" % self.userInstance.uuid, 'create_discord_mapping'),
                 # Users can delete their own discord mappings
                 (Allow, "%s" % self.userInstance.uuid, 'delete_discord_mapping'),
+                # Users can get their own applications
+                (Allow, "%s" % self.userInstance.uuid, 'get_applications')
             ]
         return acl
 
@@ -432,3 +439,14 @@ def create_discord_mapping_oauth_url(context, request):
 @view_config(context=UserInstanceResource, name='crew_card', request_method='GET', renderer='pillow', permission='get_crew_card')
 def create_crew_card(context, request):
     return generate_badge(request, context.userInstance, get_current_event(request))
+
+@view_config(context=UserInstanceResource, name='applications', request_method='GET', renderer='json', permission='get_applications')
+def get_applications(context, request):
+    # Find all applications and sort them by time created
+    applications = request.db.query(Application) \
+        .filter(and_(
+            Application.user == context.userInstance,
+            Application.hidden == False
+        )) \
+        .order_by(Application.created.asc()).all()
+    return applications

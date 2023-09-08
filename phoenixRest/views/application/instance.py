@@ -12,6 +12,8 @@ from phoenixRest.models.crew.position import create_or_fetch_crew_position
 from phoenixRest.models.crew.position_mapping import PositionMapping
 from phoenixRest.models.core.event import get_current_event
 
+from phoenixRest.mappers.application import map_application_with_hidden_fields
+
 from phoenixRest.roles import ADMIN, CHIEF
 
 from phoenixRest.utils import validate
@@ -34,6 +36,9 @@ class ApplicationInstanceResource(object):
 
             (Allow, ADMIN, 'application_edit'),
             (Allow, CHIEF, 'application_edit'),
+
+            (Allow, ADMIN, 'application_hide'),
+            (Allow, CHIEF, 'application_hide'),
         ]
         return acl
 
@@ -43,10 +48,21 @@ class ApplicationInstanceResource(object):
 
         if self.applicationInstance is None:
             raise HTTPNotFound("Application not found")
+        
+        # Hidden applications are hidden to the user
+        if self.applicationInstance.hidden and self.applicationInstance.user.uuid == request.user.uuid:
+            raise HTTPNotFound("Application not found")
 
 @view_config(context=ApplicationInstanceResource, name='', request_method='GET', renderer='json', permission='application_get')
 def get_application(context, request):
-    return context.applicationInstance
+    return map_application_with_hidden_fields(context.applicationInstance, request)
+
+@view_config(context=ApplicationInstanceResource, name='hide', request_method='PATCH', renderer='json', permission='application_hide')
+def hide_application(context, request):
+    context.applicationInstance.hidden = True
+    return {
+        "status": "ok"
+    }
 
 @view_config(context=ApplicationInstanceResource, name='', request_method='PATCH', renderer='json', permission='application_edit')
 @validate(json_body={'state': str, 'answer': str})

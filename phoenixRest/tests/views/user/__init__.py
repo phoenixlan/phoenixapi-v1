@@ -27,3 +27,19 @@ def test_get_user(testapp):
         'X-Phoenix-Auth': permissionless_token 
         }), status=403)
 
+def test_permissionless_user_fetch_applications(testapp):
+    token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
+    permissionless_token, refresh = testapp.auth_get_tokens('jeff', 'sixcharacters')
+
+    user = testapp.get_user(token)
+
+    # Should be able to get your own applications
+    testapp.get('/user/%s/applications' % user['uuid'], headers=dict({
+        'X-Phoenix-Auth': token
+    }), status=200)
+
+    testapp.get('/user/%s/applications' % user['uuid'], headers=dict({
+        'X-Phoenix-Auth': permissionless_token
+    }), status=403)
+
+    testapp.get('/user/%s/applications' % user['uuid'], status=403)

@@ -12,6 +12,8 @@ from sqlalchemy.orm import relationship
 
 from phoenixRest.models import Base
 
+from phoenixRest.mappers.crew import map_crew_simple
+
 from datetime import datetime
 
 import logging
@@ -46,7 +48,7 @@ class ApplicationCrewMapping(Base):
         return {
             'uuid': self.uuid,
             'application_uuid': self.application_uuid,
-            'crew': self.crew,
+            'crew': map_crew_simple(self.crew, request),
             'list_order': self.list_order,
             'created': int(self.created.timestamp()),
             "accepted": self.accepted
