@@ -274,7 +274,7 @@ def connect_discord(context, request):
         user = discord_get_user(token)
 
         # Send an email
-        request.mail_service.send_mail(oauth_state.user.email, "Tilkoblet Discord-konto", "discord_oauth_added.jinja2", {
+        request.service_manager.get_service('email').send_mail(oauth_state.user.email, "Tilkoblet Discord-konto", "discord_oauth_added.jinja2", {
             "discord_acc": "%s#%s" % (user["username"], user["discriminator"]),
             "mail": request.registry.settings["api.contact"],
             "name": request.registry.settings["api.name"]
