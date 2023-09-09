@@ -25,6 +25,7 @@ from phoenixRest.models import (
 from phoenixRest.models.core import (
     user,
     user_consent,
+    friendship,
     event,
     avatar,
     agenda_entry,

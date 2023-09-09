@@ -29,7 +29,7 @@ The server is made to run under docker. Simply run `docker-compose up` from the 
 
 New pyramid views goes in `views.py`, and are registered in `__init__.py`. Pyramid allows you to do all kinds of cool stuff, so be sure to check the documentation.
 
-In order to create alembic migrations(needed for the actual database to be updated when you change a model), run `docker-compose run web alembic revision --autogenerate -m "Revision name"`. This will auto-detect changes. Be sure to look over what changes were detected before actually applying it.
+In order to create alembic migrations(needed for the actual database to be updated when you change a model), run `docker-compose run rest alembic revision --autogenerate -m "Revision name"`. This will auto-detect changes. Be sure to look over what changes were detected before actually applying it.
 
 
 ## Relevant documentation

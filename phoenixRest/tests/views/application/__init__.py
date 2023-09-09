@@ -1,7 +1,9 @@
 # Test creating applications, and that the user is qualified to do so
 from wsgiref.util import application_uri
 
-def create_application(testapp, token, application_crews: list):
+from test_app import TestApp
+
+def create_application(testapp:TestApp, token, application_crews: list):
     # Get the current user, ensure there is no avatar
     currentUser = testapp.get('/user/current', headers=dict({
         'X-Phoenix-Auth': token

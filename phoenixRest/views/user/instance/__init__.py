@@ -7,6 +7,7 @@ from pyramid.httpexceptions import (
 from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
 from phoenixRest.models.core.user import User
+from phoenixRest.models.core.friendship import Friendship
 from phoenixRest.models.core.event import Event, get_current_event
 from phoenixRest.models.core.avatar import Avatar
 from phoenixRest.models.crew.application import Application
@@ -49,11 +50,14 @@ log = logging.getLogger(__name__)
 class UserInstanceResource(object):
     def __acl__(self):
         acl = [
-            # Who has access to view an user?
+            # Who has access to view a user?
             (Allow, HR_ADMIN, 'user_view'),
             (Allow, ADMIN, 'user_view'),
             (Allow, TICKET_ADMIN, 'user_view'),
             (Allow, TICKET_CHECKIN, 'user_view'),
+            # Who has acces to user friendship status?
+            (Allow, HR_ADMIN, 'get_friendship_states'),
+            (Allow, ADMIN, 'get_friendship_states'),
             # Who can see if an user is a member or not?
             (Allow, HR_ADMIN, 'get_membership_state'),
             (Allow, ADMIN, 'get_membership_state'),
@@ -106,6 +110,8 @@ class UserInstanceResource(object):
                 # Users can view themselves, always
                 (Allow, "%s" % self.userInstance.uuid, 'user_view'),
                 (Allow, "%s" % self.userInstance.uuid, 'get_membership_state'),
+                # Users can view their friendships and friend_requests
+                (Allow, "%s" % self.userInstance.uuid, 'get_friendship_states'),
                 # Users can fetch their own tickets
                 (Allow, "%s" % self.userInstance.uuid, 'user_list_owned_tickets'),
                 (Allow, "%s" % self.userInstance.uuid, 'user_list_seatable_tickets'),
@@ -148,6 +154,18 @@ def get_user(context, request):
         return map_user_with_secret_fields(context.userInstance, request)
     return map_user_public_with_positions(context.userInstance, request)
 
+@view_config(context=UserInstanceResource, name='friendships', request_method='GET', renderer='json', permission='get_friendship_states')
+def get_friendships(context, request):
+    query = request.db.query(Friendship).filter(
+        or_(
+            Friendship.source_user == context.userInstance, # Source
+            and_(
+                Friendship.recipient_user == context.userInstance, # Recipient
+                Friendship.revoked == None
+            )
+        )
+    ).all()
+    return query
 
 @view_config(context=UserInstanceResource, name='owned_tickets', request_method='GET', renderer='json', permission='user_list_owned_tickets')
 def get_owned_tickets(context, request):
