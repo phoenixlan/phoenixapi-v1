@@ -38,7 +38,10 @@ def create_friend_request(context, request):
         }
     
     has_active_friendship = request.db.query(Friendship).filter(
-        and_(Friendship.source_user == request.user, Friendship.recipient_user == recipient_user)
+        and_(
+            and_(Friendship.source_user == request.user, Friendship.recipient_user == recipient_user),
+            Friendship.revoked is None
+        )
     ).first()
     if has_active_friendship:
         request.status = 400
