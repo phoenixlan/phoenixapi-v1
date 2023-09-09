@@ -126,4 +126,8 @@ def edit_application(context, request):
         "domain": request.registry.settings["api.mainpage"]
     })
 
+    # Notify pubsub of position change
+    if context.applicationInstance.state == ApplicationState.accepted:
+        request.service_manager.get_service('position_notification').notify_user_position_mappings_changed(context.applicationInstance.user)
+
     return context.applicationInstance 
