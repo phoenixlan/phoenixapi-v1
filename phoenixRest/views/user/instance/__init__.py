@@ -419,7 +419,7 @@ def remove_discord_mapping(context, request):
             "error": "No discord mapping"
         }
     
-    request.mail_service.send_mail(context.userInstance.email, "Tilkobling til Discord-konto er fjernet", "discord_oauth_removed.jinja2", {
+    request.service_manager.get_service('email').send_mail(context.userInstance.email, "Tilkobling til Discord-konto er fjernet", "discord_oauth_removed.jinja2", {
         "mail": request.registry.settings["api.contact"],
         "name": request.registry.settings["api.name"]
     })
