@@ -49,7 +49,7 @@ class Application(Base):
     # Answer from application processor
     answer = Column(Text, nullable=False)
 
-    hidden = Column(Boolean, nullable=False, default=False)
+    hidden = Column(Boolean, nullable=False, server_default="false")
 
     # Last application processor
     last_processed_by_uuid = Column(UUID(as_uuid=True), ForeignKey("user.uuid"), nullable=True)
