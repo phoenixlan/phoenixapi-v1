@@ -25,7 +25,7 @@ def upgrade():
     op.add_column('agenda_entry', sa.Column('deviating_information', sa.Text(), nullable=True))
     op.add_column('agenda_entry', sa.Column('pinned', sa.Boolean(), server_default='false', nullable=True))
     op.add_column('agenda_entry', sa.Column('cancelled', sa.Boolean(), server_default='false', nullable=True))
-    op.add_column('agenda_entry', sa.Column('created_by_user_uuid', sa.UUID(), nullable=False))
+    op.add_column('agenda_entry', sa.Column('created_by_user_uuid', sa.UUID(), nullable=True))
     op.add_column('agenda_entry', sa.Column('modified_by_user_uuid', sa.UUID(), nullable=True))
     op.add_column('agenda_entry', sa.Column('created', sa.DateTime(), server_default='NOW()', nullable=False))
     op.add_column('agenda_entry', sa.Column('modified', sa.DateTime(), nullable=True))
