@@ -6,6 +6,8 @@ from phoenixRest.services.mail import MailService
 from phoenixRest.services.pubsub import PubsubService
 from phoenixRest.services.pubsub.rabbitmq import RabbitMQService
 
+from phoenixRest.services.position_notification import PositionNotificationService, NoopPositionNotificationService
+
 import logging
 log = logging.getLogger(__name__)
 
@@ -47,6 +49,12 @@ def setup_service_manager(settings):
             mail_provider = PubsubMailService(service_manager, settings)
     
     service_manager.register_service("email", mail_provider)
+
+    # Position notification
+    if "service.position_notification" in settings:
+        service_manager.register_service("position_notification", PositionNotificationService(service_manager))
+    else:
+        service_manager.register_service("position_notification", NoopPositionNotificationService(service_manager))
 
     return service_manager
     

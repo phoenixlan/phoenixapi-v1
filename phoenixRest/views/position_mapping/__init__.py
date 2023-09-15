@@ -79,4 +79,6 @@ def create_mapping(context, request):
     request.db.add(mapping)
     request.db.flush()
 
+    request.service_manager.get_service('position_notification').notify_user_position_mappings_changed(user)
+
     return mapping

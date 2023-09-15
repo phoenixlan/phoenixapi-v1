@@ -46,5 +46,6 @@ def get_position_mapping(context, request):
 
 @view_config(context=PositionMappingInstanceResource, request_method='DELETE', renderer='string', permission='delete_mapping')
 def delete_position_mapping(context, request):
+    request.service_manager.get_service('position_notification').notify_user_position_mappings_changed(context.positionMappingInstance.user)
     request.db.delete(context.positionMappingInstance)
     return ""
