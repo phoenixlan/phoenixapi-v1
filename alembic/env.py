@@ -32,7 +32,7 @@ from phoenixRest.models.core import (
     activation_code,
     consent_withdrawal_code,
     password_reset_code,
-    location
+    location,
 )
 
 from phoenixRest.models.core.oauth import (
@@ -47,7 +47,8 @@ from phoenixRest.models.crew import (
     team,
     permission,
     application,
-    application_crew_mapping
+    application_crew_mapping,
+    card_order
 )
 
 from phoenixRest.models.tickets import (
