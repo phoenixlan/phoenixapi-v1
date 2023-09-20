@@ -71,7 +71,7 @@ def generate_badge(request, user, event):
     draw = ImageDraw.Draw(background)
 
     #bottom background
-    draw.rectangle([(0,3000), (width, 1790)] , fill=(crew_farge))
+    draw.rectangle([(0,1790), (width, 1920)] , fill=(crew_farge))
     draw.text((200, 1200), name, font=fnt, fill=(0,0,0)) 
     draw.text((200, 1280), title, font=fnt, fill=(0,0,0))
     draw.text((200, 1360), age, font=fnt, fill=(0,0,0))
