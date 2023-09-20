@@ -213,7 +213,7 @@ def send_mail(context, request):
             "error": "Invalid category"
         }
 
-    email_subject = mistune.html(request.json_body['subject'])
+    email_subject = request.json_body['subject']
     email_body = mistune.html(request.json_body['body'])
 
     recipients = get_recipients_by_category(request, category, argument)
