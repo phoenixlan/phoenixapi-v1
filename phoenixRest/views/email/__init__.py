@@ -13,6 +13,7 @@ from phoenixRest.models.tickets.ticket import Ticket
 from phoenixRest.models.tickets.ticket_voucher import TicketVoucher
 from phoenixRest.models.tickets.ticket_type import TicketType
 
+from phoenixRest.models.crew.application import Application
 from phoenixRest.models.crew.position_mapping import PositionMapping
 from phoenixRest.models.crew.position import Position
 
@@ -23,7 +24,7 @@ from phoenixRest.resource import resource
 
 from phoenixRest.roles import ADMIN, TICKET_ADMIN, INFO_ADMIN
 
-from sqlalchemy import and_, or_, extract
+from sqlalchemy import and_, or_, extract, and_
 
 from enum import Enum, auto
 
@@ -50,6 +51,27 @@ def get_recipients_by_category(request, category, argument):
             consenting_users = db.query(UserConsent.user_uuid).subquery()
             query = db.query(User)
 
+            # We don't want to send e-mails to people that already have tickets or are crew
+            ticket_owner_uuids = db.query(Ticket.owner_uuid) \
+                .filter(Ticket.event_uuid == current_event.uuid).subquery()
+
+            applicant_uuids = db.query(Application.user_uuid) \
+                .filter(Application.event_uuid == current_event.uuid).subquery()
+
+            # Same for crews
+            positions_with_crew_membership = db.query(Position.uuid) \
+                .filter(Position.crew != None).subquery()
+
+            # Fetch all position mappings for current event that are connected to a crew
+            current_crew_list = db.query(PositionMapping.user_uuid) \
+                .filter(and_(
+                    or_(
+                        PositionMapping.event_uuid == current_event.uuid,
+                        PositionMapping.event_uuid == None)
+                    ),
+                    PositionMapping.position_uuid.in_(positions_with_crew_membership)
+                ).subquery()
+
             # Even if people over the participant age limit could apply for crew,
             # we generally only want new crew members who are under the participant age limit.
             # No reason to send them an e-mail(?)
@@ -61,7 +83,12 @@ def get_recipients_by_category(request, category, argument):
                 query = query.filter(User.birthdate >= calculated_age_limit)
             
             return query.filter(or_(
-                    User.uuid.in_(consenting_users), 
+                    and_(
+                        User.uuid.in_(consenting_users),
+                        User.uuid.not_in(ticket_owner_uuids),
+                        User.uuid.not_in(current_crew_list),
+                        User.uuid.not_in(applicant_uuids)
+                    ),
                     User.uuid == current_user_uuid)
                 ).all()
         case MailType.participant_info:

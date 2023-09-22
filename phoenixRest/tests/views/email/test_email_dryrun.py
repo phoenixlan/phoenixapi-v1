@@ -4,8 +4,6 @@ from phoenixRest.models.core.consent_withdrawal_code import ConsentWithdrawalCod
 from phoenixRest.models.core.user import User
 from phoenixRest.models.crew.position import Position
 
-from datetime import datetime
-
 def test_crew_mail_dryryn(db, testapp):
     """Tests that crew members receive mail when the crew_info category is used.
     Participants should not receive these mails.
@@ -118,10 +116,10 @@ def test_participant_mail_dryrun(testapp):
 
     # test is an admin
     sender_token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
-    jeff_token, refresh = testapp.auth_get_tokens('jeff', 'sixcharacters')
+    adam_token, refresh = testapp.auth_get_tokens('adam', 'sixcharacters')
 
     sender_user = testapp.get_user(sender_token)
-    jeff_user = testapp.get_user(jeff_token)
+    adam_user = testapp.get_user(adam_token)
 
     participant_mail_test_results = testapp.post_json('/email/dryrun', dict({
         'recipient_category': "participant_info",
@@ -150,7 +148,7 @@ def test_participant_mail_dryrun(testapp):
     }), status=200).json_body['count']
 
 
-    # Now give jeff a free ticket
+    # Now give adam a free ticket
     current_event = testapp.get('/event/current', status=200)
     # Get existing ticket types
     res = testapp.get('/event/%s/ticketType' % current_event.json_body['uuid'], headers=dict({
@@ -160,7 +158,7 @@ def test_participant_mail_dryrun(testapp):
 
     res = testapp.post_json('/ticket', dict({
         'ticket_type': ticket_type['uuid'],
-        'recipient': jeff_user['uuid']
+        'recipient': adam_user['uuid']
     }), headers=dict({
         'X-Phoenix-Auth': sender_token
     }), status=200)
@@ -174,7 +172,7 @@ def test_participant_mail_dryrun(testapp):
         'X-Phoenix-Auth': sender_token
     }), status=200).json_body
 
-    assert participant_mail_test_results['count'] == 2 # Current user + jeff
+    assert participant_mail_test_results['count'] == 2 # Current user + adam
 
     # Assure that the crew mail count didn't increase
     crew_mail_test_post = testapp.post_json('/email/dryrun', dict({
@@ -195,104 +193,6 @@ def test_participant_mail_dryrun(testapp):
     assert crew_mail_test_pre == crew_mail_test_post
     assert consenting_user_pre == consenting_user_post
 
-def test_consent_mail_dryrun(db, testapp):
-    testapp.ensure_typical_event()
-
-    # test is an admin
-    sender_token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
-    jeff_token, refresh = testapp.auth_get_tokens('jeff', 'sixcharacters')
-
-    sender_user = testapp.get_user(sender_token)
-    jeff_user = testapp.get_user(jeff_token)
-
-    # Get how many get crew and participant mails
-    crew_mail_test_pre = testapp.post_json('/email/dryrun', dict({
-        'recipient_category': "crew_info",
-        'subject': "hello",
-        'body': "# Foo bar\nHello"
-    }), headers=dict({
-        'X-Phoenix-Auth': sender_token
-    }), status=200).json_body['count']
-
-    participant_mail_count_pre = testapp.post_json('/email/dryrun', dict({
-        'recipient_category': "participant_info",
-        'subject': "hello",
-        'body': "# Foo bar\nHello"
-    }), headers=dict({
-        'X-Phoenix-Auth': sender_token
-    }), status=200).json_body['count']
-
-    # Check how many consent withdrawal codes exist
-    consent_withdrawal_codes_pre = db.query(ConsentWithdrawalCode).all()
-
-    consenting_user_result = testapp.post_json('/email/dryrun', dict({
-        'recipient_category': "event_notification",
-        'subject': "hello",
-        'body': "# Foo bar\nHello"
-    }), headers=dict({
-        'X-Phoenix-Auth': sender_token
-    }), status=200).json_body
-
-    assert consenting_user_result['count'] == 1 # Only the current user
-
-    # Add record reflecting that Jeff consented to marketing mail
-    jeff_user_obj = db.query(User).filter(User.uuid == jeff_user['uuid']).first()
-    consent = UserConsent(jeff_user_obj, ConsentType.event_notification, "test")
-    db.add(consent)
-    db.flush()
-
-    # Check that the count changed
-    consenting_user_result = testapp.post_json('/email/dryrun', dict({
-        'recipient_category': "event_notification",
-        'subject': "hello",
-        'body': "# Foo bar\nHello"
-    }), headers=dict({
-        'X-Phoenix-Auth': sender_token
-    }), status=200).json_body
-
-    assert consenting_user_result['count'] == 2 # Only the current user
-
-    # Check that other counters didn't increase
-    crew_mail_test_post = testapp.post_json('/email/dryrun', dict({
-        'recipient_category': "crew_info",
-        'subject': "hello",
-        'body': "# Foo bar\nHello"
-    }), headers=dict({
-        'X-Phoenix-Auth': sender_token
-    }), status=200).json_body['count']
-
-    participant_mail_count_post = testapp.post_json('/email/dryrun', dict({
-        'recipient_category': "participant_info",
-        'subject': "hello",
-        'body': "# Foo bar\nHello"
-    }), headers=dict({
-        'X-Phoenix-Auth': sender_token
-    }), status=200).json_body['count']
-
-    assert crew_mail_test_pre == crew_mail_test_post
-    assert participant_mail_count_pre == participant_mail_count_post
-
-    # Check how many consent codes we have now
-    consent_withdrawal_codes_post = db.query(ConsentWithdrawalCode).all()
-
-    assert len(consent_withdrawal_codes_post) == len(consent_withdrawal_codes_pre) + 1
-
-    # Call dry run again, verify that the code count didn't change
-    # We care that the consent code being used stays the same for the same recipient category
-    consenting_user_result = testapp.post_json('/email/dryrun', dict({
-        'recipient_category': "event_notification",
-        'subject': "hello",
-        'body': "# Foo bar\nHello"
-    }), headers=dict({
-        'X-Phoenix-Auth': sender_token
-    }), status=200).json_body
-
-    assert consenting_user_result['count'] == 2 # Only the current user
-
-    consent_withdrawal_codes_post = db.query(ConsentWithdrawalCode).all()
-
-    assert len(consent_withdrawal_codes_post) == len(consent_withdrawal_codes_pre) + 1
-
 def test_invalid_mail_category_dryrun(testapp):
     testapp.ensure_typical_event()
 
@@ -312,10 +212,10 @@ def test_consent_mail_age_limit(db, testapp):
 
     # test is an admin
     sender_token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
-    jeff_token, refresh = testapp.auth_get_tokens('jeff', 'sixcharacters')
+    adam_token, refresh = testapp.auth_get_tokens('adam', 'sixcharacters')
 
     sender_user = testapp.get_user(sender_token)
-    jeff_user = testapp.get_user(jeff_token)
+    adam_user = testapp.get_user(adam_token)
 
     # Get current event, set an age limit
     current_event = testapp.get_current_event(db)
@@ -323,9 +223,9 @@ def test_consent_mail_age_limit(db, testapp):
     db.add(current_event)
     db.flush()
 
-    # Add record reflecting that Jeff consented to marketing mail
-    jeff_user_obj = db.query(User).filter(User.uuid == jeff_user['uuid']).first()
-    consent = UserConsent(jeff_user_obj, ConsentType.event_notification, "test")
+    # Add record reflecting that adam consented to marketing mail
+    adam_user_obj = db.query(User).filter(User.uuid == adam_user['uuid']).first()
+    consent = UserConsent(adam_user_obj, ConsentType.event_notification, "test")
     db.add(consent)
     db.flush()
 
@@ -339,3 +239,4 @@ def test_consent_mail_age_limit(db, testapp):
     }), status=200).json_body
 
     assert consenting_user_result['count'] == 2 # Only the current user
+

@@ -36,13 +36,13 @@ def test_consent_mail_sending(db, testapp):
     testapp.ensure_typical_event()
 
     sender_token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
-    jeff_token, refresh = testapp.auth_get_tokens('jeff', 'sixcharacters')
+    adam_token, refresh = testapp.auth_get_tokens('adam', 'sixcharacters')
 
-    jeff_user = testapp.get_user(jeff_token)
+    adam_user = testapp.get_user(adam_token)
 
     # Add record reflecting that Jeff consented to marketing mail
-    jeff_user_obj = db.query(User).filter(User.uuid == jeff_user['uuid']).first()
-    consent = UserConsent(jeff_user_obj, ConsentType.event_notification, "test")
+    adam_user_obj = db.query(User).filter(User.uuid == adam_user['uuid']).first()
+    consent = UserConsent(adam_user_obj, ConsentType.event_notification, "test")
     db.add(consent)
     db.flush()
 
