@@ -147,12 +147,12 @@ def token(request):
                 "error": "Invalid token"
             }
     
-        refreshToken.refresh()
+        #refreshToken.refresh()
         # The refresh token was valid
 
         return {
             'access_token': generate_token(refreshToken.user, request),
-            'refresh_token': refreshToken.token
+            #'refresh_token': refreshToken.token
         }
     else:
         request.response.status = 400
