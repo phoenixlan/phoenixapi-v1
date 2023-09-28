@@ -4,6 +4,6 @@ def test_list_avatars(testapp):
     token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
 
     res = testapp.get('/avatar', headers=dict({
-        'X-Phoenix-Auth': token
+        "Authorization": "Bearer " + token
     }), status=200)
 

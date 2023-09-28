@@ -11,14 +11,14 @@ def test_create_delete_position_mapping(testapp):
     test_user = testapp.get_user(test_user_token)
 
     position_candidates = testapp.get('/position', headers=dict({
-        "X-Phoenix-Auth": token
+        "Authorization": "Bearer " + token
     }), status=200).json_body
 
     created_mapping = testapp.post_json('/position_mapping', {
         "position_uuid": position_candidates[0]['uuid'],
         "user_uuid": test_user['uuid']
     }, headers=dict({
-        "X-Phoenix-Auth": token
+        "Authorization": "Bearer " + token
     }), status=200).json_body
 
     assert created_mapping['uuid'] != None
@@ -35,19 +35,19 @@ def test_create_delete_position_mapping(testapp):
 
     # Try fetching it
     position_mapping_fetched = testapp.get('/position_mapping/%s' % created_mapping['uuid'], headers=dict({
-        "X-Phoenix-Auth": token
+        "Authorization": "Bearer " + token
     }), status=200).json_body
 
     assert position_mapping_fetched['uuid'] == created_mapping['uuid']
 
     # Now delete it
     testapp.delete('/position_mapping/%s' % created_mapping['uuid'], headers=dict({
-        "X-Phoenix-Auth": token
+        "Authorization": "Bearer " + token
     }), status=200)
 
     # Fetching it should now result in 404
     testapp.get('/position_mapping/%s' % created_mapping['uuid'], headers=dict({
-        "X-Phoenix-Auth": token
+        "Authorization": "Bearer " + token
     }), status=404)
     
 # Make sure a permissionless user can't make permission mappings. Low-hanging fruit to test
@@ -59,12 +59,12 @@ def test_no_permissionless_promotion(testapp):
     test_user = testapp.get_user(test_user_token)
 
     position_candidates = testapp.get('/position', headers=dict({
-        "X-Phoenix-Auth": token
+        "Authorization": "Bearer " + token
     }), status=200).json_body
 
     testapp.post_json('/position_mapping', {
         "position_uuid": position_candidates[0]['uuid'],
         "user_uuid": test_user['uuid']
     }, headers=dict({
-        "X-Phoenix-Auth": test_user_token
+        "Authorization": "Bearer " + test_user_token
     }), status=403)

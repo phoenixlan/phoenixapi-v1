@@ -38,7 +38,12 @@
 			const redirectUri = GET_PARAMS['redirect_uri'];
 
           	console.log("redirect uri: " + redirectUri);
-    		window.location = redirectUri + "?code=" + resp.code;
+
+			let args = "?code=" + resp.code
+			if('state' in GET_PARAMS){
+				args = args +  "&state="+ encodeURIComponent(GET_PARAMS['state'])
+			}
+    		window.location = redirectUri + args;
 
 		} else {
 			error = resp.error

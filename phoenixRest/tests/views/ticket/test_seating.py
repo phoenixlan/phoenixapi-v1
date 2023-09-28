@@ -14,7 +14,7 @@ def ensure_seatmap(testapp, token, event_uuid):
         'name': 'Test seatmap',
         'description': 'seatmap'
     }), headers=dict({
-        'X-Phoenix-Auth': token
+        "Authorization": "Bearer " + token
     }), status=200).json_body
 
     # Add a row
@@ -24,19 +24,19 @@ def ensure_seatmap(testapp, token, event_uuid):
         'y': 10,
         'horizontal': False
     }), headers=dict({
-        'X-Phoenix-Auth': token
+        "Authorization": "Bearer " + token
     }), status=200).json_body
 
     # Add three seats
     for i in range(0, 3):
         testapp.put_json('/row/%s/seat' % row['uuid'], dict({
         }), headers=dict({
-            'X-Phoenix-Auth': token
+            "Authorization": "Bearer " + token
         }), status=200).json_body
 
     # Re-fetch the seatmap
     seatmap = testapp.get('/seatmap/%s' % seatmap['uuid'], headers=dict({
-        'X-Phoenix-Auth': token
+        "Authorization": "Bearer " + token
     }), status=200).json_body
 
     return seatmap
@@ -44,7 +44,7 @@ def ensure_seatmap(testapp, token, event_uuid):
 def ensure_ticket(testapp, token, event_uuid):
     # Get existing ticket types
     res = testapp.get('/event/%s/ticketType' % event_uuid, headers=dict({
-        'X-Phoenix-Auth': token
+        "Authorization": "Bearer " + token
     }), status=200)
     ticket_type = res.json_body[0]
 
@@ -55,12 +55,12 @@ def ensure_ticket(testapp, token, event_uuid):
         'ticket_type': ticket_type['uuid'],
         'recipient': current_user['uuid']
     }), headers=dict({
-        'X-Phoenix-Auth': token
+        "Authorization": "Bearer " + token
     }), status=200)
 
     # List the tickets owned by the test user
     owned_tickets = testapp.get('/user/%s/owned_tickets' % current_user['uuid'], headers=dict({
-        'X-Phoenix-Auth': token 
+        "Authorization": "Bearer " + token 
     }), status=200).json_body
     assert len(owned_tickets) > 0
     return owned_tickets[0]
@@ -78,7 +78,7 @@ def test_ticket_seating(testapp, db):
     seat_ticket = ensure_ticket(testapp, token, current_event['uuid'])
 
     availability = testapp.get('/seatmap/%s/availability' % seatmap['uuid'], headers=dict({
-        'X-Phoenix-Auth': token
+        "Authorization": "Bearer " + token
     }), status=200).json_body
 
     seat = None
@@ -104,7 +104,7 @@ def test_ticket_seating(testapp, db):
     testapp.put_json('/ticket/%s/seat' % seat_ticket['ticket_id'], dict({
         'seat_uuid': seat['uuid']
     }), headers=dict({
-        'X-Phoenix-Auth': token
+        "Authorization": "Bearer " + token
     }), status=400)
 
     # Make sure sating is legal
@@ -117,12 +117,12 @@ def test_ticket_seating(testapp, db):
     testapp.put_json('/ticket/%s/seat' % seat_ticket['ticket_id'], dict({
         'seat_uuid': seat['uuid']
     }), headers=dict({
-        'X-Phoenix-Auth': token
+        "Authorization": "Bearer " + token
     }), status=200)
 
     # Ensure the seatmap updated
     availability = testapp.get('/seatmap/%s/availability' % seatmap['uuid'], headers=dict({
-        'X-Phoenix-Auth': token
+        "Authorization": "Bearer " + token
     }), status=200).json_body
 
     asserted = False
@@ -138,7 +138,7 @@ def test_ticket_seating(testapp, db):
 
     # Ensure the ticket now has a seat
     ticket = testapp.get('/ticket/%s' % seat_ticket['ticket_id'], headers=dict({
-        'X-Phoenix-Auth': token 
+        "Authorization": "Bearer " + token 
     }), status=200).json_body
     assert ticket['seat'] is not None
     assert ticket['seat']['uuid'] == seat['uuid']

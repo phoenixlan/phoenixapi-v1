@@ -24,7 +24,7 @@ def test_crew_mail_dryryn(db, testapp):
         'subject': "hello",
         'body': "# Foo bar\nHello"
     }), headers=dict({
-        'X-Phoenix-Auth': sender_token
+        "Authorization": "Bearer " + sender_token
     }), status=200).json_body['count']
     # Check how many consenting users we would be mailing
     consenting_user_pre = testapp.post_json('/email/dryrun', dict({
@@ -32,7 +32,7 @@ def test_crew_mail_dryryn(db, testapp):
         'subject': "hello",
         'body': "# Foo bar\nHello"
     }), headers=dict({
-        'X-Phoenix-Auth': sender_token
+        "Authorization": "Bearer " + sender_token
     }), status=200).json_body['count']
 
     # Test email sending to crews
@@ -41,7 +41,7 @@ def test_crew_mail_dryryn(db, testapp):
         'subject': "hello",
         'body': "# Foo bar\nHello"
     }), headers=dict({
-        'X-Phoenix-Auth': sender_token
+        "Authorization": "Bearer " + sender_token
     }), status=200).json_body
 
     assert crew_mail_test['count'] == 3 # The user is a crew member already
@@ -52,7 +52,7 @@ def test_crew_mail_dryryn(db, testapp):
         "user_uuid": adam_user['uuid'],
         "position_uuid": str(position.uuid)
     }), headers=dict({
-        'X-Phoenix-Auth': sender_token
+        "Authorization": "Bearer " + sender_token
     }), status=200)
 
     crew_mail_test = testapp.post_json('/email/dryrun', dict({
@@ -60,7 +60,7 @@ def test_crew_mail_dryryn(db, testapp):
         'subject': "hello",
         'body': "# Foo bar\nHello"
     }), headers=dict({
-        'X-Phoenix-Auth': sender_token
+        "Authorization": "Bearer " + sender_token
     }), status=200).json_body
 
     assert crew_mail_test['count'] == 3 # The number should increase to reflect that adam now is a crew
@@ -74,7 +74,7 @@ def test_crew_mail_dryryn(db, testapp):
         "user_uuid": adam_user['uuid'],
         "position_uuid": str(position.uuid)
     }), headers=dict({
-        'X-Phoenix-Auth': sender_token
+        "Authorization": "Bearer " + sender_token
     }), status=200)
 
     crew_mail_test = testapp.post_json('/email/dryrun', dict({
@@ -82,7 +82,7 @@ def test_crew_mail_dryryn(db, testapp):
         'subject': "hello",
         'body': "# Foo bar\nHello"
     }), headers=dict({
-        'X-Phoenix-Auth': sender_token
+        "Authorization": "Bearer " + sender_token
     }), status=200).json_body
 
     assert crew_mail_test['count'] == 4 # The number should increase to reflect that adam now is a crew
@@ -93,14 +93,14 @@ def test_crew_mail_dryryn(db, testapp):
         'subject': "hello",
         'body': "# Foo bar\nHello"
     }), headers=dict({
-        'X-Phoenix-Auth': sender_token
+        "Authorization": "Bearer " + sender_token
     }), status=200).json_body['count']
     consenting_user_post = testapp.post_json('/email/dryrun', dict({
         'recipient_category': "event_notification",
         'subject': "hello",
         'body': "# Foo bar\nHello"
     }), headers=dict({
-        'X-Phoenix-Auth': sender_token
+        "Authorization": "Bearer " + sender_token
     }), status=200).json_body['count']
 
     assert participant_mail_count_pre == participant_mail_count_post
@@ -126,7 +126,7 @@ def test_participant_mail_dryrun(testapp):
         'subject': "hello",
         'body': "# Foo bar\nHello"
     }), headers=dict({
-        'X-Phoenix-Auth': sender_token
+        "Authorization": "Bearer " + sender_token
     }), status=200).json_body
 
     assert participant_mail_test_results['count'] == 1 # Only the current user
@@ -137,14 +137,14 @@ def test_participant_mail_dryrun(testapp):
         'subject': "hello",
         'body': "# Foo bar\nHello"
     }), headers=dict({
-        'X-Phoenix-Auth': sender_token
+        "Authorization": "Bearer " + sender_token
     }), status=200).json_body['count']
     consenting_user_pre = testapp.post_json('/email/dryrun', dict({
         'recipient_category': "event_notification",
         'subject': "hello",
         'body': "# Foo bar\nHello"
     }), headers=dict({
-        'X-Phoenix-Auth': sender_token
+        "Authorization": "Bearer " + sender_token
     }), status=200).json_body['count']
 
 
@@ -152,7 +152,7 @@ def test_participant_mail_dryrun(testapp):
     current_event = testapp.get('/event/current', status=200)
     # Get existing ticket types
     res = testapp.get('/event/%s/ticketType' % current_event.json_body['uuid'], headers=dict({
-        'X-Phoenix-Auth': sender_token 
+        "Authorization": "Bearer " + sender_token 
     }), status=200)
     ticket_type = res.json_body[0]
 
@@ -160,7 +160,7 @@ def test_participant_mail_dryrun(testapp):
         'ticket_type': ticket_type['uuid'],
         'recipient': adam_user['uuid']
     }), headers=dict({
-        'X-Phoenix-Auth': sender_token
+        "Authorization": "Bearer " + sender_token
     }), status=200)
 
     # The number of participants should change
@@ -169,7 +169,7 @@ def test_participant_mail_dryrun(testapp):
         'subject': "hello",
         'body': "# Foo bar\nHello"
     }), headers=dict({
-        'X-Phoenix-Auth': sender_token
+        "Authorization": "Bearer " + sender_token
     }), status=200).json_body
 
     assert participant_mail_test_results['count'] == 2 # Current user + adam
@@ -180,14 +180,14 @@ def test_participant_mail_dryrun(testapp):
         'subject': "hello",
         'body': "# Foo bar\nHello"
     }), headers=dict({
-        'X-Phoenix-Auth': sender_token
+        "Authorization": "Bearer " + sender_token
     }), status=200).json_body['count']
     consenting_user_post = testapp.post_json('/email/dryrun', dict({
         'recipient_category': "event_notification",
         'subject': "hello",
         'body': "# Foo bar\nHello"
     }), headers=dict({
-        'X-Phoenix-Auth': sender_token
+        "Authorization": "Bearer " + sender_token
     }), status=200).json_body['count']
 
     assert crew_mail_test_pre == crew_mail_test_post
@@ -204,7 +204,7 @@ def test_invalid_mail_category_dryrun(testapp):
         'subject': "hello",
         'body': "# Foo bar\nHello"
     }), headers=dict({
-        'X-Phoenix-Auth': sender_token
+        "Authorization": "Bearer " + sender_token
     }), status=400)
 
 def test_consent_mail_age_limit(db, testapp):
@@ -235,7 +235,7 @@ def test_consent_mail_age_limit(db, testapp):
         'subject': "hello",
         'body': "# Foo bar\nHello"
     }), headers=dict({
-        'X-Phoenix-Auth': sender_token
+        "Authorization": "Bearer " + sender_token
     }), status=200).json_body
 
     assert consenting_user_result['count'] == 2 # Only the current user

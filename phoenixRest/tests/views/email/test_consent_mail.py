@@ -22,7 +22,7 @@ def test_consent_mail_dryrun(db, testapp):
         'subject': "hello",
         'body': "# Foo bar\nHello"
     }), headers=dict({
-        'X-Phoenix-Auth': sender_token
+        "Authorization": "Bearer " + sender_token
     }), status=200).json_body['count']
 
     participant_mail_count_pre = testapp.post_json('/email/dryrun', dict({
@@ -30,7 +30,7 @@ def test_consent_mail_dryrun(db, testapp):
         'subject': "hello",
         'body': "# Foo bar\nHello"
     }), headers=dict({
-        'X-Phoenix-Auth': sender_token
+        "Authorization": "Bearer " + sender_token
     }), status=200).json_body['count']
 
     # Check how many consent withdrawal codes exist
@@ -41,7 +41,7 @@ def test_consent_mail_dryrun(db, testapp):
         'subject': "hello",
         'body': "# Foo bar\nHello"
     }), headers=dict({
-        'X-Phoenix-Auth': sender_token
+        "Authorization": "Bearer " + sender_token
     }), status=200).json_body
 
     assert consenting_user_result['count'] == 1 # Only the current user
@@ -58,7 +58,7 @@ def test_consent_mail_dryrun(db, testapp):
         'subject': "hello",
         'body': "# Foo bar\nHello"
     }), headers=dict({
-        'X-Phoenix-Auth': sender_token
+        "Authorization": "Bearer " + sender_token
     }), status=200).json_body
 
     assert consenting_user_result['count'] == 2 # Only the current user
@@ -69,7 +69,7 @@ def test_consent_mail_dryrun(db, testapp):
         'subject': "hello",
         'body': "# Foo bar\nHello"
     }), headers=dict({
-        'X-Phoenix-Auth': sender_token
+        "Authorization": "Bearer " + sender_token
     }), status=200).json_body['count']
 
     participant_mail_count_post = testapp.post_json('/email/dryrun', dict({
@@ -77,7 +77,7 @@ def test_consent_mail_dryrun(db, testapp):
         'subject': "hello",
         'body': "# Foo bar\nHello"
     }), headers=dict({
-        'X-Phoenix-Auth': sender_token
+        "Authorization": "Bearer " + sender_token
     }), status=200).json_body['count']
 
     assert crew_mail_test_pre == crew_mail_test_post
@@ -95,7 +95,7 @@ def test_consent_mail_dryrun(db, testapp):
         'subject': "hello",
         'body': "# Foo bar\nHello"
     }), headers=dict({
-        'X-Phoenix-Auth': sender_token
+        "Authorization": "Bearer " + sender_token
     }), status=200).json_body
 
     assert consenting_user_result['count'] == 2 # Only the current user
@@ -120,7 +120,7 @@ def test_consent_mail_no_participants(db, testapp):
         'subject': "hello",
         'body': "# Foo bar\nHello"
     }), headers=dict({
-        'X-Phoenix-Auth': sender_token
+        "Authorization": "Bearer " + sender_token
     }), status=200).json_body
 
     assert consenting_user_result['count'] == 1 # Only the current user
@@ -137,7 +137,7 @@ def test_consent_mail_no_participants(db, testapp):
         'subject': "hello",
         'body': "# Foo bar\nHello"
     }), headers=dict({
-        'X-Phoenix-Auth': sender_token
+        "Authorization": "Bearer " + sender_token
     }), status=200).json_body
 
     assert consenting_user_result['count'] == 2
@@ -145,7 +145,7 @@ def test_consent_mail_no_participants(db, testapp):
     # Get existing ticket types
     current_event = testapp.get('/event/current', status=200)
     res = testapp.get('/event/%s/ticketType' % current_event.json_body['uuid'], headers=dict({
-        'X-Phoenix-Auth': sender_token
+        "Authorization": "Bearer " + sender_token
     }), status=200)
     ticket_type = res.json_body[0]
 
@@ -154,7 +154,7 @@ def test_consent_mail_no_participants(db, testapp):
         'ticket_type': ticket_type['uuid'],
         'recipient': adam_user['uuid']
     }), headers=dict({
-        'X-Phoenix-Auth': sender_token
+        "Authorization": "Bearer " + sender_token
     }), status=200)
 
     # Call the dry run again. As adam is now a participant, they should not get an e-mail
@@ -163,7 +163,7 @@ def test_consent_mail_no_participants(db, testapp):
         'subject': "hello",
         'body': "# Foo bar\nHello"
     }), headers=dict({
-        'X-Phoenix-Auth': sender_token
+        "Authorization": "Bearer " + sender_token
     }), status=200).json_body
 
     assert consenting_user_result['count'] == 1
@@ -184,7 +184,7 @@ def test_consent_mail_no_crew(db, testapp):
         'subject': "hello",
         'body': "# Foo bar\nHello"
     }), headers=dict({
-        'X-Phoenix-Auth': sender_token
+        "Authorization": "Bearer " + sender_token
     }), status=200).json_body
 
     assert consenting_user_result['count'] == 1 # Only the current user
@@ -201,14 +201,14 @@ def test_consent_mail_no_crew(db, testapp):
         'subject': "hello",
         'body': "# Foo bar\nHello"
     }), headers=dict({
-        'X-Phoenix-Auth': sender_token
+        "Authorization": "Bearer " + sender_token
     }), status=200).json_body
 
     assert consenting_user_result['count'] == 2
 
     position_candidates = list(
         filter(lambda position: position['crew_uuid'] is not None, testapp.get('/position', headers=dict({
-            "X-Phoenix-Auth": sender_token
+            "Authorization": "Bearer " + sender_token
         }), status=200).json_body)
     )
 
@@ -216,7 +216,7 @@ def test_consent_mail_no_crew(db, testapp):
         "position_uuid": position_candidates[0]['uuid'],
         "user_uuid": adam_user['uuid']
     }, headers=dict({
-        "X-Phoenix-Auth": sender_token
+        "Authorization": "Bearer " + sender_token
     }), status=200).json_body
 
     assert created_mapping['uuid'] != None
@@ -227,7 +227,7 @@ def test_consent_mail_no_crew(db, testapp):
         'subject': "hello",
         'body': "# Foo bar\nHello"
     }), headers=dict({
-        'X-Phoenix-Auth': sender_token
+        "Authorization": "Bearer " + sender_token
     }), status=200).json_body
 
     assert consenting_user_result['count'] == 1
@@ -248,7 +248,7 @@ def test_consent_mail_no_applicants(db, testapp):
         'subject': "hello",
         'body': "# Foo bar\nHello"
     }), headers=dict({
-        'X-Phoenix-Auth': sender_token
+        "Authorization": "Bearer " + sender_token
     }), status=200).json_body
 
     assert consenting_user_result['count'] == 1 # Only the current user
@@ -265,14 +265,14 @@ def test_consent_mail_no_applicants(db, testapp):
         'subject': "hello",
         'body': "# Foo bar\nHello"
     }), headers=dict({
-        'X-Phoenix-Auth': sender_token
+        "Authorization": "Bearer " + sender_token
     }), status=200).json_body
 
     assert consenting_user_result['count'] == 2
 
     current_event = testapp.get('/event/current', status=200).json_body
     testapp.post('/user/%s/avatar' % adam_user['uuid'], params="x=%d&y=%d&w=%d&h=%d"% (0, 0, 600, 450), upload_files=[('file', "phoenixRest/tests/assets/avatar_test.png")], headers=dict({
-        'X-Phoenix-Auth': adam_token
+        "Authorization": "Bearer " + adam_token
     }), status = 200)
 
     application_crews = list(filter(lambda crew: crew["is_applyable"], testapp.get('/crew', status=200).json_body))
@@ -281,7 +281,7 @@ def test_consent_mail_no_applicants(db, testapp):
         'crews': [application_crews[0]['uuid']],
         'contents': 'I want to join please'
     }), headers=dict({
-        'X-Phoenix-Auth': adam_token
+        "Authorization": "Bearer " + adam_token
     }), status=200)
 
     # Call the dry run again. As adam is now a crew member, they should not get an e-mail
@@ -290,7 +290,7 @@ def test_consent_mail_no_applicants(db, testapp):
         'subject': "hello",
         'body': "# Foo bar\nHello"
     }), headers=dict({
-        'X-Phoenix-Auth': sender_token
+        "Authorization": "Bearer " + sender_token
     }), status=200).json_body
 
     assert consenting_user_result['count'] == 1

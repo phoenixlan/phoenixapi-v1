@@ -7,7 +7,7 @@ def test_create_store_session(testapp):
     token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
 
     res = testapp.get('/event/%s/ticketType' % res.json_body['uuid'], headers=dict({
-        'X-Phoenix-Auth': token
+        "Authorization": "Bearer " + token
     }), status=200)
 
     # Reserve a card for the first ticket for sale, i guess
@@ -16,7 +16,7 @@ def test_create_store_session(testapp):
             {'qty': 1, 'uuid': res.json_body[0]['uuid']}
         ]
     }), headers=dict({
-        'X-Phoenix-Auth': token
+        "Authorization": "Bearer " + token
     }), status=200)
 
     assert res.json_body['uuid'] is not None

@@ -11,7 +11,7 @@ def test_get_crews(testapp):
     # Log in as the test user
     token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
     res = testapp.get('/crew', headers=dict({
-        'X-Phoenix-Auth': token
+        "Authorization": "Bearer " + token
         }), status=200)
     assert len(res.json_body) > 0
 

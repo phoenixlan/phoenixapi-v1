@@ -28,7 +28,7 @@ def test_consent_withdrawal(testapp, db):
         'subject': "hello",
         'body': "# Foo bar\nHello"
     }), headers=dict({
-        'X-Phoenix-Auth': test_token
+        "Authorization": "Bearer " + test_token
     }), status=200).json_body
 
     codes = db.query(ConsentWithdrawalCode).all()
@@ -37,7 +37,7 @@ def test_consent_withdrawal(testapp, db):
 
     # Ensure you can fetch info about the withdrawal code
     consenting_user_result = testapp.get('/consent_withdrawal_code/%s' % code.uuid, headers=dict({
-        'X-Phoenix-Auth': test_token
+        "Authorization": "Bearer " + test_token
     }), status=200).json_body
 
     # Try to withdraw the consent

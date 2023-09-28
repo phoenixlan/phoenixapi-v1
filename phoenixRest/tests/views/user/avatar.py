@@ -3,7 +3,7 @@ def upload_avatar_helper(testapp, username, password, path, x, y, w, h, expected
 
     # Get some info about the current user
     currentUser = testapp.get('/user/current', headers=dict({
-        'X-Phoenix-Auth': token
+        "Authorization": "Bearer " + token
         }), status=200).json_body
 
     avatar_uuid = currentUser['avatar_uuid']
@@ -12,18 +12,18 @@ def upload_avatar_helper(testapp, username, password, path, x, y, w, h, expected
         # Delete the avatar so we can test with a new one
         # This is done so the tests can run locally
         testapp.delete('/avatar/%s' % avatar_uuid, headers=dict({
-            'X-Phoenix-Auth': token
+            "Authorization": "Bearer " + token
             }), status=200)
 
     upload_res = testapp.post('/user/%s/avatar' % user_uuid, params="x=%d&y=%d&w=%d&h=%d"% (x, y, w, h), upload_files=[('file', path)], headers=dict({
-        'X-Phoenix-Auth': token
+        "Authorization": "Bearer " + token
     }), status = (expected_failure if expected_failure is not None else 200))
 
     if expected_failure is None:
         upload_res = upload_res.json_body
         # Try to delete it
         testapp.delete('/avatar/%s' % upload_res['uuid'], headers=dict({
-            'X-Phoenix-Auth': token
+            "Authorization": "Bearer " + token
         }), status=200)
 
 def test_upload_avatar(testapp):

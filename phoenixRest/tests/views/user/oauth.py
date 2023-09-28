@@ -10,22 +10,26 @@ def test_auth(testapp):
     print("Testing with code: %s" % code)
 
     # Now try getting a token and refresh token
-    res = testapp.post_json('/oauth/token', dict({
-        'grant_type': 'code',
-        'code': code
-        }), status=200)
+    res = testapp.post('/oauth/token', {
+            'grant_type': 'authorization_code',
+            'code': code
+        },
+        headers = {'Content-Type': 'application/x-www-form-urlencoded'}, 
+        status=200)
 
-    assert 'token' in res.json_body
+    assert 'access_token' in res.json_body
     assert 'refresh_token' in res.json_body
 
     refresh_token = res.json_body['refresh_token']
     # Can we refresh the token?
-    res = testapp.post_json('/oauth/token', dict({
+    res = testapp.post('/oauth/token', {
         'grant_type': 'refresh_token',
         'refresh_token': refresh_token
-        }), status=200)
+        }, 
+        headers = {'Content-Type': 'application/x-www-form-urlencoded'}, 
+        status=200)
 
-    assert 'token' in res.json_body
+    assert 'access_token' in res.json_body
 
 
 # Test authentication with an invalid password

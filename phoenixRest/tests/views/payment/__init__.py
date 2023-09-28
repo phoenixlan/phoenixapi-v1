@@ -11,7 +11,7 @@ def _create_store_session(testapp, token):
     assert res.json_body['uuid'] is not None
 
     res = testapp.get('/event/%s/ticketType' % res.json_body['uuid'], headers=dict({
-        'X-Phoenix-Auth': token
+        "Authorization": "Bearer " + token
     }), status=200)
 
     # Reserve a card for the first ticket for sale, i guess
@@ -20,7 +20,7 @@ def _create_store_session(testapp, token):
             {'qty': 1, 'uuid': res.json_body[0]['uuid']}
         ]
     }), headers=dict({
-        'X-Phoenix-Auth': token
+        "Authorization": "Bearer " + token
     }), status=200)
 
     store_session = res.json_body['uuid']
@@ -42,7 +42,7 @@ def test_ticket_sale_start_limit(testapp, db):
     transaction.commit()
 
     res = testapp.get('/event/%s/ticketType' % current_event['uuid'], headers=dict({
-        'X-Phoenix-Auth': token
+        "Authorization": "Bearer " + token
     }), status=200)
 
     # Reserve a card for the first ticket for sale, i guess
@@ -51,7 +51,7 @@ def test_ticket_sale_start_limit(testapp, db):
             {'qty': 1, 'uuid': res.json_body[0]['uuid']}
         ]
     }), headers=dict({
-        'X-Phoenix-Auth': token
+        "Authorization": "Bearer " + token
     }), status=400)
 
 # Test if we can create a payment
@@ -65,7 +65,7 @@ def test_payment_flow_vipps(testapp):
         'store_session': store_session,
         'provider': 'vipps'
     }), headers=dict({
-        'X-Phoenix-Auth': token
+        "Authorization": "Bearer " + token
     }), status=200)
     
     #self.assertIsNotNone(res.json_body['url'])
@@ -79,7 +79,7 @@ def test_payment_flow_vipps(testapp):
     res = testapp.post_json('/payment/%s/initiate' % payment_uuid, dict({
         'fallback_url': "https://test.phoenix.no"
     }), headers=dict({
-        'X-Phoenix-Auth': token
+        "Authorization": "Bearer " + token
     }), status=200)
     assert res.json_body['url'] is not None
     assert res.json_body['slug'] is not None
@@ -89,7 +89,7 @@ def test_payment_flow_vipps(testapp):
     # Test that the ticket state is correct at this point
     res = testapp.get('/payment/%s' % payment_uuid,
         headers=dict({
-            'X-Phoenix-Auth': token
+            "Authorization": "Bearer " + token
         }),
         status=200)
     assert res.json_body['state'] == "PaymentState.initiated"
@@ -114,7 +114,7 @@ def test_payment_flow_vipps(testapp):
     print("User uuid: %s" % user_uuid)
     
     res = testapp.get('/user/%s/purchased_tickets' % user_uuid, headers=dict({
-        'X-Phoenix-Auth': token
+        "Authorization": "Bearer " + token
     }), status=200)
 
     exists = False
@@ -125,7 +125,7 @@ def test_payment_flow_vipps(testapp):
     assert exists
     # Ensure payments exists as well
     res = testapp.get('/user/%s/payments' % user_uuid, headers=dict({
-        'X-Phoenix-Auth': token
+        "Authorization": "Bearer " + token
     }))
 
     exists = False
@@ -147,7 +147,7 @@ def test_payment_flow_stripe(testapp):
         'store_session': store_session,
         'provider': 'stripe'
     }), headers=dict({
-        'X-Phoenix-Auth': token
+        "Authorization": "Bearer " + token
     }), status=200)
     
     assert res.json_body['uuid'] is not None
@@ -157,14 +157,14 @@ def test_payment_flow_stripe(testapp):
     res = testapp.post_json('/payment/%s/initiate' % payment_uuid, dict({
         'fallback_url': "https://test.phoenix.no"
     }), headers=dict({
-        'X-Phoenix-Auth': token
+        "Authorization": "Bearer " + token
     }), status=200)
     assert res.json_body['client_secret'] is not None
 
     # Test that the ticket state is correct at this point
     res = testapp.get('/payment/%s' % payment_uuid,
         headers=dict({
-            'X-Phoenix-Auth': token
+            "Authorization": "Bearer " + token
         }),
         status=200)
     assert res.json_body['state'] == "PaymentState.initiated"
