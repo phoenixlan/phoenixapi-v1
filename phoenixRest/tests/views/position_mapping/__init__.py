@@ -5,8 +5,8 @@ from phoenixRest.models.crew.position_mapping import PositionMapping
 
 def test_create_delete_position_mapping(testapp):
     # Log in as the test user
-    token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
-    test_user_token, _ = testapp.auth_get_tokens('adam', 'sixcharacters')
+    token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
+    test_user_token, _ = testapp.auth_get_tokens('adam@example.com', 'sixcharacters')
 
     test_user = testapp.get_user(test_user_token)
 
@@ -53,8 +53,8 @@ def test_create_delete_position_mapping(testapp):
 # Make sure a permissionless user can't make permission mappings. Low-hanging fruit to test
 def test_no_permissionless_promotion(testapp):
     # Log in as the test user
-    token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
-    test_user_token, _ = testapp.auth_get_tokens('adam', 'sixcharacters')
+    token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
+    test_user_token, _ = testapp.auth_get_tokens('adam@example.com', 'sixcharacters')
 
     test_user = testapp.get_user(test_user_token)
 

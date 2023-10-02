@@ -8,8 +8,8 @@ def test_get_agenda(testapp):
 
 def test_create_modify_delete_agenda(testapp):
     # Login with test accounts with admin privileges and no rights
-    privileged_token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
-    unprivileged_token, refresh = testapp.auth_get_tokens('jeff', 'sixcharacters')
+    privileged_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
+    unprivileged_token, refresh = testapp.auth_get_tokens('jeff@example.com', 'sixcharacters')
     
     # Attempt to get current event
     current_event = testapp.get('/event/current', status=200)

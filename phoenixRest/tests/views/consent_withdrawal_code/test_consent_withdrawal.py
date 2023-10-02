@@ -5,8 +5,8 @@ from phoenixRest.models.core.consent_withdrawal_code import ConsentWithdrawalCod
 def test_consent_withdrawal(testapp, db):
     testapp.ensure_typical_event()
 
-    test_token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
-    target_token, refresh = testapp.auth_get_tokens('adam', 'sixcharacters')
+    test_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
+    target_token, refresh = testapp.auth_get_tokens('adam@example.com', 'sixcharacters')
 
     test_user = testapp.get_user(test_token)
     target_user = testapp.get_user(target_token)

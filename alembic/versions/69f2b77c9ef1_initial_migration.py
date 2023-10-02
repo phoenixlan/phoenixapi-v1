@@ -522,6 +522,16 @@ def upgrade():
                 'end_time': datetime.strptime('2023-10-01 12:00:00', '%Y-%m-%d %H:%M:%S'),
                 'max_participants': 400
             },
+            {
+                'uuid':uuid.uuid4(), 
+                'name': "event 6",
+                'booking_time': datetime.strptime('2024-08-29 18:00:00', '%Y-%m-%d %H:%M:%S'), 
+                'priority_seating_time_delta': 60*30,
+                'seating_time_delta': 60*60,
+                'start_time': datetime.strptime('2024-09-29 18:00:00', '%Y-%m-%d %H:%M:%S'),
+                'end_time': datetime.strptime('2024-10-01 12:00:00', '%Y-%m-%d %H:%M:%S'),
+                'max_participants': 400
+            },
         ]
     )
 

@@ -1,7 +1,7 @@
 # Test authentication with developer user
 def test_auth(testapp):
     res = testapp.post_json('/oauth/auth', dict({
-        'login': 'test',
+        'login': 'test@example.com',
         'password': 'sixcharacters'
         }), status=200)
     assert 'code' in res.json_body

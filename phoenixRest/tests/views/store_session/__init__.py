@@ -4,7 +4,7 @@ def test_create_store_session(testapp):
     res = testapp.get('/event/current', status=200)
     assert res.json_body['uuid'] is not None
 
-    token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
+    token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
 
     res = testapp.get('/event/%s/ticketType' % res.json_body['uuid'], headers=dict({
         "Authorization": "Bearer " + token

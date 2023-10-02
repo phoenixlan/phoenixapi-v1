@@ -68,7 +68,7 @@ def ensure_ticket(testapp, token, event_uuid):
 def test_ticket_seating(testapp, db):
     testapp.ensure_typical_event()
     # test is an admin
-    token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
+    token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
 
     # Current event
     current_event = testapp.get('/event/current', status=200).json_body

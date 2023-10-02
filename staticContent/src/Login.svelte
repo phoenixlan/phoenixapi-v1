@@ -59,14 +59,15 @@
 		<OauthSecurity>
 			<h1>Logg inn</h1>
 			<p><i>Du bruker den samme kontoen for alle tjenester hos Phoenix LAN</i></p>
+			<p><b>NB: Vi støtter ikke lenger å logge inn med brukernavn - vi vil senere bruke dette som display-navn</b></p>
 			<form id="loginForm" on:submit|preventDefault={handleLogin}>
 				<Textfield
 			        name="username"
 			        autocomplete="off"
 			        required
 			        bind:value={username}
-			        label="Brukernavn eller e-post addresse"
-			        message="Både brukernavn og e-post addresse er gyldig"
+			        label="E-post addresse"
+			        message="Skriv inn e-post addressen du registrerte med"
 			    />
 				<Textfield
 					type="password"

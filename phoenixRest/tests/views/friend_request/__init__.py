@@ -3,8 +3,8 @@ from test_app import TestApp
 def test_friend_request(testapp:TestApp):
     
     # Log in as the test user
-    greg_user_token, refresh = testapp.auth_get_tokens('greg', 'sixcharacters')
-    jeff_user_token, refresh = testapp.auth_get_tokens('jeff', 'sixcharacters')
+    greg_user_token, refresh = testapp.auth_get_tokens('greg@example.com', 'sixcharacters')
+    jeff_user_token, refresh = testapp.auth_get_tokens('jeff@example.com', 'sixcharacters')
     
     greg = testapp.get_user(greg_user_token)
     jeff = testapp.get_user(jeff_user_token)

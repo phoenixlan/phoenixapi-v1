@@ -2,9 +2,9 @@
 def test_ticket_transfer_flow(testapp):
     testapp.ensure_typical_event()
     # test is an admin
-    sender_token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
-    receiver_token, refresh = testapp.auth_get_tokens('jeff', 'sixcharacters')
-    receiver_2_token , refresh = testapp.auth_get_tokens('adam', 'sixcharacters')
+    sender_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
+    receiver_token, refresh = testapp.auth_get_tokens('jeff@example.com', 'sixcharacters')
+    receiver_2_token , refresh = testapp.auth_get_tokens('adam@example.com', 'sixcharacters')
 
     # Get user UUID
     sender_user = testapp.get_user(sender_token)

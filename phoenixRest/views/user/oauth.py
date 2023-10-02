@@ -60,7 +60,7 @@ def generate_token(user: User, request):
 def login(request):
     login = request.json_body['login']
     password = request.json_body['password']
-    user = request.db.query(User).filter(or_(User.username == login, User.email == login.lower())).first()
+    user = request.db.query(User).filter(User.email == login.lower()).first()
 
     if user is not None:
         if user.activation_code is not None:

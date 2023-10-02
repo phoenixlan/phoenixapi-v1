@@ -31,8 +31,8 @@ def create_application(testapp:TestApp, token, application_crews: list):
 
 def test_create_accept_appliations(testapp):
     # Log in as the test user
-    token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
-    applicant_token, refresh = testapp.auth_get_tokens('greg', 'sixcharacters')
+    token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
+    applicant_token, refresh = testapp.auth_get_tokens('greg@example.com', 'sixcharacters')
 
     application_crew_candidates = list(filter(lambda crew: crew["is_applyable"], testapp.get('/crew', status=200).json_body))
 
@@ -69,8 +69,8 @@ def test_create_accept_appliations(testapp):
     
 def test_create_reject_appliations(testapp):
     # Log in as the test user
-    token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
-    applicant_token, refresh = testapp.auth_get_tokens('greg', 'sixcharacters')
+    token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
+    applicant_token, refresh = testapp.auth_get_tokens('greg@example.com', 'sixcharacters')
 
     application_crew = list(filter(lambda crew: crew["is_applyable"], testapp.get('/crew', status=200).json_body))[0]['uuid']
 
@@ -104,8 +104,8 @@ def test_create_reject_appliations(testapp):
     assert len(correct_mappings) == 0
     
 def hide_application(testapp, token, application_crews: list):
-    token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
-    applicant_token, refresh = testapp.auth_get_tokens('greg', 'sixcharacters')
+    token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
+    applicant_token, refresh = testapp.auth_get_tokens('greg@example.com', 'sixcharacters')
 
     user = testapp.get_user(token)
 

@@ -12,8 +12,8 @@ def test_crew_mail_dryryn(db, testapp):
     testapp.ensure_typical_event()
 
     # test is an admin
-    sender_token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
-    adam_token, refresh = testapp.auth_get_tokens('adam', 'sixcharacters')
+    sender_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
+    adam_token, refresh = testapp.auth_get_tokens('adam@example.com', 'sixcharacters')
 
     sender_user = testapp.get_user(sender_token)
     adam_user = testapp.get_user(adam_token)
@@ -115,8 +115,8 @@ def test_participant_mail_dryrun(testapp):
     testapp.ensure_typical_event()
 
     # test is an admin
-    sender_token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
-    adam_token, refresh = testapp.auth_get_tokens('adam', 'sixcharacters')
+    sender_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
+    adam_token, refresh = testapp.auth_get_tokens('adam@example.com', 'sixcharacters')
 
     sender_user = testapp.get_user(sender_token)
     adam_user = testapp.get_user(adam_token)
@@ -197,7 +197,7 @@ def test_invalid_mail_category_dryrun(testapp):
     testapp.ensure_typical_event()
 
     # test is an admin
-    sender_token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
+    sender_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
 
     target_users = testapp.post_json('/email/dryrun', dict({
         'recipient_category': "swag",
@@ -211,8 +211,8 @@ def test_consent_mail_age_limit(db, testapp):
     testapp.ensure_typical_event()
 
     # test is an admin
-    sender_token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
-    adam_token, refresh = testapp.auth_get_tokens('adam', 'sixcharacters')
+    sender_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
+    adam_token, refresh = testapp.auth_get_tokens('adam@example.com', 'sixcharacters')
 
     sender_user = testapp.get_user(sender_token)
     adam_user = testapp.get_user(adam_token)

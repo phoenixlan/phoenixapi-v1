@@ -3,7 +3,7 @@ def test_get_event(testapp):
     res = testapp.get('/event/current', status=200)
     assert res.json_body['uuid'] is not None
 
-    token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
+    token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
 
     res = testapp.get('/event/%s' % res.json_body['uuid'], headers=dict({
         "Authorization": "Bearer " + token
@@ -16,7 +16,7 @@ def test_get_ticket_types(testapp):
     current_event = testapp.get('/event/current', status=200)
     assert current_event.json_body['uuid'] is not None
 
-    token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
+    token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
 
     # Ensure there are ticket types. By default there aren't
     res = testapp.get('/event/%s/ticketType' % current_event.json_body['uuid'], headers=dict({

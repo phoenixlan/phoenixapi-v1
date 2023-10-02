@@ -31,7 +31,7 @@ def _create_store_session(testapp, token):
 def test_ticket_sale_start_limit(testapp, db):
     testapp.ensure_typical_event()
     # Jeff doesn't have permission to buy tickets any time
-    token, refresh = testapp.auth_get_tokens('jeff', 'sixcharacters')
+    token, refresh = testapp.auth_get_tokens('jeff@example.com', 'sixcharacters')
 
     current_event = testapp.get('/event/current', status=200).json_body
     assert current_event['uuid'] is not None
@@ -57,7 +57,7 @@ def test_ticket_sale_start_limit(testapp, db):
 # Test if we can create a payment
 def test_payment_flow_vipps(testapp):
     testapp.ensure_typical_event()
-    token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
+    token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
 
     store_session = _create_store_session(testapp, token)
     # Create a payment
@@ -139,7 +139,7 @@ def test_payment_flow_vipps(testapp):
 # Test if we can create a payment
 def test_payment_flow_stripe(testapp):
     testapp.ensure_typical_event()
-    token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
+    token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
 
     store_session = _create_store_session(testapp, token)
     # Create a payment

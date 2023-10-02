@@ -5,7 +5,7 @@ from phoenixRest.models.core.user_consent import UserConsent, ConsentType
 def test_crew_mail_sending(testapp):
     testapp.ensure_typical_event()
 
-    sender_token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
+    sender_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
 
     crew_mail_test = testapp.post_json('/email/send', dict({
         'recipient_category': "crew_info",
@@ -20,7 +20,7 @@ def test_crew_mail_sending(testapp):
 def test_participant_mail_sending(testapp):
     testapp.ensure_typical_event()
 
-    sender_token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
+    sender_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
 
     crew_mail_test = testapp.post_json('/email/send', dict({
         'recipient_category': "participant_info",
@@ -35,8 +35,8 @@ def test_participant_mail_sending(testapp):
 def test_consent_mail_sending(db, testapp):
     testapp.ensure_typical_event()
 
-    sender_token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
-    adam_token, refresh = testapp.auth_get_tokens('adam', 'sixcharacters')
+    sender_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
+    adam_token, refresh = testapp.auth_get_tokens('adam@example.com', 'sixcharacters')
 
     adam_user = testapp.get_user(adam_token)
 
@@ -60,7 +60,7 @@ def test_invalid_mail_category_send(testapp):
     testapp.ensure_typical_event()
 
     # test is an admin
-    sender_token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
+    sender_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
 
     target_users = testapp.post_json('/email/send', dict({
         'recipient_category': "swag",

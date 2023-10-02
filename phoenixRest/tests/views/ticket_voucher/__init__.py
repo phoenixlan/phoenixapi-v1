@@ -6,9 +6,9 @@ def test_ticket_voucher_flow(testapp):
     testapp.ensure_typical_event()
 
     # test is an admin
-    sender_token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
-    receiver_token, refresh = testapp.auth_get_tokens('jeff', 'sixcharacters')
-    third_party_token, refresh = testapp.auth_get_tokens('adam', 'sixcharacters')
+    sender_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
+    receiver_token, refresh = testapp.auth_get_tokens('jeff@example.com', 'sixcharacters')
+    third_party_token, refresh = testapp.auth_get_tokens('adam@example.com', 'sixcharacters')
 
     sender_user = testapp.get_user(sender_token)
     receiver_user = testapp.get_user(receiver_token)
@@ -116,8 +116,8 @@ def test_expired_voucher_flow(testapp, db):
     testapp.ensure_typical_event()
 
     # test is an admin
-    sender_token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
-    receiver_token, refresh = testapp.auth_get_tokens('jeff', 'sixcharacters')
+    sender_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
+    receiver_token, refresh = testapp.auth_get_tokens('jeff@example.com', 'sixcharacters')
 
     sender_user = testapp.get_user(sender_token)
     receiver_user = testapp.get_user(receiver_token)

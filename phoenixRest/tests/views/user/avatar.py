@@ -28,21 +28,21 @@ def upload_avatar_helper(testapp, username, password, path, x, y, w, h, expected
 
 def test_upload_avatar(testapp):
     # Log in as the test user
-    upload_avatar_helper(testapp, 'test', 'sixcharacters', 'phoenixRest/tests/assets/avatar_test.png', 10, 10, 600, 450)
+    upload_avatar_helper(testapp, 'test@example.com', 'sixcharacters', 'phoenixRest/tests/assets/avatar_test.png', 10, 10, 600, 450)
 
 def test_upload_transparent_avatar(testapp):
     # Log in as the test user
-    upload_avatar_helper(testapp, 'test', 'sixcharacters', 'phoenixRest/tests/assets/transparent.png', 10, 10, 600, 450)
+    upload_avatar_helper(testapp, 'test@example.com', 'sixcharacters', 'phoenixRest/tests/assets/transparent.png', 10, 10, 600, 450)
     
 
 def test_upload_avatar_bad_bounds(testapp):
     # Ensure the minimum requirements are held
-    upload_avatar_helper(testapp, 'test', 'sixcharacters', 'phoenixRest/tests/assets/transparent.png', 10, 10, 10, 450, expected_failure=400)
-    upload_avatar_helper(testapp, 'test', 'sixcharacters', 'phoenixRest/tests/assets/transparent.png', 10, 10, 600, 10, expected_failure=400)
+    upload_avatar_helper(testapp, 'test@example.com', 'sixcharacters', 'phoenixRest/tests/assets/transparent.png', 10, 10, 10, 450, expected_failure=400)
+    upload_avatar_helper(testapp, 'test@example.com', 'sixcharacters', 'phoenixRest/tests/assets/transparent.png', 10, 10, 600, 10, expected_failure=400)
 
     # Ensure that when the bounds are outside the image, the site complains
-    upload_avatar_helper(testapp, 'test', 'sixcharacters', 'phoenixRest/tests/assets/transparent.png', 10, 10, 1000, 1000, expected_failure=400)
+    upload_avatar_helper(testapp, 'test@example.com', 'sixcharacters', 'phoenixRest/tests/assets/transparent.png', 10, 10, 1000, 1000, expected_failure=400)
 
     # Ensure that when the bounding box starts outside the image, the site complains
-    upload_avatar_helper(testapp, 'test', 'sixcharacters', 'phoenixRest/tests/assets/transparent.png', 1000, 1000, 600, 450, expected_failure=400)
+    upload_avatar_helper(testapp, 'test@example.com', 'sixcharacters', 'phoenixRest/tests/assets/transparent.png', 1000, 1000, 600, 450, expected_failure=400)
     

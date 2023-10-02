@@ -10,8 +10,8 @@ def test_consent_mail_dryrun(db, testapp):
     testapp.ensure_typical_event()
 
     # test is an admin
-    sender_token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
-    adam_token, refresh = testapp.auth_get_tokens('adam', 'sixcharacters')
+    sender_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
+    adam_token, refresh = testapp.auth_get_tokens('adam@example.com', 'sixcharacters')
 
     sender_user = testapp.get_user(sender_token)
     adam_user = testapp.get_user(adam_token)
@@ -109,8 +109,8 @@ def test_consent_mail_no_participants(db, testapp):
     testapp.ensure_typical_event()
 
     # test is an admin
-    sender_token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
-    adam_token, refresh = testapp.auth_get_tokens('adam', 'sixcharacters')
+    sender_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
+    adam_token, refresh = testapp.auth_get_tokens('adam@example.com', 'sixcharacters')
 
     sender_user = testapp.get_user(sender_token)
     adam_user = testapp.get_user(adam_token)
@@ -173,8 +173,8 @@ def test_consent_mail_no_crew(db, testapp):
     testapp.ensure_typical_event()
 
     # test is an admin
-    sender_token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
-    adam_token, refresh = testapp.auth_get_tokens('adam', 'sixcharacters')
+    sender_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
+    adam_token, refresh = testapp.auth_get_tokens('adam@example.com', 'sixcharacters')
 
     sender_user = testapp.get_user(sender_token)
     adam_user = testapp.get_user(adam_token)
@@ -237,8 +237,8 @@ def test_consent_mail_no_applicants(db, testapp):
     testapp.ensure_typical_event()
 
     # test is an admin
-    sender_token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
-    adam_token, refresh = testapp.auth_get_tokens('adam', 'sixcharacters')
+    sender_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
+    adam_token, refresh = testapp.auth_get_tokens('adam@example.com', 'sixcharacters')
 
     sender_user = testapp.get_user(sender_token)
     adam_user = testapp.get_user(adam_token)

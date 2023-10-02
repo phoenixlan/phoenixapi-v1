@@ -1,5 +1,5 @@
 def test_list_users(testapp):
-    token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
+    token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
 
     # Get some info about the current user
     users = testapp.get('/user', headers=dict({
@@ -9,8 +9,8 @@ def test_list_users(testapp):
     assert len(users) > 0
 
 def test_get_user(testapp):
-    token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
-    permissionless_token, refresh = testapp.auth_get_tokens('jeff', 'sixcharacters')
+    token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
+    permissionless_token, refresh = testapp.auth_get_tokens('jeff@example.com', 'sixcharacters')
 
     # Get the UUID for the current user
     currentUser = testapp.get('/user/current', headers=dict({
@@ -28,8 +28,8 @@ def test_get_user(testapp):
         }), status=403)
 
 def test_permissionless_user_fetch_applications(testapp):
-    token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
-    permissionless_token, refresh = testapp.auth_get_tokens('jeff', 'sixcharacters')
+    token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
+    permissionless_token, refresh = testapp.auth_get_tokens('jeff@example.com', 'sixcharacters')
 
     user = testapp.get_user(token)
 
