@@ -12,7 +12,7 @@ import uuid
 import enum
 
 class OrderStates(enum.Enum):
-    created     = "CREATED" # Placed?
+    created     = "CREATED"
     in_progress = "IN PROGRESS"
     finished    = "FINISHED"
     
@@ -21,6 +21,9 @@ from phoenixRest.models import Base
 class CardOrder(Base):
     __tablename__ = "card_order"
     uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
+    
+    event_uuid = Column(UUID(as_uuid=True), ForeignKey("event.uuid"), nullable=False)
+    event = relationship("Event")
     
     subject_user_uuid = Column(UUID(as_uuid=True), ForeignKey("user.uuid"), nullable=False)
     subject_user = relationship("User", foreign_keys=subject_user_uuid)
@@ -37,7 +40,8 @@ class CardOrder(Base):
     
     state = Column(Enum(OrderStates), server_default=(OrderStates.created.value), nullable=False)
     
-    def __init__(self, subject_user, creator_user):
+    def __init__(self, event, subject_user, creator_user):
+        self.event = event
         self.subject_user = subject_user
         self.creator_user = creator_user
         self.created = datetime.now()
@@ -45,6 +49,7 @@ class CardOrder(Base):
     def __json__(self, request):
         return {
             "uuid": self.uuid,
+            "event": self.event,
             "subject_user": self.subject_user,
             "creator_user": self.creator_user,
             "updated_by_user": self.updated_by_user,
