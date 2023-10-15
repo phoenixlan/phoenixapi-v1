@@ -36,7 +36,7 @@ from phoenixRest.models.core.event import get_current_event
 def create_card_order(context, request):
     current_event = get_current_event(request)
     if current_event is None:
-        request.status = 400
+        request.response.status = 400
         return {
             "error": "Current event not found"
         }
@@ -44,7 +44,7 @@ def create_card_order(context, request):
     subject_user_uuid = request.json_body["user_uuid"]
     subject_user = request.db.query(User).filter(User.uuid == subject_user_uuid).first()
     if subject_user is None:
-        request.status = 400
+        request.response.status = 400
         return {
             "error": "Subject user not found"
         }

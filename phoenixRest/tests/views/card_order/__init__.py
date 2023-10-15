@@ -2,9 +2,9 @@ from test_app import TestApp
 
 def test_card_order(testapp:TestApp):
     # Log in as an admin user
-    admin_user_token, refresh = testapp.auth_get_tokens('greg', 'sixcharacters')
+    admin_user_token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
     admin = testapp.get_user(admin_user_token)
-    admin_uuid = admin.uuid
+    admin_uuid = admin["uuid"]
     
     #? ---- __init__.py ----
     # Admin orders a card for themself
@@ -17,13 +17,13 @@ def test_card_order(testapp:TestApp):
     import uuid
     # Admin orders a card with the wrong user uuid
     res = testapp.post_json('/card_order/', dict({
-        "user_uuid" : uuid.uuid4()
+        "user_uuid" : str(uuid.uuid4())
     }), headers=dict({
         'X-Phoenix-Auth': admin_user_token
     }), status=400)
     
     # Admin views all card orders i.e the one they created
-    res = testapp.get(f'/card_order/', headers=dict({
+    res = testapp.get('/card_order/', headers=dict({
         'X-Phoenix-Auth': admin_user_token
     }), status=200).json_body
     assert len(res) == 1
@@ -39,19 +39,19 @@ def test_card_order(testapp:TestApp):
         'X-Phoenix-Auth': admin_user_token
     }), status=200).json_body
     assert len(res) == 1
-    assert res["state"] == OrderStates.created.value
+    assert res["state"] == OrderStates.CREATED.value
     
     # Admin orders the printing of the card
     res = testapp.patch(f'/card_order/{card_order_uuid}/generate', headers=dict({
         'X-Phoenix-Auth': admin_user_token
     }), status=200)
-    assert res["state"] == OrderStates.in_progress.value
+    assert res["state"] == OrderStates.IN_PROGRESS.value
     
     # Admin marks the order as finished
     res = testapp.patch(f'/card_order/{card_order_uuid}/finish', headers=dict({
         'X-Phoenix-Auth': admin_user_token
     }), status=200)
-    assert res["state"] == OrderStates.finished.value
+    assert res["state"] == OrderStates.FINISHED.value
     
     # Admin orders a new card for themself
     res = testapp.post_json('/card_order/', dict({
@@ -65,7 +65,7 @@ def test_card_order(testapp:TestApp):
     res = testapp.delete(f'/card_order/{card_order_uuid}/cancel', headers=dict({
         'X-Phoenix-Auth': admin_user_token
     }), status=200)
-    assert res["state"] == OrderStates.cancelled.value
+    assert res["state"] == OrderStates.CANCELLED.value
     
     # Admin orders the printing of the cancelled card
     res = testapp.patch(f'/card_order/{card_order_uuid}/generate', headers=dict({
