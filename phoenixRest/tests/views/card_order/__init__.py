@@ -30,7 +30,7 @@ def test_card_order(testapp:TestApp):
     
     #? ---- instance.py ----
     # We get the uuid of the created order
-    card_order_uuid = res["uuid"]
+    card_order_uuid = res[0]["uuid"]
     
     from phoenixRest.models.crew.card_order import OrderStates
     
@@ -38,7 +38,6 @@ def test_card_order(testapp:TestApp):
     res = testapp.get(f'/card_order/{card_order_uuid}/', headers=dict({
         'X-Phoenix-Auth': admin_user_token
     }), status=200).json_body
-    assert len(res) == 1
     assert res["state"] == OrderStates.CREATED.value
     
     # Admin orders the printing of the card
@@ -58,7 +57,8 @@ def test_card_order(testapp:TestApp):
         "user_uuid" : admin_uuid
     }), headers=dict({
         'X-Phoenix-Auth': admin_user_token
-    }), status=200)
+    }), status=200).json_body
+    
     card_order_uuid = res["uuid"]
     
     # Admin marks the order as cancelled

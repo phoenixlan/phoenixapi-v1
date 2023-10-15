@@ -62,5 +62,5 @@ def create_card_order(context, request):
 # Get all card orders for current event
 @view_config(name="", context=CardOrderResource, request_method="GET", renderer="json", permission="view_all")
 def get_card_orders(context, request):
-    current_card_orders = request.db.query(CardOrder).filter(CardOrder.event == get_current_event(request))
+    current_card_orders = request.db.query(CardOrder).filter(CardOrder.event == get_current_event(request)).all()
     return current_card_orders

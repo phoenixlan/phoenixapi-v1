@@ -41,10 +41,8 @@ def view_card_order(context, request):
 
 # Generates a crew card and updates the state of the order
 @view_config(name="generate", context=CardOrderInstanceResource, request_method="PATCH", renderer="pillow", permission="print")
-def create_crew_card_from_order(context, request):
-    if context.cardOrderInstance.state == OrderStates.CANCELLED.value:
 def generate_crew_card_from_order(context, request):
-    if context.cardOrderInstance.state == OrderStates.cancelled.value:
+    if context.cardOrderInstance.state == OrderStates.CANCELLED.value:
         request.response.status = 403
         return {
             "error": "This order is cancelled, cannot generate"
