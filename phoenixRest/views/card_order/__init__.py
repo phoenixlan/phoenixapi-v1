@@ -1,22 +1,20 @@
-from pyramid.view import view_config
 from pyramid.authorization import Allow
 
 from phoenixRest.resource import resource
 from phoenixRest.utils import validate
-from phoenixRest.roles import CHIEF, CREW_CARD_PRINTER
+from phoenixRest.roles import CHIEF, CREW_CARD_PRINTER, ADMIN
 
-from phoenixRest.models.core.user import User
-
-from phoenixRest.models.crew.card_order import CardOrder
 from phoenixRest.views.card_order.instance import CardOrderInstanceResource
 
 @resource(name="card_order")
 class CardOrderResource(object):
     __acl__ = [
          (Allow, CHIEF, "create"),
+         (Allow, ADMIN, "create"),
          
          (Allow, CHIEF, "view_all"),
          (Allow, CREW_CARD_PRINTER, "view_all"),
+         (Allow, ADMIN, "view_all"),
     ]   
          
     def __init__(self, request):
@@ -27,8 +25,12 @@ class CardOrderResource(object):
         node.__parent__ = self
         node.__name__ = key
         return node
-    
+
+from pyramid.view import view_config
+
 from phoenixRest.models.core.event import get_current_event
+from phoenixRest.models.core.user import User
+from phoenixRest.models.crew.card_order import CardOrder
 
 # Creates a new card order
 @view_config(name="", context=CardOrderResource, request_method="POST", renderer="json", permission="create")
