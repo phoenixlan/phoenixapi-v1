@@ -2,9 +2,9 @@ from test_app import TestApp
 
 def test_card_order(testapp:TestApp):
     # Log in as an admin user
-    admin_user_token, refresh = testapp.auth_get_tokens('greg', 'sixcharacters')
+    admin_user_token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
     admin = testapp.get_user(admin_user_token)
-    admin_uuid = admin.uuid
+    admin_uuid = admin["uuid"]
     
     #? ---- __init__.py ----
     # Admin orders a card for themself
