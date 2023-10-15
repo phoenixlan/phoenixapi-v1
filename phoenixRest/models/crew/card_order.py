@@ -15,6 +15,7 @@ class OrderStates(enum.Enum):
     created     = "CREATED"
     in_progress = "IN PROGRESS"
     finished    = "FINISHED"
+    cancelled   = "CANCELLED"
     
 from phoenixRest.models import Base
 
