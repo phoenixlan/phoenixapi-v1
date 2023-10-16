@@ -17,28 +17,30 @@ class TestApp(webtest.TestApp):
         log.info("Authenticated, got code: %s" % code)
 
         # Now try getting a token and refresh token
-        res = self.post_json('/oauth/token', dict({
-            'grant_type': 'code',
-            'code': code
-            }), status=200)
+        res = self.post('/oauth/token', {
+                'grant_type': 'authorization_code',
+                'code': code
+            }, 
+            headers = {'Content-Type': 'application/x-www-form-urlencoded'},
+            status=200)
 
-        return res.json_body['token'], res.json_body['refresh_token']
+        return res.json_body['access_token'], res.json_body['refresh_token']
     
     def ensure_typical_event(self):
-        token, refresh = self.auth_get_tokens('test', 'sixcharacters')
+        token, refresh = self.auth_get_tokens('test@example.com', 'sixcharacters')
 
         current_event = self.get('/event/current', status=200).json_body
 
         # Add typical Ticket Types
         all_ticket_types = self.get('/ticketType', headers=dict({
-            'X-Phoenix-Auth': token
+            'Authorization': "Bearer " + token
         }), status=200).json_body
 
         for ticket_type in all_ticket_types:
             self.put_json('/event/%s/ticketType' % current_event['uuid'], dict({
                 'ticket_type_uuid': ticket_type['uuid']
             }), headers=dict({
-                'X-Phoenix-Auth': token
+                'Authorization': "Bearer " + token
             }), status=200)
     
     def get_last_event(self, db):
@@ -53,7 +55,7 @@ class TestApp(webtest.TestApp):
 
     def get_user(self, token):
         res = self.get('/user/current', headers=dict({
-            'X-Phoenix-Auth': token
+            'Authorization': "Bearer " + token
         }), status=200)
 
         return res.json_body

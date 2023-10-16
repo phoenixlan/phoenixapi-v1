@@ -46,4 +46,7 @@ class OauthRefreshToken(Base):
         self.created = datetime.now()
         # TODO do we need to expire these?
         self.expires = datetime.now() + timedelta(days=365)
+    
+    def refresh(self):
+        self.token = randomCode(40)
 

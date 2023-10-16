@@ -6,9 +6,9 @@ def test_ticket_voucher_flow(testapp):
     testapp.ensure_typical_event()
 
     # test is an admin
-    sender_token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
-    receiver_token, refresh = testapp.auth_get_tokens('jeff', 'sixcharacters')
-    third_party_token, refresh = testapp.auth_get_tokens('adam', 'sixcharacters')
+    sender_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
+    receiver_token, refresh = testapp.auth_get_tokens('jeff@example.com', 'sixcharacters')
+    third_party_token, refresh = testapp.auth_get_tokens('adam@example.com', 'sixcharacters')
 
     sender_user = testapp.get_user(sender_token)
     receiver_user = testapp.get_user(receiver_token)
@@ -20,40 +20,40 @@ def test_ticket_voucher_flow(testapp):
 
     # Get existing ticket types
     res = testapp.get('/event/%s/ticketType' % current_event['uuid'], headers=dict({
-        'X-Phoenix-Auth': sender_token
+        "Authorization": "Bearer " + sender_token
     }), status=200)
     ticket_type = res.json_body[0]
 
     # Check how many tickets jeff has
     jeff_owned_tickets_pre = testapp.get('/user/%s/owned_tickets' % receiver_user['uuid'], headers=dict({
-        'X-Phoenix-Auth': sender_token 
+        "Authorization": "Bearer " + sender_token 
     }), status=200).json_body
 
     # Ensure jeff has no ticket vouchers
     jeff_owned_vouchers = testapp.get('/user/%s/ticket_vouchers' % receiver_user['uuid'], headers=dict({
-        'X-Phoenix-Auth': receiver_token
+        "Authorization": "Bearer " + receiver_token
     }), status=200).json_body
     assert len(jeff_owned_vouchers) == 0
 
     # Ensure there are no global ticket vouchers
     global_vouchers = testapp.get('/ticket_voucher' , headers=dict({
-        'X-Phoenix-Auth': sender_token
+        "Authorization": "Bearer " + sender_token
     }), status=200).json_body
     assert len(global_vouchers) == 0
 
     # Ensure people cannot look at the global voucher list
     testapp.get('/ticket_voucher' , headers=dict({
-        'X-Phoenix-Auth': receiver_token
+        "Authorization": "Bearer " + receiver_token
     }), status=403)
 
     # Ensure a third party cannot see jeff's ticket vouchers
     jeff_owned_vouchers = testapp.get('/user/%s/ticket_vouchers' % receiver_user['uuid'], headers=dict({
-        'X-Phoenix-Auth': third_party_token
+        "Authorization": "Bearer " + third_party_token
     }), status=403)
 
     # Ensure an admin can see jeffs vouchers
     jeff_owned_vouchers = testapp.get('/user/%s/ticket_vouchers' % receiver_user['uuid'], headers=dict({
-        'X-Phoenix-Auth': sender_token
+        "Authorization": "Bearer " + sender_token
     }), status=200).json_body
 
     # Give jeff a voucher
@@ -62,43 +62,43 @@ def test_ticket_voucher_flow(testapp):
         'recipient_user_uuid': receiver_user['uuid'],
         'last_use_event_uuid': current_event['uuid']
     }), headers=dict({
-        'X-Phoenix-Auth': sender_token
+        "Authorization": "Bearer " + sender_token
     }), status=200).json_body
 
     # Ensure jeff has a ticket voucher
     jeff_owned_vouchers = testapp.get('/user/%s/ticket_vouchers' % receiver_user['uuid'], headers=dict({
-        'X-Phoenix-Auth': sender_token 
+        "Authorization": "Bearer " + sender_token 
     }), status=200).json_body
     assert len(jeff_owned_vouchers) == 1
     assert jeff_owned_vouchers[0]['is_used'] == False
 
     # Ensure there is now a global ticket voucher
     global_vouchers = testapp.get('/ticket_voucher' , headers=dict({
-        'X-Phoenix-Auth': sender_token
+        "Authorization": "Bearer " + sender_token
     }), status=200).json_body
     assert len(global_vouchers) == 1
 
     # Check that jeff hasn't gotten a ticket yet
     jeff_owned_tickets_post = testapp.get('/user/%s/owned_tickets' % receiver_user['uuid'], headers=dict({
-        'X-Phoenix-Auth': sender_token 
+        "Authorization": "Bearer " + sender_token 
     }), status=200).json_body
     assert len(jeff_owned_tickets_pre) == len(jeff_owned_tickets_post)
 
     # Ensure third party can't burn the voucher
     res = testapp.post_json('/ticket_voucher/%s/burn' % voucher['uuid'], dict({
     }), headers=dict({
-        'X-Phoenix-Auth': third_party_token
+        "Authorization": "Bearer " + third_party_token
     }), status=403)
 
     # Ensure that recipient can burn it
     post_burn_voucher = testapp.post_json('/ticket_voucher/%s/burn' % voucher['uuid'], dict({
     }), headers=dict({
-        'X-Phoenix-Auth': receiver_token
+        "Authorization": "Bearer " + receiver_token
     }), status=200).json_body
 
     # Ensure that jeff has received a ticket
     jeff_owned_tickets_post = testapp.get('/user/%s/owned_tickets' % receiver_user['uuid'], headers=dict({
-        'X-Phoenix-Auth': sender_token 
+        "Authorization": "Bearer " + sender_token 
     }), status=200).json_body
     assert len(jeff_owned_tickets_pre) + 1 == len(jeff_owned_tickets_post)
 
@@ -107,7 +107,7 @@ def test_ticket_voucher_flow(testapp):
 
     # Assert the ticket voucher is now burned
     jeff_owned_vouchers = testapp.get('/user/%s/ticket_vouchers' % receiver_user['uuid'], headers=dict({
-        'X-Phoenix-Auth': sender_token 
+        "Authorization": "Bearer " + sender_token 
     }), status=200).json_body
     assert len(jeff_owned_vouchers) == 1
     assert jeff_owned_vouchers[0]['is_used'] == True
@@ -116,8 +116,8 @@ def test_expired_voucher_flow(testapp, db):
     testapp.ensure_typical_event()
 
     # test is an admin
-    sender_token, refresh = testapp.auth_get_tokens('test', 'sixcharacters')
-    receiver_token, refresh = testapp.auth_get_tokens('jeff', 'sixcharacters')
+    sender_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
+    receiver_token, refresh = testapp.auth_get_tokens('jeff@example.com', 'sixcharacters')
 
     sender_user = testapp.get_user(sender_token)
     receiver_user = testapp.get_user(receiver_token)
@@ -131,13 +131,13 @@ def test_expired_voucher_flow(testapp, db):
 
     # Get existing ticket types
     res = testapp.get('/event/%s/ticketType' % current_event['uuid'], headers=dict({
-        'X-Phoenix-Auth': sender_token
+        "Authorization": "Bearer " + sender_token
     }), status=200)
     ticket_type = res.json_body[0]
 
     # Check how many tickets jeff has
     jeff_owned_tickets_pre = testapp.get('/user/%s/owned_tickets' % receiver_user['uuid'], headers=dict({
-        'X-Phoenix-Auth': sender_token 
+        "Authorization": "Bearer " + sender_token 
     }), status=200).json_body
 
     # Give jeff a voucher
@@ -146,7 +146,7 @@ def test_expired_voucher_flow(testapp, db):
         'recipient_user_uuid': receiver_user['uuid'],
         'last_use_event_uuid': str(old_event.uuid),
     }), headers=dict({
-        'X-Phoenix-Auth': sender_token
+        "Authorization": "Bearer " + sender_token
     }), status=200).json_body
 
     assert voucher['is_expired'] == True
@@ -154,11 +154,11 @@ def test_expired_voucher_flow(testapp, db):
     # Ensure that you cannot burn an expired voucher
     post_burn_voucher = testapp.post_json('/ticket_voucher/%s/burn' % voucher['uuid'], dict({
     }), headers=dict({
-        'X-Phoenix-Auth': receiver_token
+        "Authorization": "Bearer " + receiver_token
     }), status=400).json_body
 
     # Check that jeff didn't get a ticket
     jeff_owned_tickets_post = testapp.get('/user/%s/owned_tickets' % receiver_user['uuid'], headers=dict({
-        'X-Phoenix-Auth': sender_token 
+        "Authorization": "Bearer " + sender_token 
     }), status=200).json_body
     assert len(jeff_owned_tickets_pre) == len(jeff_owned_tickets_post)

@@ -33,9 +33,9 @@ def test_role_event_assignment(testapp, db):
     db.add(position_mapping_past)
 
     # Now log in and check what permissions we have
-    token, refresh = testapp.auth_get_tokens('jeff', 'sixcharacters')
+    token, refresh = testapp.auth_get_tokens('jeff@example.com', 'sixcharacters')
     current_user = testapp.get('/user/current', headers=dict({
-        'X-Phoenix-Auth': token
+        'Authorization': "Bearer " + token
         }), status=200).json_body
     
     # First ensure that position mappings show up properly

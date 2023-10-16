@@ -54,13 +54,13 @@ def generate_token(user: User, request):
 
     log.debug("Permissions: %s" % flat_set)
 
-    return request.create_jwt_token(str(user.uuid), roles=list(flat_set), flag="PHOENIX{JWTS_ARE_AWESOME}")
+    return request.create_jwt_token(str(user.uuid), roles=list(flat_set))
 
 @view_config(route_name='login', request_method='POST', renderer='json', permission='auth')
 def login(request):
     login = request.json_body['login']
     password = request.json_body['password']
-    user = request.db.query(User).filter(or_(User.username == login, User.email == login.lower())).first()
+    user = request.db.query(User).filter(User.email == login.lower()).first()
 
     if user is not None:
         if user.activation_code is not None:
@@ -89,12 +89,12 @@ def login(request):
  
 @view_config(route_name='oauth_token', request_method='POST', renderer='json')
 def token(request):
-    if request.json_body['grant_type'] == 'code':
+    # Oauth compliant
+    if request.POST['grant_type'] == 'authorization_code':
         # Exchange access code for token
-        log.info("Looking for: %s" % request.json_body['code'])
-        print("Looking for: %s" % request.json_body['code'])
+        log.info("Looking for: %s" % request.POST['code'])
 
-        code = request.db.query(OauthCode).filter(OauthCode.code == request.json_body['code']).first()
+        code = request.db.query(OauthCode).filter(OauthCode.code == request.POST['code']).first()
         if code is None:
             log.info("Not seen before code")
 
@@ -127,29 +127,33 @@ def token(request):
 
         token = generate_token(user, request)
         
+        # https://www.oauth.com/oauth2-servers/access-tokens/access-token-response/
         return {
-            'token': token,
-            'refresh_token': refresh_token.token
+            'access_token': token,
+            'refresh_token': refresh_token.token,
+            'token_type': "Bearer" 
         }
-    elif request.json_body['grant_type'] == 'refresh_token':
-        if 'refresh_token' not in request.json_body:
+    elif request.POST['grant_type'] == 'refresh_token':
+        if 'refresh_token' not in request.POST:
             request.response.status = 400
             return {
                 "error": "Missing refresh_token"
             }
-        refreshToken = request.db.query(OauthRefreshToken).filter(OauthRefreshToken.token == request.json_body['refresh_token']).first()
+        refreshToken = request.db.query(OauthRefreshToken).filter(OauthRefreshToken.token == request.POST['refresh_token']).first()
         if refreshToken is None:
             # TODO rate limit
             request.response.status = 403
             return {
                 "error": "Invalid token"
             }
+    
+        #refreshToken.refresh()
         # The refresh token was valid
 
         return {
-            'token': generate_token(refreshToken.user, request)
+            'access_token': generate_token(refreshToken.user, request),
+            #'refresh_token': refreshToken.token
         }
-
     else:
         request.response.status = 400
         return {
