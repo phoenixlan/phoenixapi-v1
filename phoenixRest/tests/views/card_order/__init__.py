@@ -2,13 +2,13 @@ from test_app import TestApp
 
 def test_card_order(testapp:TestApp):
     # Log in as an admin user
-    admin_user_token, refresh = testapp.auth_get_tokens("test", "sixcharacters")
+    admin_user_token, refresh = testapp.auth_get_tokens("test@example.com", "sixcharacters")
     admin = testapp.get_user(admin_user_token)
     admin_uuid = admin["uuid"]
     
     # We ensure that admin has an avatar
     from phoenixRest.tests.views.user.avatar import upload_avatar_helper
-    upload_avatar_helper(testapp, "test", "sixcharacters", "phoenixRest/tests/assets/avatar_test.png", 10, 10, 600, 450, expected_failure=200)
+    upload_avatar_helper(testapp, "test@example.com", "sixcharacters", "phoenixRest/tests/assets/avatar_test.png", 10, 10, 600, 450, expected_failure=200)
     
     #? ---- __init__.py ----
     # Admin orders a card for themself
