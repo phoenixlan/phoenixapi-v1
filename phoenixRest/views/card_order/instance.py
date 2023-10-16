@@ -39,14 +39,13 @@ from phoenixRest.models.core.event import get_current_event
 def view_card_order(context, request):
     return context.cardOrderInstance
 
+from pyramid.httpexceptions import HTTPForbidden
+
 # Generates a crew card and updates the state of the order
 @view_config(name="generate", context=CardOrderInstanceResource, request_method="PATCH", renderer="pillow", permission="print")
 def generate_crew_card_from_order(context, request):
     if context.cardOrderInstance.state == OrderStates.CANCELLED.value:
-        request.response.status = 403
-        return {
-            "error": "This order is cancelled, cannot generate"
-        }
+        raise HTTPForbidden("This order is cancelled, cannot generate")
         
     context.cardOrderInstance.state = OrderStates.IN_PROGRESS.value
     context.cardOrderInstance.last_updated = datetime.now()
@@ -64,7 +63,7 @@ def finish_card_order(context, request):
     return context.cardOrderInstance
 
 # Marks the order as cancelled
-@view_config(name="cancel", context=CardOrderInstanceResource, request_method="DELTE", renderer="json", permission="cancel")
+@view_config(name="cancel", context=CardOrderInstanceResource, request_method="DELETE", renderer="json", permission="cancel")
 def cancel_card_order(context, request):
     context.cardOrderInstance.state = OrderStates.CANCELLED.value
     context.cardOrderInstance.last_updated = datetime.now()

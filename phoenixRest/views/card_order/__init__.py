@@ -9,9 +9,10 @@ from phoenixRest.views.card_order.instance import CardOrderInstanceResource
 @resource(name="card_order")
 class CardOrderResource(object):
     __acl__ = [
+        # Roles with permission to create a new card order
          (Allow, CHIEF, "create"),
          (Allow, ADMIN, "create"),
-         
+        # Roles with permission to view all card orders for current event
          (Allow, CHIEF, "view_all"),
          (Allow, CREW_CARD_PRINTER, "view_all"),
          (Allow, ADMIN, "view_all"),
