@@ -7,15 +7,14 @@ def test_card_order(testapp:TestApp):
     admin_uuid = admin["uuid"]
     
     # We ensure that admin has an avatar
-    from phoenixRest.tests.views.user.avatar import upload_avatar_helper
-    upload_avatar_helper(testapp, "test@example.com", "sixcharacters", "phoenixRest/tests/assets/avatar_test.png", 10, 10, 600, 450, expected_failure=200)
+    testapp.upload_avatar("test@example.com", "sixcharacters", "phoenixRest/tests/assets/avatar_test.png", 10, 10, 600, 450, expected_status=200)
     
     #? ---- __init__.py ----
     # Admin orders a card for themself
     res = testapp.post_json("/card_order/", dict({
         "user_uuid" : admin_uuid
     }), headers=dict({
-        "X-Phoenix-Auth": admin_user_token
+        'Authorization': "Bearer " + admin_user_token
     }), status=200)
     
     import uuid
@@ -23,12 +22,12 @@ def test_card_order(testapp:TestApp):
     res = testapp.post_json("/card_order/", dict({
         "user_uuid" : str(uuid.uuid4())
     }), headers=dict({
-        "X-Phoenix-Auth": admin_user_token
+        'Authorization': "Bearer " + admin_user_token
     }), status=400)
     
     # Admin views all card orders i.e the one they created
     res = testapp.get("/card_order/", headers=dict({
-        "X-Phoenix-Auth": admin_user_token
+        'Authorization': "Bearer " + admin_user_token
     }), status=200).json_body
     assert len(res) == 1
     
@@ -40,24 +39,24 @@ def test_card_order(testapp:TestApp):
     
     # Admin views the card order instance
     res = testapp.get(f"/card_order/{card_order_uuid}/", headers=dict({
-        "X-Phoenix-Auth": admin_user_token
+        'Authorization': "Bearer " + admin_user_token
     }), status=200).json_body
     assert res["state"] == OrderStates.CREATED.value
     
     # Admin orders the printing of the card
     res = testapp.patch(f"/card_order/{card_order_uuid}/generate", headers=dict({
-        "X-Phoenix-Auth": admin_user_token
+        'Authorization': "Bearer " + admin_user_token
     }), status=200)
     
     # Admin checks the order is in progress
     res = testapp.get(f"/card_order/{card_order_uuid}/", headers=dict({
-        "X-Phoenix-Auth": admin_user_token
+        'Authorization': "Bearer " + admin_user_token
     }), status=200).json_body
     assert res["state"] == OrderStates.IN_PROGRESS.value
     
     # Admin marks the order as finished
     res = testapp.patch(f"/card_order/{card_order_uuid}/finish", headers=dict({
-        "X-Phoenix-Auth": admin_user_token
+        'Authorization': "Bearer " + admin_user_token
     }), status=200).json_body
     assert res["state"] == OrderStates.FINISHED.value
     
@@ -65,18 +64,18 @@ def test_card_order(testapp:TestApp):
     res = testapp.post_json("/card_order/", dict({
         "user_uuid" : admin_uuid
     }), headers=dict({
-        "X-Phoenix-Auth": admin_user_token
+        'Authorization': "Bearer " + admin_user_token
     }), status=200).json_body
     
     card_order_uuid = res["uuid"]
     
     # Admin marks the order as cancelled
     res = testapp.delete(f"/card_order/{card_order_uuid}/cancel", headers=dict({
-        "X-Phoenix-Auth": admin_user_token
+        'Authorization': "Bearer " + admin_user_token
     }), status=200).json_body
     assert res["state"] == OrderStates.CANCELLED.value
     
     # Admin orders the printing of the cancelled card
     res = testapp.patch(f"/card_order/{card_order_uuid}/generate", headers=dict({
-        "X-Phoenix-Auth": admin_user_token
+        'Authorization': "Bearer " + admin_user_token
     }), status=403)
