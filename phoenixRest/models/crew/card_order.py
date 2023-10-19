@@ -1,8 +1,4 @@
-from sqlalchemy import (
-    Column,
-    ForeignKey,
-    DateTime,
-)
+from sqlalchemy import Column, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID, ENUM
 
@@ -10,13 +6,13 @@ from datetime import datetime
 import uuid
 import enum
 
+from phoenixRest.models import Base
+
 class OrderStates(str, enum.Enum):
     CREATED     = "CREATED"
     IN_PROGRESS = "IN_PROGRESS"
     FINISHED    = "FINISHED"
     CANCELLED   = "CANCELLED"
-    
-from phoenixRest.models import Base
 
 class CardOrder(Base):
     __tablename__ = "card_order"
@@ -51,7 +47,7 @@ class CardOrder(Base):
     def __json__(self, request):
         return {
             "uuid": self.uuid,
-            "event": self.event,
+            "event_uuid": self.event_uuid,
             "subject_user": self.subject_user,
             "creator_user": self.creator_user,
             "updated_by_user": self.updated_by_user,

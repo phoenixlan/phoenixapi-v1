@@ -1,9 +1,18 @@
 from pyramid.authorization import Allow
-from pyramid.httpexceptions import HTTPNotFound
 
 from phoenixRest.roles import CREW_CARD_PRINTER, CHIEF, ADMIN
 from phoenixRest.utils import validateUuidAndQuery
 from phoenixRest.models.crew.card_order import CardOrder, OrderStates
+
+from pyramid.view import view_config
+
+from pyramid.httpexceptions import HTTPNotFound
+from pyramid.httpexceptions import HTTPForbidden
+
+from phoenixRest.features.crew_card import generate_badge
+from phoenixRest.models.core.event import get_current_event
+
+from datetime import datetime
 
 class CardOrderInstanceResource(object):
     def __acl__(self):
@@ -15,6 +24,9 @@ class CardOrderInstanceResource(object):
             # Roles with permission to generate a crew card based on an order
             (Allow, CREW_CARD_PRINTER, "print"),
             (Allow, ADMIN, "print"),
+            # Roles with permission to finish a card order
+            (Allow, CREW_CARD_PRINTER, "finish"),
+            (Allow, ADMIN, "finish"),
             # Roles with permission to cancel the card order
             (Allow, CHIEF, "cancel"),
             (Allow, ADMIN, "cancel"),
@@ -28,18 +40,10 @@ class CardOrderInstanceResource(object):
         if self.cardOrderInstance == None:
             raise HTTPNotFound("card_order with specified uuid not found")
 
-from pyramid.view import view_config
-
-from datetime import datetime
-from phoenixRest.features.crew_card import generate_badge
-from phoenixRest.models.core.event import get_current_event
-
 # Views the specified card order
 @view_config(name="", context=CardOrderInstanceResource, request_method="GET", renderer="json", permission="view")
 def view_card_order(context, request):
     return context.cardOrderInstance
-
-from pyramid.httpexceptions import HTTPForbidden
 
 # Generates a crew card and updates the state of the order
 @view_config(name="generate", context=CardOrderInstanceResource, request_method="PATCH", renderer="pillow", permission="print")
@@ -54,7 +58,7 @@ def generate_crew_card_from_order(context, request):
     return generate_badge(request, context.cardOrderInstance.subject_user, get_current_event(request))
 
 # Marks the order as finished
-@view_config(name="finish", context=CardOrderInstanceResource, request_method="PATCH", renderer="json", permission="print")
+@view_config(name="finish", context=CardOrderInstanceResource, request_method="PATCH", renderer="json", permission="finish")
 def finish_card_order(context, request):
     context.cardOrderInstance.state = OrderStates.FINISHED.value
     context.cardOrderInstance.last_updated = datetime.now()
