@@ -47,7 +47,7 @@ class CardOrder(Base):
     def __json__(self, request):
         return {
             "uuid": self.uuid,
-            "event_uuid": self.event_uuid,
+            "event_uuid": str(self.event_uuid),
             "subject_user": self.subject_user,
             "creator_user": self.creator_user,
             "updated_by_user": self.updated_by_user,

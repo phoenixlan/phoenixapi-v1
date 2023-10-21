@@ -5,7 +5,7 @@ from pyramid.view import view_config
 from phoenixRest.resource import resource
 from phoenixRest.utils import validate
 
-from phoenixRest.models.core.event import get_current_event
+from phoenixRest.models.core.event import Event, get_current_event
 from phoenixRest.models.core.user import User
 from phoenixRest.models.crew.card_order import CardOrder
 from phoenixRest.views.card_order.instance import CardOrderInstanceResource
@@ -61,9 +61,16 @@ def create_card_order(context, request):
 # Get all card orders for specified or current event
 @view_config(name="", context=CardOrderResource, request_method="GET", renderer="json", permission="view_all")
 def get_card_orders(context, request):
+    event = None
     # We either get the specified event or the current event
     if "event_uuid" in request.GET:
-        return request.db.query(CardOrder).filter(CardOrder.event_uuid == request.GET["event_uuid"]).all()
+        event = request.db.query(Event).filter(Event.uuid == request.GET["event_uuid"]).first()
+        if event is None:
+            request.response.status = 400
+            return {
+                'error': "Event not found"
+            }
     else:
-        current_card_orders = request.db.query(CardOrder).filter(CardOrder.event == get_current_event(request)).all()
-        return current_card_orders
+        event = get_current_event(request)
+    
+    return request.db.query(CardOrder).filter(CardOrder.event_uuid == event.uuid).all()

@@ -77,7 +77,7 @@ def test_card_order(testapp:TestApp):
     # Admin orders the printing of the cancelled card
     res = testapp.patch(f"/card_order/{card_order_uuid}/generate", headers=dict({
         'Authorization': "Bearer " + admin_user_token
-    }), status=403)
+    }), status=400)
     
     # Admin views all card orders for the current event
     res = testapp.get("/card_order/", headers=dict({

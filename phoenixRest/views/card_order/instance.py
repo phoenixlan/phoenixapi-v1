@@ -6,8 +6,7 @@ from phoenixRest.models.crew.card_order import CardOrder, OrderStates
 
 from pyramid.view import view_config
 
-from pyramid.httpexceptions import HTTPNotFound
-from pyramid.httpexceptions import HTTPForbidden
+from pyramid.httpexceptions import HTTPNotFound, HTTPBadRequest
 
 from phoenixRest.features.crew_card import generate_badge
 from phoenixRest.models.core.event import get_current_event
@@ -49,7 +48,7 @@ def view_card_order(context, request):
 @view_config(name="generate", context=CardOrderInstanceResource, request_method="PATCH", renderer="pillow", permission="print")
 def generate_crew_card_from_order(context, request):
     if context.cardOrderInstance.state == OrderStates.CANCELLED.value:
-        raise HTTPForbidden("This order is cancelled, cannot generate")
+        raise HTTPBadRequest("This order is cancelled, cannot generate")
         
     context.cardOrderInstance.state = OrderStates.IN_PROGRESS.value
     context.cardOrderInstance.last_updated = datetime.now()

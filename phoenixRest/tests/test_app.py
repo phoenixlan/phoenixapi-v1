@@ -85,4 +85,4 @@ class TestApp(webtest.TestApp):
             avatar_uuid = upload_res.json_body["uuid"]
             return avatar_uuid
         else:
-            return
+            return None
