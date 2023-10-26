@@ -79,12 +79,12 @@ def login(request):
         else:
             request.response.status = 403
             return {
-                "error": "Invalid username or password"
+                "error": "Invalid email or password"
             }
     else:
         request.response.status = 403
         return {
-            "error": "Invalid username or password"
+            "error": "Invalid email or password"
         }
  
 @view_config(route_name='oauth_token', request_method='POST', renderer='json')
