@@ -7,8 +7,11 @@ from phoenixRest.utils import validate
 
 from phoenixRest.models.core.event import Event, get_current_event
 from phoenixRest.models.core.user import User
+from phoenixRest.models.core.avatar import Avatar, AvatarState
 from phoenixRest.models.crew.card_order import CardOrder
 from phoenixRest.views.card_order.instance import CardOrderInstanceResource
+
+from sqlalchemy import and_
 
 @resource(name="card_order")
 class CardOrderResource(object):
@@ -48,6 +51,17 @@ def create_card_order(context, request):
         request.response.status = 400
         return {
             "error": "Subject user not found"
+        }
+    
+    subject_has_avatar = request.db.query(Avatar).filter(and_(
+        Avatar.user_uuid == subject_user_uuid,
+        Avatar.state != AvatarState.rejected
+    ))
+    
+    if subject_has_avatar is None:
+        request.response.status = 400
+        return {
+            "error": "Subject user has no valid avatar"
         }
     
     creator_user = request.user
