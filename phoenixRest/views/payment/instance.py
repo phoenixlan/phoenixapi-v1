@@ -57,6 +57,7 @@ def initiate_payment(context, request):
                 "error": "The variable fallback_url must be provided when making payments using vipps"
             }
         deeplinkUrl, slug = initialize_vipps_payment(request, context.paymentInstance, request.json_body['fallback_url'])
+
         if deeplinkUrl:
             # Since the payment is successful, insert everything. This populates payment.uuid
             request.db.flush()
