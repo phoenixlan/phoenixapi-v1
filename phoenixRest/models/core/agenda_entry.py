@@ -35,12 +35,11 @@ class AgendaEntry(Base):
     title = Column(Text, nullable=False)
     description = Column(Text, nullable=True)
     location = Column(Text, nullable=True, server_default=None)
-    start_time = Column(DateTime, nullable=False)
-    end_time = Column(DateTime, nullable=False)
+    time = Column(DateTime, nullable=False)
+    duration = Column(Integer, nullable=True)
 
-    deviating_start_time = Column(DateTime, nullable=True, server_default=None)
-    deviating_end_time = Column(DateTime, nullable=True, server_default=None)
-    deviating_start_time_unknown = Column(Boolean, server_default='false')
+    deviating_time = Column(DateTime, nullable=True, server_default=None)
+    deviating_time_unknown = Column(Boolean, server_default='false')
     deviating_location = Column(Text, nullable=True, server_default=None)
     deviating_information = Column(Text, nullable=True, server_default=None)
 
@@ -55,12 +54,13 @@ class AgendaEntry(Base):
     created = Column(DateTime, nullable=False, server_default='NOW()')
     modified = Column(DateTime, nullable=True, server_default=None)
 
-    def __init__(self, event: Event, title: str, description: str, location: str, start_time: DateTime, pinned: bool, created_by_user: User):
+    def __init__(self, event: Event, title: str, description: str, location: str, time: DateTime, duration: int, pinned: bool, created_by_user: User):
         self.event = event
         self.title = title
         self.description = description
         self.location = location
-        self.start_time = start_time
+        self.time = time
+        self.duration = duration
         self.pinned = pinned
         self.created = datetime.now()
         self.created_by_user = created_by_user
@@ -72,10 +72,10 @@ class AgendaEntry(Base):
             'title': self.title,
             'description': self.description,
             'location': self.location,
-            'start_time': int(self.start_time.timestamp()) if self.start_time is not None else None,
-            'end_time': int(self.end_time.timestamp()) if self.end_time is not None else None,
-            'deviating_start_time': int(self.deviating_start_time.timestamp()) if self.deviating_start_time is not None else None,
-            'deviating_start_time_unknown': self.deviating_time_unknown,
+            'time': int(self.time.timestamp()) if self.time is not None else None,
+            'duration': int(self.duration),
+            'deviating_time': int(self.deviating_time.timestamp()) if self.deviating_time is not None else None,
+            'deviating_time_unknown': self.deviating_time_unknown,
             'deviating_location': self.deviating_location,
             'deviating_information': self.deviating_information,
             'pinned': self.pinned,

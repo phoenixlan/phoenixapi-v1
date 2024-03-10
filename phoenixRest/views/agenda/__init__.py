@@ -40,14 +40,14 @@ class AgendaViews(object):
 
 @view_config(context=AgendaViews, request_method='GET', renderer='json', permission='get')
 def get_agenda_entries(request):
-    # Find all events and sort them by start start_time
-    entries = request.db.query(AgendaEntry).filter(AgendaEntry.event == get_current_event(request)).order_by(AgendaEntry.start_time.asc()).all()
+    # Find all events and sort them by start time
+    entries = request.db.query(AgendaEntry).filter(AgendaEntry.event == get_current_event(request)).order_by(AgendaEntry.time.asc()).all()
     return entries 
 
 
 
 @view_config(context=AgendaViews, request_method='PUT', renderer='json', permission='create')
-@validate(json_body={'event_uuid': str, 'title': str, 'description': str, 'location': str, 'start_time': int, 'pinned': bool})
+@validate(json_body={'event_uuid': str, 'title': str, 'description': str, 'location': str, 'time': int, 'duration': int, 'pinned': bool})
 def create_agenda_entry(context, request):
     # Attempt to find current Event uuid
     event = request.db.query(Event).filter(Event.uuid == request.json_body['event_uuid']).first()
@@ -63,10 +63,12 @@ def create_agenda_entry(context, request):
         title=request.json_body['title'],
         description=request.json_body['description'],
         location=request.json_body['location'],
-        start_time=datetime.fromtimestamp(int(request.json_body['start_time'])), 
+        time=datetime.fromtimestamp(int(request.json_body['time'])),
+        duration=request.json_body['duration'],
         pinned=request.json_body['pinned'],
         created_by_user=request.user
     )
+
     request.db.add(entry)
     request.db.flush()
     return entry

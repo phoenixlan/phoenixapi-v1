@@ -71,6 +71,24 @@ def modify_agenda_entry(context, request):
                 'error': 'Invalid type for description (not string)'
             }
         
+    if 'time' in request.json_body:
+        if type(request.json_body['time']) == int:
+            context.agendaInstance.time = datetime.fromtimestamp(int(request.json_body['time']))
+        else:
+            request.response.status = 400
+            return {
+                'error': 'Invalid type of time (not integer)'
+            }
+        
+    if 'duration' in request.json_body:
+        if type(request.json_body['duration']) == int:
+            context.agendaInstance.duration = request.json_body['duration']
+        else:
+            request.response.status = 400
+            return {
+                'error': 'Invalid type of duration (not integer)'
+            }
+        
     if 'location' in request.json_body:
         if type(request.json_body['location']) == str:
             context.agendaInstance.location = request.json_body['location']
@@ -80,44 +98,24 @@ def modify_agenda_entry(context, request):
                 'error': 'Invalid type for location (not string)'
             }
         
-    if 'start_time' in request.json_body:
-        if type(request.json_body['start_time']) == int:
-            context.agendaInstance.start_time = datetime.fromtimestamp(int(request.json_body['start_time']))
+    if 'deviating_time' in request.json_body:
+        if type(request.json_body['deviating_time']) == int:
+            context.agendaInstance.deviating_time = datetime.fromtimestamp(int(request.json_body['deviating_time']))  
+        elif request.json_body['deviating_time'] == None:
+            context.agendaInstance.deviating_time = None
         else:
             request.response.status = 400
             return {
-                'error': 'Invalid type of start_time (not integer)'
-            }
-        
-    if 'end_time' in request.json_body:
-        if type(request.json_body['end_time']) == int:
-            context.agendaInstance.end_time = datetime.fromtimestamp(int(request.json_body['end_time']))
-        elif request.json_body['end_time'] == None:
-            context.agendaInstance.end_time = None
-        else:
-            request.response.status = 400
-            return {
-                'error': 'Invalid type of end_time (not integer)'
+                'error': 'Invalid type of deviating_time (not integer)'
             }
 
-    if 'deviating_start_time' in request.json_body:
-        if type(request.json_body['deviating_start_time']) == int:
-            context.agendaInstance.deviating_start_time = datetime.fromtimestamp(int(request.json_body['deviating_start_time']))  
-        elif request.json_body['deviating_start_time'] == None:
-            context.agendaInstance.deviating_start_time = None
+    if 'deviating_time_unknown' in request.json_body:
+        if type(request.json_body['deviating_time_unknown']) == bool:
+            context.agendaInstance.deviating_time_unknown = request.json_body['deviating_time_unknown']
         else:
             request.response.status = 400
             return {
-                'error': 'Invalid type of deviating_start_time (not integer)'
-            }
-
-    if 'deviating_start_time_unknown' in request.json_body:
-        if type(request.json_body['deviating_start_time_unknown']) == bool:
-            context.agendaInstance.deviating_start_time_unknown = request.json_body['deviating_start_time_unknown']
-        else:
-            request.response.status = 400
-            return {
-                'error': 'Invalid type of deviating_start_time_unknown (not boolean)'
+                'error': 'Invalid type of deviating_time_unknown (not boolean)'
             }
         
     if 'deviating_location' in request.json_body:
