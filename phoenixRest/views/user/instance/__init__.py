@@ -6,7 +6,7 @@ from pyramid.httpexceptions import (
 )
 from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
-from phoenixRest.models.core.user import User
+from phoenixRest.models.core.user import Gender, User
 from phoenixRest.models.core.friendship import Friendship
 from phoenixRest.models.core.event import Event, get_current_event
 from phoenixRest.models.core.avatar import Avatar
@@ -34,9 +34,11 @@ from phoenixRest.features.discord import DISCORD_OAUTH_REDIRECT_URI, DISCORD_CLI
 
 from phoenixRest.roles import HR_ADMIN, ADMIN, TICKET_ADMIN, TICKET_CHECKIN, CREW_CARD_PRINTER, CHIEF
 
+import re
+
 from sqlalchemy import and_, or_, extract
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 import urllib
 import os
@@ -55,6 +57,9 @@ class UserInstanceResource(object):
             (Allow, ADMIN, 'user_view'),
             (Allow, TICKET_ADMIN, 'user_view'),
             (Allow, TICKET_CHECKIN, 'user_view'),
+            # Who has access to modify a user?
+            (Allow, HR_ADMIN, 'user_modify'),
+            (Allow, ADMIN, 'user_modify'),
             # Who has acces to user friendship status?
             (Allow, HR_ADMIN, 'get_friendship_states'),
             (Allow, ADMIN, 'get_friendship_states'),
@@ -153,6 +158,171 @@ def get_user(context, request):
         log.warning("Sending more details about a user because the query person is an admin or owns the account")
         return map_user_with_secret_fields(context.userInstance, request)
     return map_user_public_with_positions(context.userInstance, request)
+
+
+#https://stackoverflow.com/questions/201323/how-can-i-validate-an-email-address-using-a-regular-expression
+email_regex = re.compile("(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*)@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9]))\.){3}(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9])|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])")
+
+@view_config(context=UserInstanceResource, name='', request_method='PATCH', renderer='json', permission='user_modify')
+def modify_user(context, request):
+    if 'firstname' in request.json_body:
+        if type(request.json_body['firstname']) == str:
+            if len(request.json_body['firstname']) > 1:
+                context.userInstance.firstname = request.json_body['firstname']
+            else:
+                request.response.status = 400
+                return {
+                    'error': 'Firstname cannot be empty'
+                }
+        else:
+            request.response.status = 400
+            return {
+                'error': 'Invalid type for firstname (not string)'
+            }
+        
+    if 'lastname' in request.json_body:
+        if type(request.json_body['lastname']) == str:
+            if len(request.json_body['lastname']) > 1:
+                context.userInstance.lastname = request.json_body['lastname']
+            else:
+                request.response.status = 400
+                return {
+                    'error': 'Lastname cannot be empty'
+                }
+        else:
+            request.response.status = 400
+            return {
+                'error': 'Invalid type for lastname (not string)'
+            }
+
+    if 'username' in request.json_body:
+        if type(request.json_body['username']) == str:
+            if len(request.json_body['username']) > 1:
+                if not request.db.query(User).filter(User.username == request.json_body['username'], User.uuid != request.json_body['uuid']).first():
+                    context.userInstance.username = request.json_body['username']
+                else: 
+                    request.response.status = 400
+                    return {
+                        'error': 'Username is already in use'
+                    }
+            else:
+                request.response.status = 400
+                return {
+                    'error': 'Username cannot be empty'
+                }        
+        else:
+            request.response.status = 400
+            return {
+                'error': 'Invalid type for username (not string)'
+            }
+        
+    if 'email' in request.json_body:
+        if type(request.json_body['email']) == str:
+            if email_regex.match(request.json_body['email']) is not None:
+                if not request.db.query(User).filter(User.email == request.json_body['email'].lower(), User.uuid != request.json_body['uuid']).first():
+                    context.userInstance.email = request.json_body['email']
+                else: 
+                    request.response.status = 400
+                    return {
+                        'error': 'Email is already in use'
+                    }
+            else:
+                request.response.status = 400
+                return {
+                    'error': 'Invalid email formatting (regex match failure)'
+                }        
+        else:
+            request.response.status = 400
+            return {
+                'error': 'Invalid type for email (not string)'
+            }
+        
+    if 'phone' in request.json_body:
+        if type(request.json_body['phone']) == str:
+            if len(request.json_body['phone']) > 1:
+                if not request.db.query(User).filter(User.phone == request.json_body['phone'], User.uuid != request.json_body['uuid']).first():
+                    context.userInstance.phone = request.json_body['phone']
+                else: 
+                    request.response.status = 400
+                    return {
+                        'error': 'Phone is already in use'
+                    }
+            else:
+                request.response.status = 400
+                return {
+                    'error': 'Phone cannot be empty'
+                }        
+        else:
+            request.response.status = 400
+            return {
+                'error': 'Invalid type for phone (not string)'
+            }
+        
+    if 'guardian_phone' in request.json_body:
+        if type(request.json_body['guardian_phone']) == str:
+            context.userInstance.guardian_phone = request.json_body['guardian_phone']
+        else:
+            request.response.status = 400
+            return {
+                'error': 'Invalid type for guardian_phone (not string)'
+            }
+
+    if 'address' in request.json_body:
+        if type(request.json_body['address']) == str:
+            context.userInstance.address = request.json_body['address']
+        else:
+            request.response.status = 400
+            return {
+                'error': 'Invalid type for address (not string)'
+            }
+
+    if 'postal_code' in request.json_body:
+        if type(request.json_body['postal_code']) == str:
+            context.userInstance.postal_code = request.json_body['postal_code']
+        else:
+            request.response.status = 400
+            return {
+                'error': 'Invalid type for postal_code (not string)'
+            }
+        
+    if 'birthdate' in request.json_body:
+        if type(request.json_body['birthdate']) == str:
+            if date.fromisoformat(request.json_body['birthdate']) < date.today():
+                try:
+                    context.userInstance.birthdate = date.fromisoformat(request.json_body['birthdate'])
+                except:
+                    request.response.status = 400
+                    return {
+                        'error': 'Failed to format birthdate to isoformat. Invalid input.'
+                    }
+            else:
+                request.response.status = 400
+                return {
+                    'error': 'Invalid birthdate, cannot be in future'
+                }
+        else:
+            request.response.status = 400
+            return {
+                'error': 'Invalid type for birthdate (not string)'
+            }
+        
+    if 'gender' in request.json_body:
+        if type(request.json_body['gender']) == str:
+            if(request.json_body['gender'] == "male"):
+                context.userInstance.gender = Gender.male
+            elif(request.json_body['gender'] == "female"):
+                context.userInstance.gender = Gender.female
+            else:
+                request.response.status = 400
+                return {
+                    'error': 'Invalid gender (not male or female)'
+                }
+        else:
+            request.response.status = 400
+            return {
+                'error': 'Invalid type for gender (not string)'
+            }
+
 
 @view_config(context=UserInstanceResource, name='friendships', request_method='GET', renderer='json', permission='get_friendship_states')
 def get_friendships(context, request):

@@ -71,6 +71,24 @@ def modify_agenda_entry(context, request):
                 'error': 'Invalid type for description (not string)'
             }
         
+    if 'time' in request.json_body:
+        if type(request.json_body['time']) == int:
+            context.agendaInstance.time = datetime.fromtimestamp(int(request.json_body['time']))
+        else:
+            request.response.status = 400
+            return {
+                'error': 'Invalid type of time (not integer)'
+            }
+        
+    if 'duration' in request.json_body:
+        if type(request.json_body['duration']) == int:
+            context.agendaInstance.duration = request.json_body['duration']
+        else:
+            request.response.status = 400
+            return {
+                'error': 'Invalid type of duration (not integer)'
+            }
+        
     if 'location' in request.json_body:
         if type(request.json_body['location']) == str:
             context.agendaInstance.location = request.json_body['location']
@@ -80,15 +98,6 @@ def modify_agenda_entry(context, request):
                 'error': 'Invalid type for location (not string)'
             }
         
-    if 'time' in request.json_body:
-        if type(request.json_body['time']) == int:
-            context.agendaInstance.time = datetime.fromtimestamp(int(request.json_body['time']))
-        else:
-            request.response.status = 400
-            return {
-                'error': 'Invalid type of time (not integer)'
-            }
-
     if 'deviating_time' in request.json_body:
         if type(request.json_body['deviating_time']) == int:
             context.agendaInstance.deviating_time = datetime.fromtimestamp(int(request.json_body['deviating_time']))  

@@ -47,7 +47,7 @@ def get_agenda_entries(request):
 
 
 @view_config(context=AgendaViews, request_method='PUT', renderer='json', permission='create')
-@validate(json_body={'event_uuid': str, 'title': str, 'description': str, 'location': str, 'time': int, 'pinned': bool})
+@validate(json_body={'event_uuid': str, 'title': str, 'description': str, 'location': str, 'time': int, 'duration': int, 'pinned': bool})
 def create_agenda_entry(context, request):
     # Attempt to find current Event uuid
     event = request.db.query(Event).filter(Event.uuid == request.json_body['event_uuid']).first()
@@ -63,10 +63,12 @@ def create_agenda_entry(context, request):
         title=request.json_body['title'],
         description=request.json_body['description'],
         location=request.json_body['location'],
-        time=datetime.fromtimestamp(int(request.json_body['time'])), 
+        time=datetime.fromtimestamp(int(request.json_body['time'])),
+        duration=request.json_body['duration'],
         pinned=request.json_body['pinned'],
         created_by_user=request.user
     )
+
     request.db.add(entry)
     request.db.flush()
     return entry
