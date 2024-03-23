@@ -165,164 +165,107 @@ email_regex = re.compile("(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?
 
 @view_config(context=UserInstanceResource, name='', request_method='PATCH', renderer='json', permission='user_modify')
 def modify_user(context, request):
-    if 'firstname' in request.json_body:
-        if type(request.json_body['firstname']) == str:
-            if len(request.json_body['firstname']) > 1:
-                context.userInstance.firstname = request.json_body['firstname']
+    try:
+        if 'firstname' in request.json_body:
+            if type(request.json_body['firstname']) == str:
+                if len(request.json_body['firstname']) > 1:
+                    context.userInstance.firstname = request.json_body['firstname']
+                else:
+                    raise Exception('Firstname cannot be empty')
             else:
-                request.response.status = 400
-                return {
-                    'error': 'Firstname cannot be empty'
-                }
-        else:
-            request.response.status = 400
-            return {
-                'error': 'Invalid type for firstname (not string)'
-            }
-        
-    if 'lastname' in request.json_body:
-        if type(request.json_body['lastname']) == str:
-            if len(request.json_body['lastname']) > 1:
-                context.userInstance.lastname = request.json_body['lastname']
+                raise Exception('Invalid type for firstname (not string)')
+            
+        if 'lastname' in request.json_body:
+            if type(request.json_body['lastname']) == str:
+                if len(request.json_body['lastname']) > 1:
+                    context.userInstance.lastname = request.json_body['lastname']
+                else:
+                    raise Exception('Lastname cannot be empty')
             else:
-                request.response.status = 400
-                return {
-                    'error': 'Lastname cannot be empty'
-                }
-        else:
-            request.response.status = 400
-            return {
-                'error': 'Invalid type for lastname (not string)'
-            }
+                raise Exception('Invalid type for lastname (not string)')
 
-    if 'username' in request.json_body:
-        if type(request.json_body['username']) == str:
-            if len(request.json_body['username']) > 1:
-                if not request.db.query(User).filter(User.username == request.json_body['username'], User.uuid != request.json_body['uuid']).first():
-                    context.userInstance.username = request.json_body['username']
-                else: 
-                    request.response.status = 400
-                    return {
-                        'error': 'Username is already in use'
-                    }
+        if 'username' in request.json_body:
+            if type(request.json_body['username']) == str:
+                if len(request.json_body['username']) > 1:
+                    if not request.db.query(User).filter(User.username == request.json_body['username'], User.uuid != request.json_body['uuid']).first():
+                        context.userInstance.username = request.json_body['username']
+                    else: 
+                        raise Exception('Username is already in use')
+                else:
+                    raise Exception('Username cannot be empty')
             else:
-                request.response.status = 400
-                return {
-                    'error': 'Username cannot be empty'
-                }        
-        else:
-            request.response.status = 400
-            return {
-                'error': 'Invalid type for username (not string)'
-            }
-        
-    if 'email' in request.json_body:
-        if type(request.json_body['email']) == str:
-            if email_regex.match(request.json_body['email']) is not None:
-                if not request.db.query(User).filter(User.email == request.json_body['email'].lower(), User.uuid != request.json_body['uuid']).first():
-                    context.userInstance.email = request.json_body['email']
-                else: 
-                    request.response.status = 400
-                    return {
-                        'error': 'Email is already in use'
-                    }
+                raise Exception('Invalid type for username (not string)')
+            
+        if 'email' in request.json_body:
+            if type(request.json_body['email']) == str:
+                if email_regex.match(request.json_body['email']) is not None:
+                    if not request.db.query(User).filter(User.email == request.json_body['email'].lower(), User.uuid != request.json_body['uuid']).first():
+                        context.userInstance.email = request.json_body['email']
+                    else: 
+                        raise Exception('Email is already in use')
+                else:
+                    raise Exception('Invalid email formatting (regex match failure)')
             else:
-                request.response.status = 400
-                return {
-                    'error': 'Invalid email formatting (regex match failure)'
-                }        
-        else:
-            request.response.status = 400
-            return {
-                'error': 'Invalid type for email (not string)'
-            }
-        
-    if 'phone' in request.json_body:
-        if type(request.json_body['phone']) == str:
-            if len(request.json_body['phone']) > 1:
-                if not request.db.query(User).filter(User.phone == request.json_body['phone'], User.uuid != request.json_body['uuid']).first():
-                    context.userInstance.phone = request.json_body['phone']
-                else: 
-                    request.response.status = 400
-                    return {
-                        'error': 'Phone is already in use'
-                    }
+                raise Exception('Invalid type for email (not string)')
+            
+        if 'phone' in request.json_body:
+            if type(request.json_body['phone']) == str:
+                if len(request.json_body['phone']) > 1:
+                    if not request.db.query(User).filter(User.phone == request.json_body['phone'], User.uuid != request.json_body['uuid']).first():
+                        context.userInstance.phone = request.json_body['phone']
+                    else: 
+                        raise Exception('Phone is already in use')
+                else:
+                    raise Exception('Phone cannot be empty')
             else:
-                request.response.status = 400
-                return {
-                    'error': 'Phone cannot be empty'
-                }        
-        else:
-            request.response.status = 400
-            return {
-                'error': 'Invalid type for phone (not string)'
-            }
-        
-    if 'guardian_phone' in request.json_body:
-        if type(request.json_body['guardian_phone']) == str:
-            context.userInstance.guardian_phone = request.json_body['guardian_phone']
-        else:
-            request.response.status = 400
-            return {
-                'error': 'Invalid type for guardian_phone (not string)'
-            }
+                raise Exception('Invalid type for phone (not string)')
+            
+        if 'guardian_phone' in request.json_body:
+            if type(request.json_body['guardian_phone']) == str:
+                context.userInstance.guardian_phone = request.json_body['guardian_phone']
+            else:
+                raise Exception('Invalid type for guardian_phone (not string)')
 
-    if 'address' in request.json_body:
-        if type(request.json_body['address']) == str:
-            context.userInstance.address = request.json_body['address']
-        else:
-            request.response.status = 400
-            return {
-                'error': 'Invalid type for address (not string)'
-            }
-
-    if 'postal_code' in request.json_body:
-        if type(request.json_body['postal_code']) == str:
-            context.userInstance.postal_code = request.json_body['postal_code']
-        else:
-            request.response.status = 400
-            return {
-                'error': 'Invalid type for postal_code (not string)'
-            }
-        
-    if 'birthdate' in request.json_body:
-        if type(request.json_body['birthdate']) == str:
-            if date.fromisoformat(request.json_body['birthdate']) < date.today():
-                try:
-                    context.userInstance.birthdate = date.fromisoformat(request.json_body['birthdate'])
-                except:
-                    request.response.status = 400
-                    return {
-                        'error': 'Failed to format birthdate to isoformat. Invalid input.'
-                    }
+        if 'address' in request.json_body:
+            if type(request.json_body['address']) == str:
+                context.userInstance.address = request.json_body['address']
             else:
-                request.response.status = 400
-                return {
-                    'error': 'Invalid birthdate, cannot be in future'
-                }
-        else:
-            request.response.status = 400
-            return {
-                'error': 'Invalid type for birthdate (not string)'
-            }
-        
-    if 'gender' in request.json_body:
-        if type(request.json_body['gender']) == str:
-            if(request.json_body['gender'] == "male"):
-                context.userInstance.gender = Gender.male
-            elif(request.json_body['gender'] == "female"):
-                context.userInstance.gender = Gender.female
-            else:
-                request.response.status = 400
-                return {
-                    'error': 'Invalid gender (not male or female)'
-                }
-        else:
-            request.response.status = 400
-            return {
-                'error': 'Invalid type for gender (not string)'
-            }
+                raise Exception('Invalid type for address (not string)')
 
+        if 'postal_code' in request.json_body:
+            if type(request.json_body['postal_code']) == str:
+                context.userInstance.postal_code = request.json_body['postal_code']
+            else:
+                raise Exception('Invalid type for postal_code (not string)')
+            
+        if 'birthdate' in request.json_body:
+            if type(request.json_body['birthdate']) == str:
+                if date.fromisoformat(request.json_body['birthdate']) < date.today():
+                    try:
+                        context.userInstance.birthdate = date.fromisoformat(request.json_body['birthdate'])
+                    except:
+                        raise Exception('Failed to format birthdate to isoformat. Invalid input.')
+                else:
+                    raise Exception('Invalid birthdate, cannot be in future')
+            else:
+                raise Exception('Invalid type for birthdate (not string)')
+            
+        if 'gender' in request.json_body:
+            if type(request.json_body['gender']) == str:
+                if(request.json_body['gender'] == "male"):
+                    context.userInstance.gender = Gender.male
+                elif(request.json_body['gender'] == "female"):
+                    context.userInstance.gender = Gender.female
+                else:
+                    raise Exception('Invalid gender (not male or female)')
+            else:
+                raise Exception('Invalid type for gender (not string)')
+            
+    except Exception as error:
+        request.response.status = 400
+        return {
+            'error': error
+        }
 
 @view_config(context=UserInstanceResource, name='friendships', request_method='GET', renderer='json', permission='get_friendship_states')
 def get_friendships(context, request):
