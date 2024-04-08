@@ -35,6 +35,9 @@ label {
 	overflow: visible !important;
 	white-space: unset !important;
 }
+.mark {
+	aspect-ratio: 1/1;
+}
 
 input, button, select, textarea {
 	font-family: inherit;
