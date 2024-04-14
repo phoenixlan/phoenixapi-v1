@@ -240,8 +240,7 @@ def modify_user(context, request):
     if len(error) > 0:
         request.response.status = 400
         return {
-            'error': "One or more input fields has failed their checks",
-            'value': error
+            'error': "One or more input fields has failed their checks: %s" % "\n".join(error)
         }
         
     # All checks passed, set the variables to the database and return a success message!
