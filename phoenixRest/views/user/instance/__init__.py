@@ -167,102 +167,110 @@ email_regex = re.compile("(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?
 @validate(json_body={'firstname': str, 'lastname': str, 'username': str, 'email': str, 'phone': str, 'guardian_phone': str, 'address': str, 'postal_code': str, 'birthdate': str, 'gender': str})
 def modify_user(context, request):
     if 'firstname' in request.json_body:
-        if len(request.json_body['firstname']) > 1:
-            context.userInstance.firstname = request.json_body['firstname']
-        else:
+        if len(request.json_body['firstname']) < 1:
             request.response.status = 400
             return {
                 'error': 'Firstname cannot be empty'
             }
-        
+
     if 'lastname' in request.json_body:
-        if len(request.json_body['lastname']) > 1:
-            context.userInstance.lastname = request.json_body['lastname']
-        else:
+        if len(request.json_body['lastname']) < 1:
             request.response.status = 400
             return {
                 'error': 'Lastname cannot be empty'
             }
 
     if 'username' in request.json_body:
-        if len(request.json_body['username']) > 1:
-            if not request.db.query(User).filter(User.username == request.json_body['username'], User.uuid != request.json_body['uuid']).first():
-                context.userInstance.username = request.json_body['username']
-            else: 
-                request.response.status = 400
-                return {
-                    'error': 'Username is already in use'
-                }
-        else:
+        if len(request.json_body['username']) < 1:
             request.response.status = 400
             return {
                 'error': 'Username cannot be empty'
             }        
         
+        if request.db.query(User).filter(User.username == request.json_body['username'], User.uuid != request.json_body['uuid']).first():
+            request.response.status = 400
+            return {
+                'error': 'Username is already in use'
+            }
+  
     if 'email' in request.json_body:
-        if email_regex.match(request.json_body['email']) is not None:
-            if not request.db.query(User).filter(User.email == request.json_body['email'].lower(), User.uuid != request.json_body['uuid']).first():
-                context.userInstance.email = request.json_body['email']
-            else: 
-                request.response.status = 400
-                return {
-                    'error': 'Email is already in use'
-                }
-        else:
+        if email_regex.match(request.json_body['email']) is None:
             request.response.status = 400
             return {
                 'error': 'Invalid email formatting (regex match failure)'
-            }        
-        
+            }  
+        if request.db.query(User).filter(User.email == request.json_body['email'].lower(), User.uuid != request.json_body['uuid']).first():
+            request.response.status = 400
+            return {
+                'error': 'Email is already in use'
+            }
+
     if 'phone' in request.json_body:
-        if len(request.json_body['phone']) > 1:
-            if not request.db.query(User).filter(User.phone == request.json_body['phone'], User.uuid != request.json_body['uuid']).first():
-                context.userInstance.phone = request.json_body['phone']
-            else: 
-                request.response.status = 400
-                return {
-                    'error': 'Phone is already in use'
-                }
-        else:
+        if len(request.json_body['phone']) < 1:
             request.response.status = 400
             return {
                 'error': 'Phone cannot be empty'
             }
-        
-    if 'guardian_phone' in request.json_body:
-        context.userInstance.guardian_phone = request.json_body['guardian_phone']
+        if request.db.query(User).filter(User.phone == request.json_body['phone'], User.uuid != request.json_body['uuid']).first():
+            request.response.status = 400
+            return {
+                'error': 'Phone is already in use'
+            }
 
     if 'address' in request.json_body:
-        context.userInstance.address = request.json_body['address']
+        if len(request.json_body['address']) < 1:
+            request.response.status = 400
+            return {
+                'error': 'Address cannot be empty'
+            }
 
     if 'postal_code' in request.json_body:
-        context.userInstance.postal_code = request.json_body['postal_code']
-        
+        if len(request.json_body['postal_code']) < 1:
+            request.response.status = 400
+            return {
+                'error': 'Postal code cannot be empty'
+            }
+  
     if 'birthdate' in request.json_body:
-        if date.fromisoformat(request.json_body['birthdate']) < date.today():
-            try:
-                context.userInstance.birthdate = date.fromisoformat(request.json_body['birthdate'])
-            except:
-                request.response.status = 400
-                return {
-                    'error': 'Failed to format birthdate to isoformat. Invalid input.'
-                }
-        else:
+        if date.fromisoformat(request.json_body['birthdate']) > date.today():
             request.response.status = 400
             return {
                 'error': 'Invalid birthdate, cannot be in future'
             }
-        
+        try:
+            birthdate = date.fromisoformat(request.json_body['birthdate'])
+        except:
+            request.response.status = 400
+            return {
+                'error': 'Failed to format birthdate to isoformat. Invalid input.'
+            }
+   
     if 'gender' in request.json_body:
         if(request.json_body['gender'] == "male"):
-            context.userInstance.gender = Gender.male
+            gender = Gender.male
+           
         elif(request.json_body['gender'] == "female"):
-            context.userInstance.gender = Gender.female
+            gender = Gender.female
         else:
             request.response.status = 400
             return {
                 'error': 'Invalid gender (not male or female)'
             }
+        
+    context.userInstance.firstname = request.json_body['firstname']
+    context.userInstance.lastname = request.json_body['lastname']
+    context.userInstance.username = request.json_body['username']
+    context.userInstance.email = request.json_body['email']
+    context.userInstance.phone = request.json_body['phone']
+    context.userInstance.guardian_phone = request.json_body['guardian_phone']
+    context.userInstance.address = request.json_body['address']
+    context.userInstance.postal_code = request.json_body['postal_code']
+    context.userInstance.birthdate = birthdate
+    context.userInstance.gender = gender
+    
+    return {
+        'info': 'User information updated successfully!',
+    }
 
 
 @view_config(context=UserInstanceResource, name='friendships', request_method='GET', renderer='json', permission='get_friendship_states')
