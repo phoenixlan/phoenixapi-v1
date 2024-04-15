@@ -176,34 +176,34 @@ def modify_user(context, request):
     if 'firstname' in request.json_body:
         firstname = request.json_body['firstname']
         if len(firstname) < 1:
-            error.append("Firstname cannot be empty")
+            error.append("firstname cannot be empty")
 
     if 'lastname' in request.json_body:
         lastname = request.json_body['lastname']
         if len(lastname) < 1:
-            error.append("Lastname cannot be empty")
+            error.append("lastname cannot be empty")
 
     if 'username' in request.json_body:
         username = request.json_body['username']
         if len(username) < 1:
-            error.append("Username cannot be empty")
+            error.append("username cannot be empty")
         
         if request.db.query(User).filter(User.username == username, User.uuid != user_uuid).first():
-            error.append("Username is already in use")
+            error.append("username is already in use")
   
     if 'email' in request.json_body:
         email = request.json_body['email']
         if email_regex.match(email) is None:
-            error.append("Invalid email formatting (regex match failure)") 
+            error.append("invalid email formatting - regex match failure") 
         if request.db.query(User).filter(User.email == email.lower(), User.uuid != user_uuid).first():
-            error.append("Email is already in use")
+            error.append("email is already in use")
 
     if 'phone' in request.json_body:
         phone = request.json_body['phone']
         if len(phone) < 1:
-            error.append("Phone cannot be empty")
+            error.append("phone cannot be empty")
         if request.db.query(User).filter(User.phone == phone, User.uuid != user_uuid).first():
-            error.append("Phone is already in use")
+            error.append("phone is already in use")
 
     if 'guardian_phone' in request.json_body:
         guardian_phone = request.json_body['guardian_phone']
@@ -211,21 +211,21 @@ def modify_user(context, request):
     if 'address' in request.json_body:
         address = request.json_body['address']
         if len(address) < 1:
-            error.append("Address cannot be empty")
+            error.append("address cannot be empty")
 
     if 'postal_code' in request.json_body:
         postal_code = request.json_body['postal_code']
         if len(postal_code) < 1:
-            error.append("Postal code cannot be empty")
+            error.append("postal code cannot be empty")
   
     if 'birthdate' in request.json_body:
         local_birthdate = request.json_body['birthdate']
         if date.fromisoformat(local_birthdate) > date.today():
-            error.append("Invalid birthdate, cannot be in future")
+            error.append("invalid birthdate - cannot be in future")
         try:
             birthdate = date.fromisoformat(local_birthdate)
         except:
-            error.append("Failed to format birthdate to isoformat. Invalid input.")
+            error.append("failed to format birthdate to isoformat - invalid input.")
    
     if 'gender' in request.json_body:
         local_gender = request.json_body['gender']
@@ -234,13 +234,13 @@ def modify_user(context, request):
         elif(local_gender == "female"):
             gender = Gender.female
         else:
-            error.append("Invalid gender (not male or female)")
+            error.append("invalid gender (not male or female)")
 
     # Check if any errors occured while checking the variables and return them
     if len(error) > 0:
         request.response.status = 400
         return {
-            'error': "One or more input fields has failed their checks: %s" % "\n".join(error)
+            'error': "An error occured when attempting to update user information: %s." % ", ".join(error)
         }
         
     # All checks passed, set the variables to the database and return a success message!
