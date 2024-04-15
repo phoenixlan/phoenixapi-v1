@@ -377,7 +377,7 @@ def get_activation_state(context, request):
         "activated" :context.userInstance.activation_code is None
     }
 
-@view_config(context=UserInstanceResource, name='activation', request_method='PATCH', renderer='text', permission='activate_user')
+@view_config(context=UserInstanceResource, name='activation', request_method='PATCH', renderer='json', permission='activate_user')
 def activate_user(context, request):
     if context.userInstance.activation_code is None:
         request.response.status = 400
