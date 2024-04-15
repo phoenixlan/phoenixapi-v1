@@ -164,7 +164,6 @@ def get_user(context, request):
 email_regex = re.compile("(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*)@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9]))\.){3}(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9])|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])")
 
 @view_config(context=UserInstanceResource, name='', request_method='PATCH', renderer='json', permission='user_modify')
-@validate(json_body={'firstname': str, 'lastname': str, 'username': str, 'email': str, 'phone': str, 'guardian_phone': str, 'address': str, 'postal_code': str, 'birthdate': str, 'gender': str})
 def modify_user(context, request):
 
     # Create an error list
@@ -173,62 +172,106 @@ def modify_user(context, request):
     # Create and check variables
     user_uuid = request.json_body['uuid']
 
+    firstname = None
     if 'firstname' in request.json_body:
         firstname = request.json_body['firstname']
+        if type(firstname) != str:
+            error.append("invalid type for firstname (not string)")
         if len(firstname) < 1:
             error.append("firstname cannot be empty")
 
+    lastname = None
     if 'lastname' in request.json_body:
         lastname = request.json_body['lastname']
+        if type(lastname) != str:
+            error.append("invalid type for lastname (not string)")
         if len(lastname) < 1:
             error.append("lastname cannot be empty")
 
+    username = None
     if 'username' in request.json_body:
         username = request.json_body['username']
+        if type(username) != str:
+            error.append("invalid type for username (not string)")
         if len(username) < 1:
             error.append("username cannot be empty")
-        
-        if request.db.query(User).filter(User.username == username, User.uuid != user_uuid).first():
+        if request.db.query(User).filter(and_( 
+                User.username == username, 
+                User.uuid != user_uuid
+            )).first():
             error.append("username is already in use")
   
+    email = None
     if 'email' in request.json_body:
         email = request.json_body['email']
+        if type(email) != str:
+            error.append("invalid type for email (not string)")
         if email_regex.match(email) is None:
             error.append("invalid email formatting - regex match failure") 
-        if request.db.query(User).filter(User.email == email.lower(), User.uuid != user_uuid).first():
+        if request.db.query(User).filter(and_(
+                User.email == email.lower(), 
+                User.uuid != user_uuid
+            )).first():
             error.append("email is already in use")
 
+    phone = None
     if 'phone' in request.json_body:
         phone = request.json_body['phone']
+        if type(phone) != str:
+            error.append("invalid type for phone (not string)")
         if len(phone) < 1:
             error.append("phone cannot be empty")
-        if request.db.query(User).filter(User.phone == phone, User.uuid != user_uuid).first():
-            error.append("phone is already in use")
+        if request.db.query(User).filter(and_(
+                User.phone == phone, 
+                User.uuid != user_uuid
+            )).first():
+            error.append("phone number is already in use")
 
+    guardian_phone = None
     if 'guardian_phone' in request.json_body:
         guardian_phone = request.json_body['guardian_phone']
+        if type(guardian_phone) != str:
+            error.append("invalid type for guardian_phone (not string)")
 
+    address = None
     if 'address' in request.json_body:
         address = request.json_body['address']
+        if type(address) != str:
+            error.append("invalid type for address (not string)")
         if len(address) < 1:
             error.append("address cannot be empty")
 
+    postal_code = None
     if 'postal_code' in request.json_body:
         postal_code = request.json_body['postal_code']
+        if type(postal_code) != str:
+            error.append("invalid type for postal_code (not string)")
         if len(postal_code) < 1:
             error.append("postal code cannot be empty")
   
+    birthdate = None
     if 'birthdate' in request.json_body:
         local_birthdate = request.json_body['birthdate']
-        if date.fromisoformat(local_birthdate) > date.today():
-            error.append("invalid birthdate - cannot be in future")
-        try:
-            birthdate = date.fromisoformat(local_birthdate)
-        except:
-            error.append("failed to format birthdate to isoformat - invalid input.")
-   
+        if type(local_birthdate) != str:
+            error.append("invalid type for local_birthdate (not string)")
+        if len(local_birthdate) < 1:
+            error.append("local-birthdate cannot be empty")
+            print(local_birthdate)
+        else:
+            try:
+                birthdate = date.fromisoformat(local_birthdate)
+            except:
+                error.append("failed to format birthdate to isoformat - invalid input.")
+
+            if birthdate:
+                if birthdate > date.today():
+                    error.append("invalid birthdate - cannot be in future")
+
+    gender = None
     if 'gender' in request.json_body:
         local_gender = request.json_body['gender']
+        if type(local_gender) != str:
+            error.append("invalid type for local_gender (not string)")
         if(local_gender == "male"):
             gender = Gender.male
         elif(local_gender == "female"):
@@ -244,16 +287,16 @@ def modify_user(context, request):
         }
         
     # All checks passed, set the variables to the database and return a success message!
-    context.userInstance.firstname = firstname
-    context.userInstance.lastname = lastname
-    context.userInstance.username = username
-    context.userInstance.email = email
-    context.userInstance.phone = phone
-    context.userInstance.guardian_phone = guardian_phone
-    context.userInstance.address = address
-    context.userInstance.postal_code = postal_code
-    context.userInstance.birthdate = birthdate
-    context.userInstance.gender = gender
+    if firstname is not None: context.userInstance.firstname = firstname
+    if lastname is not None: context.userInstance.lastname = lastname
+    if username is not None: context.userInstance.username = username
+    if email is not None: context.userInstance.email = email
+    if phone is not None: context.userInstance.phone = phone
+    if guardian_phone is not None: context.userInstance.guardian_phone = guardian_phone
+    if address is not None: context.userInstance.address = address
+    if postal_code is not None: context.userInstance.postal_code = postal_code
+    if birthdate is not None: context.userInstance.birthdate = birthdate
+    if gender is not None: context.userInstance.gender = gender
     
     return {
         'info': 'User information updated successfully!',
@@ -384,8 +427,11 @@ def activate_user(context, request):
         return {
             "error": "User is already activated"
         }
+    
     request.db.delete(context.userInstance.activation_code)
-    return ""
+    return {
+        'info': 'User activated successfully!'
+    }
 
 @view_config(context=UserInstanceResource, name='avatar', request_method='POST', renderer='json', permission='avatar_upload')
 @validate(post={'x': str, 'y': str, 'w': str, 'h': str})
