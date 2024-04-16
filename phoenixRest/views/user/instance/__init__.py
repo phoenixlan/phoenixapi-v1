@@ -101,7 +101,9 @@ class UserInstanceResource(object):
             (Allow, ADMIN, 'delete_discord_mapping'),
 
             # Who can activate users on others behalf
+            (Allow, HR_ADMIN, 'activate_user'),
             (Allow, ADMIN, 'activate_user'),
+            
             # Who can view if an user is activated and activate their user?
             (Allow, ADMIN, 'get_activation_state'),
 

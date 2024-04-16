@@ -44,7 +44,6 @@ class UserViews(object):
         (Allow, TICKET_ADMIN, 'search'),
 
         (Allow, Everyone, 'register'),
-        (Allow, Everyone, 'activate_user'),
         (Allow, Everyone, 'connect_discord'),
 
         # Authenticated pages
