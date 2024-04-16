@@ -31,7 +31,7 @@ def test_create_modify_delete_agenda(testapp):
         'description': "Test description",
         'location': "Test location",
         'time': int(datetime.datetime.now().timestamp()),
-        'duration': int(0),
+        'duration': 0,
         'pinned': bool(False)
     }), headers=dict({
         "Authorization": "Bearer " + privileged_token
@@ -43,7 +43,7 @@ def test_create_modify_delete_agenda(testapp):
         'title': "Test agenda entry as unprivileged",
         'description': "Test description",
         'location': "Test location",
-        'duration': int(0),
+        'duration': 0,
         'time': int(datetime.datetime.now().timestamp()),
         'pinned': bool(False)
     }), headers=dict({
@@ -61,7 +61,7 @@ def test_create_modify_delete_agenda(testapp):
         'description': "Modified the description",
         'location': "Modified the location",
         'time': int(datetime.datetime.now().timestamp() + 692100),
-        'duration': int(30),
+        'duration': 30,
         'deviating_time': int(datetime.datetime.now().timestamp()),
         'deviating_time_unknown': bool(True),
         'deviating_location': "Added deviating location",
@@ -79,7 +79,7 @@ def test_create_modify_delete_agenda(testapp):
         'description': "Default description",
         'location': "Default location",
         'time': int(datetime.datetime.now().timestamp() + 692100),
-        'duration': int(0),
+        'duration': 30,
         'deviating_time': None,
         'deviating_time_unknown': bool(False),
         'deviating_location': None,
@@ -97,7 +97,7 @@ def test_create_modify_delete_agenda(testapp):
         'description': "Modified the description",
         'location': "Modified the location",
         'time': int(datetime.datetime.now().timestamp() + 692100),
-        'duration': int(30),
+        'duration': 30,
         'deviating_time': int(datetime.datetime.now().timestamp()),
         'deviating_time_unknown': bool(True),
         'deviating_location': "Added deviating location",

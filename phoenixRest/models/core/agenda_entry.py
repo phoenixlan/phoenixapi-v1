@@ -73,7 +73,7 @@ class AgendaEntry(Base):
             'description': self.description,
             'location': self.location,
             'time': int(self.time.timestamp()) if self.time is not None else None,
-            'duration': int(self.duration),
+            'duration': self.duration,
             'deviating_time': int(self.deviating_time.timestamp()) if self.deviating_time is not None else None,
             'deviating_time_unknown': self.deviating_time_unknown,
             'deviating_location': self.deviating_location,
