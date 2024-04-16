@@ -29,6 +29,16 @@ label {
 	display: block;
 }
 
+/* This overwrites the mui class to fix checkbox label text from overflowing */
+.label-text {
+	line-height: normal !important;
+	overflow: visible !important;
+	white-space: unset !important;
+}
+.mark {
+	aspect-ratio: 1/1;
+}
+
 input, button, select, textarea {
 	font-family: inherit;
 	font-size: inherit;
