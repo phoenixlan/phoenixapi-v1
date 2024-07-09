@@ -495,12 +495,9 @@ def upload_avatar(context, request):
 
     # Crop the image
     im = im.crop((x, y, x+w, y+h))
-
-    log.warn("transparency" in im.info)
-    log.warn("lol:" + im.mode)
-    log.warn(im.info)
+    
     # Deal with transparency
-    if im.mode in ('RGBA', 'LA') or (im.mode == 'P' and 'transparency' in im.info):
+    if im.mode != "RGB":
         background = Image.new('RGBA', im.size, (255,255,255))
 
         # Alpha composite function only accepts RGBA
