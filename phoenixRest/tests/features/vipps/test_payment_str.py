@@ -38,7 +38,7 @@ def test_normal_payment_plural_str(db, testapp):
     store_session.cart_entries.append(StoreSessionCartEntry(vestibyle, 2))
 
     # Create payment
-    payment = Payment(user, PaymentProvider.vipps, store_session.get_total(), get_current_event(testapp.get_current_event))
+    payment = Payment(user, PaymentProvider.vipps, store_session.get_total(), testapp.get_current_event())
     db.add(payment)
 
     payment_str = _get_payment_str(payment)
