@@ -42,3 +42,4 @@ In order to create alembic migrations(needed for the actual database to be updat
 
  * See http://alembic.zzzcomputing.com/en/latest/tutorial.html
  * See http://alembic.zzzcomputing.com/en/latest/autogenerate.html for autogeneration
+
