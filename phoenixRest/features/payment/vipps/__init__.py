@@ -80,7 +80,23 @@ def _ensureToken():
 		log.debug("Token is already fetched")
 
 def _get_payment_str(payment):
-	return ", ".join(["%s %s-billett%s" % (entry.amount, entry.ticket_type.name, "er" if entry.amount > 1 else "") for entry in payment.store_session.cart_entries])
+	candidate = ", ".join(["%s %s-billett%s" % (entry.amount, entry.ticket_type.name, "er" if entry.amount > 1 else "") for entry in payment.store_session.cart_entries])
+	if len(candidate) >= 100:
+		# Vipps gets mad, so return a simpler list...
+		tickets = filter(lambda x: x.ticket_type.seatable, payment.store_session.cart_entries)
+		other = filter(lambda x: not x.ticket_type.seatable, payment.store_session.cart_entries)
+
+		ticket_count = sum([ entry.amount for entry in tickets ])
+		other_count = sum([ entry.amount for entry in other])
+
+		items = []
+		if ticket_count > 0:
+			items.append("%s billetter" % ticket_count)
+		if other_count > 0:
+			items.append("%s annet" % other_count)
+
+		return ", ".join(items)
+	return candidate
 
 def capture_vipps_payment(vipps_payment):
 	if not "PYTEST_CURRENT_TEST" in os.environ:
