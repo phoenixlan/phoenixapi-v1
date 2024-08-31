@@ -525,7 +525,7 @@ def upgrade():
             {
                 'uuid':uuid.uuid4(), 
                 'name': "event 6",
-                'booking_time': datetime.strptime('2024-08-00 18:00:00', '%Y-%m-%d %H:%M:%S'), 
+                'booking_time': datetime.strptime('2024-08-01 18:00:00', '%Y-%m-%d %H:%M:%S'), 
                 'priority_seating_time_delta': 60*30,
                 'seating_time_delta': 60*60,
                 'start_time': datetime.strptime('2024-09-27 18:00:00', '%Y-%m-%d %H:%M:%S'),
