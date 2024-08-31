@@ -83,8 +83,8 @@ def _get_payment_str(payment):
 	candidate = ", ".join(["%s %s-billett%s" % (entry.amount, entry.ticket_type.name, "er" if entry.amount > 1 else "") for entry in payment.store_session.cart_entries])
 	if len(candidate) >= 100:
 		# Vipps gets mad, so return a simpler list...
-		tickets = filter(lambda x: x.ticket_type.is_seatable, payment.store_session.cart_entries)
-		other = filter(lambda x: not x.ticket_type.is_seatable, payment.store_session.cart_entries)
+		tickets = filter(lambda x: x.ticket_type.seatable, payment.store_session.cart_entries)
+		other = filter(lambda x: not x.ticket_type.seatable, payment.store_session.cart_entries)
 
 		ticket_count = sum([ entry.amount for entry in tickets ])
 		other_count = sum([ entry.amount for entry in other])
