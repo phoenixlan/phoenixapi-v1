@@ -1,5 +1,7 @@
 from phoenixRest.models.core.event import Event
 from phoenixRest.models.core.user import User
+from phoenixRest.models.crew.position_mapping import PositionMapping
+from phoenixRest.models.crew.position import Position
 from phoenixRest.models.tickets.ticket import Ticket
 from phoenixRest.models.tickets.ticket_type import TicketType
 
@@ -132,6 +134,8 @@ def test_participant_history_crew(db, testapp):
     """
     # test is an admin
     token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
+    unprivileged_token, refresh = testapp.auth_get_tokens('jeff@example.com', 'sixcharacters')
+    unprivileged_user = testapp.get_user(unprivileged_token)
 
     stats = testapp.get('/statistics/participant_history', headers=dict({
         "Authorization": "Bearer " + token
@@ -151,4 +155,53 @@ def test_participant_history_crew(db, testapp):
         assert event_stats["counts"] == counts
         assert event_stats["crew_counts"] == crew_counts
 
+    # No people with experience what so ever
     test_event(str(all_sorted_events[0].uuid), [], [])
+
+    # Now add someone to a crew
+    position_candidates = testapp.get('/position', headers=dict({
+        "Authorization": "Bearer " + token
+    }), status=200).json_body
+    created_mapping = testapp.post_json('/position_mapping', {
+        "position_uuid": position_candidates[0]['uuid'],
+        "user_uuid": unprivileged_user['uuid']
+    }, headers=dict({
+        "Authorization": "Bearer " + token
+    }), status=200).json_body
+
+    # Refresh
+    stats = testapp.get('/statistics/participant_history', headers=dict({
+        "Authorization": "Bearer " + token
+    }), status=200).json_body
+
+    # There should be a crew member with 0 experience!
+    test_event(str(all_sorted_events[0].uuid), [], [1])
+
+    # Now try to create a position mapping for last event.
+    position_user = db.query(User).filter(User.uuid == unprivileged_user['uuid']).first()
+    position = db.query(Position).filter(Position.uuid == position_candidates[0]['uuid']).first()
+    assert position is not None
+    last_mapping = PositionMapping(position_user, position, all_sorted_events[1])
+    db.add(last_mapping)
+
+    # Refresh
+    stats = testapp.get('/statistics/participant_history', headers=dict({
+        "Authorization": "Bearer " + token
+    }), status=200).json_body
+
+    # There should be a crew member with 1 year of experience!
+    test_event(str(all_sorted_events[0].uuid), [], [0, 1])
+
+    # Add them to another crew, shouldnt change the output
+    created_mapping = testapp.post_json('/position_mapping', {
+        "position_uuid": position_candidates[1]['uuid'],
+        "user_uuid": unprivileged_user['uuid']
+    }, headers=dict({
+        "Authorization": "Bearer " + token
+    }), status=200).json_body
+
+    stats = testapp.get('/statistics/participant_history', headers=dict({
+        "Authorization": "Bearer " + token
+    }), status=200).json_body
+
+    test_event(str(all_sorted_events[0].uuid), [], [0, 1])
