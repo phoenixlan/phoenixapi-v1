@@ -19,8 +19,9 @@ height = int(height)
 
 log.info("Loading crew card assets")
 
-fnt = ImageFont.truetype("assets/NotoSans-Medium.ttf", 60)
-logo = Image.open("assets/logo_card.png")
+fnt = ImageFont.truetype("assets/gomarice_no_continue.ttf", 60)
+logo = Image.open("assets/logo_card.png").convert("RGBA")
+crew_background = Image.open("assets/crew_background.png").convert("RGBA")
 
 def generate_badge(request, user, event):
     name = "%s %s" % (user.firstname, user.lastname)
@@ -67,18 +68,19 @@ def generate_badge(request, user, event):
     
     photo = Image.open(os.path.join(request.registry.settings["avatar.directory_sd"], "%s.%s" % (user.avatar.uuid, user.avatar.extension)))
     qrid = qrcode.make(qrcode_data)
-    background = Image.new("RGB", (height, width), '#ffffff')
-    draw = ImageDraw.Draw(background)
+    background = crew_background.copy()
+    background = background.resize((height, width))
+    draw = ImageDraw.Draw(background, "RGBA")
 
     #bottom background
     draw.rectangle([(0,1790), (width, 1920)] , fill=(crew_farge))
-    draw.text((200, 1200), name, font=fnt, fill=(0,0,0)) 
-    draw.text((200, 1280), title, font=fnt, fill=(0,0,0))
-    draw.text((200, 1360), age, font=fnt, fill=(0,0,0))
-    draw.text((30,1670 ), event_name, font=fnt, fill=(0,0,0))
+    draw.text((200, 1200), name, font=fnt, fill=(255, 255, 255)) 
+    draw.text((200, 1280), title, font=fnt, fill=(255, 255, 255))
+    draw.text((200, 1360), age, font=fnt, fill=(255, 255, 255))
+    draw.text((30,1670 ), event_name, font=fnt, fill=(255, 255, 255))
     #draw.text((530,1815 ), crew, font=fnt, fill=(0,0,0))
     back_img = background.copy() 
-    back_img.paste(logo,( 302, 50))
+    back_img.paste(logo,( 302, 50),logo)
     back_img.paste(photo,( 200, 550))
     back_img.paste(qrid, (802, 1380))
 
