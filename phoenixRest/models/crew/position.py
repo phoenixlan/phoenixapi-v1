@@ -35,6 +35,8 @@ class Position(Base):
     description = Column(Text)
     chief = Column(Boolean, nullable=False, default=True)
 
+    is_vanity = Column(Boolean, nullable=False, server_default='False')
+
     position_mappings = relationship("PositionMapping", back_populates="position")
 
     permissions = relationship("Permission", back_populates="position")
@@ -49,6 +51,7 @@ class Position(Base):
             'uuid': str(self.uuid),
             'name': self.name,
             'description': self.description,
+            'is_vanity': self.is_vanity,
 
             'crew_uuid': str(self.crew_uuid) if self.crew_uuid is not None else None,
             'team_uuid': str(self.team_uuid) if self.team_uuid is not None else None,
@@ -59,6 +62,8 @@ class Position(Base):
         }
     
     def get_title(self):
+        if self.name:
+            return self.name
         if self.team:
             if self.crew is None:
                 raise RuntimeError("User is member of a team but not a crew?")
