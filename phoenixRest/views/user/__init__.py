@@ -36,6 +36,7 @@ log = logging.getLogger(__name__)
 class UserViews(object):
     __acl__ = [
         (Allow, Authenticated, 'current_get'),
+        (Allow, Everyone, 'activate_user_by_code'),
         (Allow, ADMIN, 'all_get'),
         (Allow, HR_ADMIN, 'all_get'),
 
@@ -121,7 +122,7 @@ def register_user(context, request):
     if existingUsername is not None or existingEmail is not None or existingPhone is not None:
         request.response.status = 400
         return {
-            "error": "An user by this username, phone number, or e-mail already exists"
+            "error": "A user by this username, phone number, or e-mail already exists"
         }
     
     if email_regex.match(email) is None:
@@ -133,7 +134,7 @@ def register_user(context, request):
     if len(username) < 1:
         request.response.status = 400
         return {
-            "error": "An username is required"
+            "error": "A username is required"
         }
     
     firstname = request.json_body['firstname']
@@ -187,6 +188,7 @@ def register_user(context, request):
     client_id = request.json_body.get("clientId")
     if client_id not in request.registry.settings["oauth.valid_client_ids"].split(","):
         request.response.status = 400
+        log.info("Valid oauth client IDs are: %s" % request.registry.settings["oauth.valid_client_ids"])
         return {
             "error": "Invalid OAuth client ID"
         }
@@ -215,7 +217,7 @@ def register_user(context, request):
     }
 
 
-@view_config(context=UserViews, name='activate', request_method='GET', renderer='templates/activation.jinja2', permission='activate_user')
+@view_config(context=UserViews, name='activate', request_method='GET', renderer='templates/activation.jinja2', permission='activate_user_by_code')
 @validate(get={"code": str})
 def activate_account(context, request):
     code = request.GET["code"]
@@ -223,6 +225,7 @@ def activate_account(context, request):
 
     if activationCode is None:
         log.info("Unable to find activation code %s" % code)
+        request.response.status = 404
         return {
             'success': False,
             'mail': request.registry.settings["api.contact"],

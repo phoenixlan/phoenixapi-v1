@@ -216,8 +216,6 @@ def test_modify_user(testapp):
         "Authorization": "Bearer " + privileged_token
     }), status=400)
 
-
-
 def test_activate_user(testapp):
     # Test coverage:
     #    Title                  Active  Description

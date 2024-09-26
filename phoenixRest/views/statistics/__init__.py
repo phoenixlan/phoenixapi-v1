@@ -67,7 +67,6 @@ def get_age_distribution(context, request):
         crew_age_counts = request.db.query(crews.c.age, func.count(crews.c.age).label("age_count")).group_by(crews.c.age).all()
 
         for part in age_counts:
-            print(part)
             age, count = part
             age = int(age)
 
@@ -76,7 +75,6 @@ def get_age_distribution(context, request):
             age_distribution[age] += count
 
         for part in crew_age_counts:
-            print(part)
             age, count = part
             age = int(age)
 
@@ -141,14 +139,12 @@ def get_participant_history(context, request):
         counts = []
 
         for part in user_participations:
-            print(part)
             _, count = part
             if len(counts) <= count:
                 counts = counts + ( [0] * (count - len(counts) + 1) )
             counts[count] += 1
 
         for part in crew_participations:
-            print(part)
             _, count = part
             if len(crew_counts) <= count:
                 crew_counts = crew_counts + ( [0] * (count - len(crew_counts) + 1) )
