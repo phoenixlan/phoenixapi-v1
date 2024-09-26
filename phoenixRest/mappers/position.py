@@ -4,6 +4,7 @@ def map_position_with_position_mappings(position, request):
         'uuid': position.uuid,
         'name': position.name,
         'description': position.description,
+        'is_vanity': position.is_vanity,
 
         'crew_uuid': position.crew_uuid,
         'team_uuid': position.team_uuid,

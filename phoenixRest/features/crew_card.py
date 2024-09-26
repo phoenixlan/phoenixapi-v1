@@ -42,9 +42,9 @@ def generate_badge(request, user, event):
     if len(candidate_mappings) == 0:
         raise RuntimeError("User has crew mappings - unable to build crew card")
     
-    # Generate list of special positions and positions that traverse events
-    special_positions = list(filter(lambda mapping: mapping.position.name!= None, candidate_mappings))
-    infinite_positions = list(filter(lambda mapping: mapping.event == None, candidate_mappings))
+    # Generate list of special positions and positions that traverse events. Both require vanity to be set in order to count.
+    special_positions = list(filter(lambda mapping: mapping.position.name != None and mapping.position.is_vanity, candidate_mappings))
+    infinite_positions = list(filter(lambda mapping: mapping.event == None and mapping.position.is_vanity, candidate_mappings))
 
     # Use the special positions to generate the "correct" title and color
     title = "Person"
