@@ -121,6 +121,7 @@ class UserInstanceResource(object):
                 (Allow, "%s" % self.userInstance.uuid, 'get_friendship_states'),
                 # Users can fetch their own tickets
                 (Allow, "%s" % self.userInstance.uuid, 'user_list_owned_tickets'),
+                (Allow, "%s" % self.userInstance.uuid, 'user_list_purchased_tickets'),
                 (Allow, "%s" % self.userInstance.uuid, 'user_list_seatable_tickets'),
                 # Users can see their own ticket transfers
                 (Allow, "%s" % self.userInstance.uuid, 'user_list_ticket_transfers'),
