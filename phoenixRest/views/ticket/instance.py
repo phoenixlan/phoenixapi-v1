@@ -188,5 +188,4 @@ def transfer_ticket(context, request):
 
 @view_config(context=TicketInstanceResource, name='transfer_log', request_method='GET', renderer='json', permission='view_ticket_transfer_log')
 def transfer_log(context, request):
-    log = request.db.query(TicketTransfer).filter(TicketTransfer.ticket == context.ticketInstance).all()
-    return log
+    return request.db.query(TicketTransfer).filter(TicketTransfer.ticket == context.ticketInstance).all()
