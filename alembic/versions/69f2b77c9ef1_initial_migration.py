@@ -532,6 +532,26 @@ def upgrade():
                 'end_time': datetime.strptime('2024-09-29 12:00:00', '%Y-%m-%d %H:%M:%S'),
                 'max_participants': 400
             },
+            {
+                'uuid':uuid.uuid4(), 
+                'name': "event 7",
+                'booking_time': datetime.strptime('2025-08-01 18:00:00', '%Y-%m-%d %H:%M:%S'), 
+                'priority_seating_time_delta': 60*30,
+                'seating_time_delta': 60*60,
+                'start_time': datetime.strptime('2025-09-27 18:00:00', '%Y-%m-%d %H:%M:%S'),
+                'end_time': datetime.strptime('2025-09-29 12:00:00', '%Y-%m-%d %H:%M:%S'),
+                'max_participants': 400
+            },
+            {
+                'uuid':uuid.uuid4(), 
+                'name': "event 8",
+                'booking_time': datetime.strptime('2026-08-01 18:00:00', '%Y-%m-%d %H:%M:%S'), 
+                'priority_seating_time_delta': 60*30,
+                'seating_time_delta': 60*60,
+                'start_time': datetime.strptime('2026-09-27 18:00:00', '%Y-%m-%d %H:%M:%S'),
+                'end_time': datetime.strptime('2026-09-29 12:00:00', '%Y-%m-%d %H:%M:%S'),
+                'max_participants': 400
+            },
         ]
     )
 
