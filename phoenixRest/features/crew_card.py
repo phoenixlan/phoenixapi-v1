@@ -82,6 +82,7 @@ def generate_badge(request, user, event):
     back_img = background.copy() 
     back_img.paste(logo,( 302, 50),logo)
     back_img.paste(photo,( 200, 550))
-    back_img.paste(qrid, (802, 1380))
+    # The qrid image is not actually a real pil image instance and this breaks pillow nowadays
+    back_img.paste(qrid._img, (802, 1380))
 
     return back_img

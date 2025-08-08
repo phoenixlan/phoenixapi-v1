@@ -9,5 +9,5 @@ def map_row_for_availability(row, request):
         'entrance': row.entrance,
         'ticket_type_uuid': row.ticket_type_uuid,
         'row_number': row.row_number,
-        'seats': [ map_seat_for_availability(seat, request) for seat in row.seats ]
+        'seats': [ map_seat_for_availability(seat, request) for seat in sorted(row.seats, key=lambda seat: seat.number) ]
     }
