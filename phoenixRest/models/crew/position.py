@@ -25,6 +25,9 @@ class Position(Base):
     __tablename__ = "position"
     uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
 
+    event_type_uuid = Column(UUID(as_uuid=True), ForeignKey("event_type.uuid"), nullable=True)
+    event_type = relationship("EventType")
+
     crew_uuid = Column(UUID(as_uuid=True), ForeignKey("crew.uuid"), nullable=True)
     crew = relationship("Crew")
 
@@ -49,6 +52,7 @@ class Position(Base):
     def __json__(self, request):
         return {
             'uuid': str(self.uuid),
+            'event_type_uuid': str(self.event_type_uuid),
             'name': self.name,
             'description': self.description,
             'is_vanity': self.is_vanity,

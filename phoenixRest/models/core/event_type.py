@@ -1,4 +1,3 @@
-from audioop import add
 from sqlalchemy import (
     Column,
     DateTime,
@@ -14,29 +13,27 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import UUID
 
 from sqlalchemy.orm import relationship
+from sqlalchemy import and_
 
 from phoenixRest.models import Base
 
+import logging
+log = logging.getLogger(__name__)
+
 import uuid
 
-class Location(Base):
-    __tablename__ = "location"
+class EventType(Base):
+    __tablename__ = "event_type"
+    
     uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
 
-    event_type_uuid = Column(UUID(as_uuid=True), ForeignKey("event_type.uuid"), nullable=True)
-    event_type = relationship("EventType")
-
     name = Column(Text, nullable=False)
-    address = Column(Text, nullable=False)
 
-    def __init__(self, name: str, address: str):
+    def __init__(self, name: str):
         self.name = name
-        self.address = address
 
     def __json__(self, request):
         return {
             'uuid': str(self.uuid),
-            'event_type_uuid': str(self.event_type_uuid),
-            'name': self.name,
-            'address': self.address,
+            'name': str(self.name)
         }
