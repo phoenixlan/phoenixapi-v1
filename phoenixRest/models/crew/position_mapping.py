@@ -22,6 +22,9 @@ class PositionMapping(Base):
     __tablename__ = "user_positions"
     uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
 
+    event_type_uuid = Column(UUID(as_uuid=True), ForeignKey("event_type.uuid"), nullable=True)
+    event_type = relationship("EventType")
+
     position_uuid = Column(UUID(as_uuid=True), ForeignKey("position.uuid"), nullable=False)
     position = relationship("Position", back_populates="position_mappings", uselist=False)
 
@@ -46,6 +49,7 @@ class PositionMapping(Base):
     def __json__(self, request):
         return {
             'uuid': self.uuid,
+            'event_type_uuid': str(self.event_type_uuid),
             'position_uuid': self.position_uuid,
             'user_uuid': self.user_uuid,
             'event_uuid': self.event_uuid,

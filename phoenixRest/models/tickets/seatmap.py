@@ -29,6 +29,9 @@ class Seatmap(Base):
     __tablename__ = "seatmap"
     uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
 
+    event_type_uuid = Column(UUID(as_uuid=True), ForeignKey("event_type.uuid"), nullable=True)
+    event_type = relationship("EventType")
+
     name = Column(Text, nullable=False)
     description = Column(Text, nullable=False)
 
@@ -50,6 +53,7 @@ class Seatmap(Base):
     def __json__(self, request):
         return {
             'uuid': str(self.uuid),
+            'event_type_uuid': str(self.event_type_uuid),
             'name': str(self.name),
             'description': str(self.description),
             'background': map_seatmap_background_no_metadata(self.background, request) if self.background is not None else None,
