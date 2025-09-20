@@ -17,7 +17,7 @@ from sqlalchemy import and_
 
 from phoenixRest.models import Base
 
-from phoenixRest.models.core.event_type import EventType
+from phoenixRest.models.core.event_brand import EventBrand
 from phoenixRest.models.core.user import User
 from phoenixRest.models.tickets.ticket import Ticket
 from phoenixRest.models.tickets.ticket_type import TicketType
@@ -42,8 +42,8 @@ class Event(Base):
     __tablename__ = "event"
     uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
 
-    event_type_uuid = Column(UUID(as_uuid=True), ForeignKey("event_type.uuid"), nullable=True)
-    event_type = relationship("EventType")
+    event_brand_uuid = Column(UUID(as_uuid=True), ForeignKey("event_brand.uuid"), nullable=True)
+    event_brand = relationship("EventBrand")
 
     booking_time = Column(DateTime, nullable=False)
     
@@ -87,7 +87,7 @@ class Event(Base):
         return {
             'name': str(self.name),
             'uuid': str(self.uuid),
-            'event_type_uuid': str(self.event_type_uuid),
+            'event_brand_uuid': str(self.event_brand_uuid),
             'participant_age_limit_inclusive': self.participant_age_limit_inclusive,
             'crew_age_limit_inclusive': self.crew_age_limit_inclusive,
             'booking_time': int(self.booking_time.timestamp()),

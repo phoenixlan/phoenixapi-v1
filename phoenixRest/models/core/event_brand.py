@@ -22,8 +22,8 @@ log = logging.getLogger(__name__)
 
 import uuid
 
-class EventType(Base):
-    __tablename__ = "event_type"
+class EventBrand(Base):
+    __tablename__ = "event_brand"
     
     uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
 

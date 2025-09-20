@@ -22,8 +22,8 @@ class TicketType(Base):
     __tablename__ = "ticket_type"
     uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
 
-    event_type_uuid = Column(UUID(as_uuid=True), ForeignKey("event_type.uuid"), nullable=True)
-    event_type = relationship("EventType")
+    event_brand_uuid = Column(UUID(as_uuid=True), ForeignKey("event_brand.uuid"), nullable=True)
+    event_brand = relationship("EventBrand")
 
     name = Column(Text, nullable=False)
 
@@ -36,8 +36,6 @@ class TicketType(Base):
     requires_membership = Column(Boolean, server_default="false", nullable=False)
     grants_membership = Column(Boolean, server_default="true", nullable=False)
     
-    can_checkin = Column(Boolean, server_default="false", nullable=False)
-
     description = Column(Text)
     
 
@@ -52,13 +50,12 @@ class TicketType(Base):
     def __json__(self, request):
         return {
             'uuid': str(self.uuid),
-            'event_type_uuid': str(self.event_type_uuid),
+            'event_brand_uuid': str(self.event_brand_uuid),
             'name': self.name,
             'price': self.price,
             'refundable': self.refundable,
             'seatable': self.seatable,
             'description': self.description,
             'requires_membership': self.requires_membership,
-            'grants_membership': self.grants_membership,
-            'can_checkin': self.can_checkin
+            'grants_membership': self.grants_membership
         }
