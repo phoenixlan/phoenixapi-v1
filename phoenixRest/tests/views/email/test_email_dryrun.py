@@ -240,3 +240,27 @@ def test_consent_mail_age_limit(db, testapp):
 
     assert consenting_user_result['count'] == 2 # Only the current user
 
+
+def test_last_event_participants(testapp):
+    """Tests that all participants get e-mails when the participant_info category is used.
+    Crew members should not receive these mails if they don't have a ticket
+    
+    Assumes nobody has consented to marketing mail"""
+    testapp.ensure_typical_event()
+
+    # test is an admin
+    sender_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
+    adam_token, refresh = testapp.auth_get_tokens('adam@example.com', 'sixcharacters')
+
+    sender_user = testapp.get_user(sender_token)
+    adam_user = testapp.get_user(adam_token)
+
+    participant_mail_test_results = testapp.post_json('/email/dryrun', dict({
+        'recipient_category': "participant_info",
+        'subject': "hello",
+        'body': "# Foo bar\nHello"
+    }), headers=dict({
+        "Authorization": "Bearer " + sender_token
+    }), status=200).json_body
+
+    assert participant_mail_test_results['count'] == 1 # Only the current user

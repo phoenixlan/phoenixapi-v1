@@ -109,6 +109,9 @@ class Event(Base):
             )) \
             .count()
 
+    def foo(self):
+        log.info("foo bar!")
+
 def get_current_event(request):
     firstEvent = request.db.query(Event).filter(Event.end_time > datetime.now()).order_by(Event.start_time.asc()).first()
     if firstEvent is None:
@@ -118,3 +121,10 @@ def get_current_event(request):
         # TODO we want to return ticket types some time? Maybe?
         return firstEvent
 
+def get_most_recent_event(request):
+    mostRecentEvent = request.db.query(Event).filter(Event.end_time < datetime.now()).order_by(Event.start_time.asc()).first()
+    if mostRecentEvent is None:
+        logging.warning("There is no most recent event")
+        return None
+    else:
+        return mostRecentEvent
