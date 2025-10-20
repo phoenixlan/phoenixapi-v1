@@ -1,5 +1,5 @@
 
-def test_ticket_transfer_flow(testapp):
+def test_ticket_transfer_flow(testapp, upcoming_event):
     testapp.ensure_typical_event()
     # test is an admin
     sender_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')

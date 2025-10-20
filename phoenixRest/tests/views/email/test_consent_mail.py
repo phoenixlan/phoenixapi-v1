@@ -6,7 +6,7 @@ from phoenixRest.models.crew.position import Position
 
 from datetime import datetime
 
-def test_consent_mail_dryrun(db, testapp):
+def test_consent_mail_dryrun(db, testapp, upcoming_event):
     testapp.ensure_typical_event()
 
     # test is an admin
@@ -105,7 +105,7 @@ def test_consent_mail_dryrun(db, testapp):
     assert len(consent_withdrawal_codes_post) == len(consent_withdrawal_codes_pre) + 1
 
 
-def test_consent_mail_no_participants(db, testapp):
+def test_consent_mail_no_participants(db, testapp, upcoming_event):
     testapp.ensure_typical_event()
 
     # test is an admin
@@ -169,7 +169,7 @@ def test_consent_mail_no_participants(db, testapp):
     assert consenting_user_result['count'] == 1
 
 
-def test_consent_mail_no_crew(db, testapp):
+def test_consent_mail_no_crew(db, testapp, upcoming_event):
     testapp.ensure_typical_event()
 
     # test is an admin
@@ -233,7 +233,7 @@ def test_consent_mail_no_crew(db, testapp):
     assert consenting_user_result['count'] == 1
 
 
-def test_consent_mail_no_applicants(db, testapp):
+def test_consent_mail_no_applicants(db, testapp, upcoming_event):
     testapp.ensure_typical_event()
 
     # test is an admin

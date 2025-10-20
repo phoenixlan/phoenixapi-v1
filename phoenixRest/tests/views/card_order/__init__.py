@@ -2,7 +2,7 @@ from test_app import TestApp
 import uuid
 from phoenixRest.models.crew.card_order import OrderStates
 
-def test_card_order(testapp:TestApp):
+def test_card_order(testapp:TestApp, upcoming_event):
     # Log in as an admin user
     admin_user_token, refresh = testapp.auth_get_tokens("test@example.com", "sixcharacters")
     admin = testapp.get_user(admin_user_token)

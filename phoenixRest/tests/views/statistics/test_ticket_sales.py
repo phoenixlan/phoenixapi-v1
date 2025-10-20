@@ -1,6 +1,6 @@
 from phoenixRest.models.core.event import Event
 
-def test_smoketest_ticket_sales(db, testapp):
+def test_smoketest_ticket_sales(db, testapp, ticketsale_ongoing_event):
     """Simple test that just makes sure ticket sales statistics isn't obviously broken
     """
     # test is an admin
@@ -18,9 +18,8 @@ def test_smoketest_ticket_sales(db, testapp):
     assert len(stats) == len(all_events)
 
     # No tickets should ever be sold
-    for stat in stats:
-        for day in stat['days']:
-            assert day["count"] == 0
+    current_stats = next(filter(lambda stat: stat["event"]["uuid"] == str(testapp.get_current_event(db).uuid), stats))
+    assert sum(map(lambda day: day["count"], current_stats["days"])) == 0
     
     # Get ticket types for the next stage
     ticket_types = filter(
@@ -43,13 +42,18 @@ def test_smoketest_ticket_sales(db, testapp):
         }), headers=dict({
             "Authorization": "Bearer " + token
         }), status=200)
+        print(f"Ticket: {res.json_body}")
 
     # Ensure at least one ticket is sold
     stats = testapp.get('/statistics/ticket_sales', headers=dict({
         "Authorization": "Bearer " + token
     }), status=200).json_body
 
-    current_stats = next(filter(lambda stat: stat["event"]["uuid"] == str(testapp.get_current_event(db).uuid), stats))
+    current_event_uuid = str(testapp.get_current_event(db).uuid)
+    print(f"Current event UUID: {current_event_uuid}")
 
-    # No tickets should ever be sold
+    current_stats = next(filter(lambda stat: stat["event"]["uuid"] == current_event_uuid, stats))
+    print(f"Stats: {current_stats}")
+
+    # The two tickets should show up
     assert sum(map(lambda day: day["count"], current_stats["days"])) == 2

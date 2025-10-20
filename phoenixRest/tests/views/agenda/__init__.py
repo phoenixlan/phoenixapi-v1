@@ -6,7 +6,7 @@ import logging
 def test_get_agenda(testapp):
     return testapp.get('/agenda/', status=200)
 
-def test_create_modify_delete_agenda(testapp):
+def test_create_modify_delete_agenda(testapp, upcoming_event):
 
     # Test coverage:
     #    Title                  Active  Description

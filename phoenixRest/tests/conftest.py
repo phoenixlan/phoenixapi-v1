@@ -3,7 +3,10 @@ import pytest
 import transaction
 from phoenixRest.tests.test_app import TestApp
 from phoenixRest.models import setup_dbengine, get_tm_session
+from phoenixRest.models.core.event import Event
 from phoenixRest import main
+
+from datetime import datetime, timedelta
 
 import logging
 log = logging.getLogger(__name__)
@@ -42,3 +45,26 @@ def testapp(app, tm, db):
         'app.dbsession': db,
     })
 
+@pytest.fixture
+def upcoming_event(db):
+    """Creates an event that has not yet happened, but where ticketsale hasn't started yet"""
+
+    event_start = datetime.now() + timedelta(days=62)
+    event_end = datetime.now() + timedelta(days=65)
+
+    e = Event("Test event", event_start, event_end, 400)
+    db.add(e)
+    db.flush()
+    return e
+
+@pytest.fixture
+def ticketsale_ongoing_event(db):
+    """Creates an event that has not yet happened, where the ticket sale is currently ongoing"""
+
+    event_start = datetime.now() + timedelta(days=10)
+    event_end = datetime.now() + timedelta(days=13)
+
+    e = Event("Test event(Ticket sale ongoing)", event_start, event_end, 400)
+    db.add(e)
+    db.flush()
+    return e

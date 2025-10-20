@@ -2,7 +2,7 @@ from phoenixRest.models.core.event import Event
 
 from datetime import datetime
 
-def test_ticket_voucher_flow(testapp):
+def test_ticket_voucher_flow(testapp, upcoming_event):
     testapp.ensure_typical_event()
 
     # test is an admin
@@ -112,7 +112,7 @@ def test_ticket_voucher_flow(testapp):
     assert len(jeff_owned_vouchers) == 1
     assert jeff_owned_vouchers[0]['is_used'] == True
 
-def test_expired_voucher_flow(testapp, db):
+def test_expired_voucher_flow(testapp, db, upcoming_event):
     testapp.ensure_typical_event()
 
     # test is an admin

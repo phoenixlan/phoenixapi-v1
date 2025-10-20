@@ -1,5 +1,5 @@
 # Test getting the current event
-def test_get_event(testapp):
+def test_get_event(testapp, upcoming_event):
     res = testapp.get('/event/current', status=200)
     assert res.json_body['uuid'] is not None
 
@@ -12,7 +12,7 @@ def test_get_event(testapp):
 
 
 # Get ticket types for an event(we will use the current one)
-def test_get_ticket_types(testapp):
+def test_get_ticket_types(testapp, upcoming_event):
     current_event = testapp.get('/event/current', status=200)
     assert current_event.json_body['uuid'] is not None
 
