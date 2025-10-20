@@ -46,6 +46,9 @@ def get_all_positions(request):
 def create_position(context, request):
     position = Position(request.json_body['name'], request.json_body['description'])
 
+    position.chief = request.json_body['chief']
+    position.is_vanity = request.json_body['is_vanity']
+
     # Add crew
     if request.json_body['crew_uuid'] is not None:
         crew = request.db.query(Crew).filter(Crew.uuid == request.json_body['crew_uuid']).first()

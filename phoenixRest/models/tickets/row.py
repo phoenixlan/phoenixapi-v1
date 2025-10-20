@@ -63,5 +63,5 @@ class Row(Base):
             'entrance_uuid': self.entrance_uuid,
             'ticket_type_uuid': self.ticket_type_uuid,
             'row_number': self.row_number,
-            'seats': self.seats
+            'seats': sorted(self.seats, key=lambda seat: seat.number)
         }

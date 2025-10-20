@@ -1,5 +1,5 @@
 
-def test_ticket_creation_permissions(testapp):
+def test_ticket_creation_permissions(testapp, upcoming_event):
     testapp.ensure_typical_event()
     # test is an admin
     privileged_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')

@@ -2,7 +2,7 @@
 from phoenixRest.models.core.user import User
 from phoenixRest.models.core.user_consent import UserConsent, ConsentType
 
-def test_crew_mail_sending(testapp):
+def test_crew_mail_sending(testapp, upcoming_event):
     testapp.ensure_typical_event()
 
     sender_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
@@ -17,7 +17,7 @@ def test_crew_mail_sending(testapp):
 
     assert crew_mail_test['sent'] == 3 # The user is a crew member already
 
-def test_participant_mail_sending(testapp):
+def test_participant_mail_sending(testapp, upcoming_event):
     testapp.ensure_typical_event()
 
     sender_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
@@ -32,7 +32,7 @@ def test_participant_mail_sending(testapp):
 
     assert crew_mail_test['sent'] == 1
 
-def test_consent_mail_sending(db, testapp):
+def test_consent_mail_sending(db, testapp, upcoming_event):
     testapp.ensure_typical_event()
 
     sender_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
@@ -56,7 +56,7 @@ def test_consent_mail_sending(db, testapp):
 
     assert consent_mail_test['sent'] == 2
 
-def test_invalid_mail_category_send(testapp):
+def test_invalid_mail_category_send(testapp, upcoming_event):
     testapp.ensure_typical_event()
 
     # test is an admin

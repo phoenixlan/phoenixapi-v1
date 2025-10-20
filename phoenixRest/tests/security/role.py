@@ -8,7 +8,7 @@ import json
 import base64
 
 # Tests that roles are correctly given out depending on current event
-def test_role_event_assignment(testapp, db):
+def test_role_event_assignment(testapp, db, upcoming_event):
     last_event = testapp.get_last_event(db)
     current_event = testapp.get_current_event(db)
 

@@ -29,7 +29,7 @@ def create_application(testapp:TestApp, token, application_crews: list):
 
     return application_uuid
 
-def test_create_accept_appliations(testapp):
+def test_create_accept_appliations(testapp, upcoming_event):
     # Log in as the test user
     token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
     applicant_token, refresh = testapp.auth_get_tokens('greg@example.com', 'sixcharacters')
@@ -67,7 +67,7 @@ def test_create_accept_appliations(testapp):
     assert len(correct_mappings) == 1
     assert correct_mappings[0]['position']['crew_uuid'] == application_crew_candidates[0]['uuid']
     
-def test_create_reject_appliations(testapp):
+def test_create_reject_appliations(testapp, upcoming_event):
     # Log in as the test user
     token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
     applicant_token, refresh = testapp.auth_get_tokens('greg@example.com', 'sixcharacters')
@@ -103,7 +103,7 @@ def test_create_reject_appliations(testapp):
     correct_mappings = list(filter(lambda mapping: mapping['event_uuid'] == current_event['uuid'], applicant_user['position_mappings']))
     assert len(correct_mappings) == 0
     
-def hide_application(testapp, token, application_crews: list):
+def hide_application(testapp, token, application_crews: list, upcoming_event):
     token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
     applicant_token, refresh = testapp.auth_get_tokens('greg@example.com', 'sixcharacters')
 

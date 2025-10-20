@@ -4,7 +4,7 @@ from phoenixRest.models.core.consent_withdrawal_code import ConsentWithdrawalCod
 from phoenixRest.models.core.user import User
 from phoenixRest.models.crew.position import Position
 
-def test_crew_mail_dryryn(db, testapp):
+def test_crew_mail_dryryn(db, testapp, upcoming_event):
     """Tests that crew members receive mail when the crew_info category is used.
     Participants should not receive these mails.
     
@@ -107,7 +107,7 @@ def test_crew_mail_dryryn(db, testapp):
     assert consenting_user_pre == consenting_user_post
 
 
-def test_participant_mail_dryrun(testapp):
+def test_participant_mail_dryrun(testapp, upcoming_event):
     """Tests that all participants get e-mails when the participant_info category is used.
     Crew members should not receive these mails if they don't have a ticket
     
@@ -193,7 +193,7 @@ def test_participant_mail_dryrun(testapp):
     assert crew_mail_test_pre == crew_mail_test_post
     assert consenting_user_pre == consenting_user_post
 
-def test_invalid_mail_category_dryrun(testapp):
+def test_invalid_mail_category_dryrun(testapp, upcoming_event):
     testapp.ensure_typical_event()
 
     # test is an admin
@@ -207,7 +207,7 @@ def test_invalid_mail_category_dryrun(testapp):
         "Authorization": "Bearer " + sender_token
     }), status=400)
 
-def test_consent_mail_age_limit(db, testapp):
+def test_consent_mail_age_limit(db, testapp, upcoming_event):
     testapp.ensure_typical_event()
 
     # test is an admin

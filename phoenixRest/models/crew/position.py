@@ -33,8 +33,8 @@ class Position(Base):
 
     name = Column(Text)
     description = Column(Text)
-    chief = Column(Boolean, nullable=False, default=True)
-
+    
+    chief = Column(Boolean, nullable=False, default=False)
     is_vanity = Column(Boolean, nullable=False, server_default='False')
 
     position_mappings = relationship("PositionMapping", back_populates="position")
