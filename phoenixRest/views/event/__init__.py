@@ -47,7 +47,9 @@ class EventViews(object):
 
 @view_config(context=EventViews, name='current', request_method='GET', renderer='json', permission='current::get')
 def current(request):
-    return get_current_event(request)
+    e = get_current_event(request)
+    e.foo()
+    return e
 
 @view_config(context=EventViews, request_method='GET', renderer='json', permission='get')
 def get_events(request):
