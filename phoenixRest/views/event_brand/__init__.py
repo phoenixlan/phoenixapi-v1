@@ -5,7 +5,7 @@ from pyramid.httpexceptions import (
 from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
 
-from phoenixRest.models.core.event_type import EventType
+from phoenixRest.models.core.event_brand import EventBrand
 
 from phoenixRest.resource import resource
 
@@ -15,9 +15,9 @@ import logging
 log = logging.getLogger(__name__)
 
 
-@view_defaults(context='.EventTypeViews')
-@resource(name='event_type')
-class EventTypeResource(object):
+@view_defaults(context='.EventBrandResource')
+@resource(name='event_brand')
+class EventBrandResource(object):
     __acl__ = [
         (Allow, Everyone, 'get'),
         (Allow, ADMIN, 'create'),
@@ -26,8 +26,8 @@ class EventTypeResource(object):
         self.request = request
         log.info("event type class init")
 
-@view_config(context=EventTypeResource, request_method='GET', renderer='json', permission='get')
+@view_config(context=EventBrandResource, request_method='GET', renderer='json', permission='get')
 def get_event_types(request):
     # Find all events and sort them by start time
-    event_types = request.db.query(EventType).all()
+    event_types = request.db.query(EventBrand).all()
     return event_types
