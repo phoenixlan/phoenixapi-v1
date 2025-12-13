@@ -13,6 +13,7 @@ from phoenixRest.resource import resource
 from phoenixRest.roles import ADMIN, MEMBER
 
 from phoenixRest.models.core.user import User
+from phoenixRest.models.core.event import Event
 from phoenixRest.models.core.event import get_current_event
 from phoenixRest.models.crew.position_mapping import PositionMapping
 
@@ -39,7 +40,7 @@ class PositionMappingResource(object):
         return node
 
 @view_config(context=PositionMappingResource, name='', request_method='POST', renderer='json', permission='create_position_mapping')
-@validate(json_body={'user_uuid': str, 'position_uuid': str})
+@validate(json_body={'user_uuid': str, 'position_uuid': str, 'event_uuid': str})
 def create_mapping(context, request):
     user = request.db.query(User).filter(User.uuid == request.json_body['user_uuid']).first()
     if user is None:
@@ -56,13 +57,18 @@ def create_mapping(context, request):
         return {
             "error": "Position not found"
         }
-    
-    current_event = get_current_event(request)
+
+    event = request.db.query(Event).filter(Event.uuid == request.json_body['event_uuid']).first()
+    if event is None:
+        request.response.status = 404
+        return {
+            "error": "Event not found"
+        }
     
     existing_mapping = request.db.query(PositionMapping) \
         .filter(and_(
             PositionMapping.user == user,
-            PositionMapping.event == current_event,
+            PositionMapping.event == event,
             PositionMapping.position == position
         )) \
         .first()
@@ -73,7 +79,7 @@ def create_mapping(context, request):
             "error": "User already has a position mapping for the given position and event"
         }
 
-    mapping = PositionMapping(user, position, current_event)
+    mapping = PositionMapping(user, position, event)
 
     position.position_mappings.append(mapping)
     request.db.add(mapping)

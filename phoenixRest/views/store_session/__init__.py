@@ -6,11 +6,12 @@ from pyramid.httpexceptions import (
 from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
 
-from phoenixRest.models.core.event import get_current_event
+from phoenixRest.models.core.event import get_current_events, Event
 from phoenixRest.models.tickets.store_session import StoreSession
 from phoenixRest.models.tickets.store_session_cart_entry import StoreSessionCartEntry
 from phoenixRest.models.tickets.ticket_type import TicketType
 
+from phoenixRest.utils import validate
 from phoenixRest.resource import resource
 
 from phoenixRest.roles import ADMIN, TICKET_BYPASS_TICKETSALE_START_RESTRICTION, TICKET_WHOLESALE, TICKET_ADMIN
@@ -49,10 +50,25 @@ def get_active_sessions(request):
     return request.db.query(StoreSession).filter(StoreSession.expires > datetime.now()).order_by(StoreSession.created).all()
 
 @view_config(context=StoreSessionResource, name='', request_method='PUT', renderer='json', permission='create')
+@validate(json_body={'event_uuid': str})
 def create_store_session(context, request):
     max_purchase_amt = int(request.registry.settings["ticket.max_purchase_amt"])
     store_session_lifetime = int(request.registry.settings["ticket.store_session_lifetime"])
-    event = get_current_event(request)
+    
+    event = request.db.query(Event).filter(Event.uuid == request.json_body["event_uuid"]).first()
+    if event is None:
+        request.response.status = 400
+        return {
+            "error": "Event not found"
+        }
+    
+    active_events = list(map(lambda u: str(u), get_current_events(request.db)))
+    if str(event.uuid) not in active_events:
+        request.response.status = 400
+        return {
+            "error": f"Event is not current - you can't create a store session for a non-curent event"
+        }
+
 
     if datetime.now() < event.booking_time and TICKET_BYPASS_TICKETSALE_START_RESTRICTION not in request.effective_principals:
         request.response.status = 400
@@ -78,7 +94,7 @@ def create_store_session(context, request):
         }
 
     # Expiry is prolonged when the user is sent to external payment, as some payment providers implement their own mechanism for this(vipps)
-    store_session = StoreSession(request.user, store_session_lifetime)
+    store_session = StoreSession(request.user, store_session_lifetime, event)
 
     total_qty = 0
     for entry in request.json_body['cart']:

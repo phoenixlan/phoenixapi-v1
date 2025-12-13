@@ -3,8 +3,8 @@ import time
 import logging
 
 # Test getting the current event
-def test_get_agenda(testapp):
-    return testapp.get('/agenda/', status=200)
+def test_get_agenda(testapp, upcoming_event):
+    return testapp.get(f"/event/{upcoming_event.uuid}/agenda", status=200)
 
 def test_create_modify_delete_agenda(testapp, upcoming_event):
 
@@ -20,13 +20,12 @@ def test_create_modify_delete_agenda(testapp, upcoming_event):
     unprivileged_token, refresh = testapp.auth_get_tokens('jeff@example.com', 'sixcharacters')
     
     # Attempt to get current event
-    current_event = testapp.get('/event/current', status=200)
-    assert current_event.json_body['uuid'] is not None
+    current_event_uuid = str(upcoming_event.uuid)
 
     ### Test to create a new agenda entry as an admin (privileged) and as a regular user (unprivileged)
     # Attempt to create an agenda entry as an admin (Expects 200)
     privileged_entry = testapp.put_json('/agenda', dict({ 
-        'event_uuid': current_event.json_body['uuid'],
+        'event_uuid': current_event_uuid,
         'title': "Test agenda entry as privileged",
         'description': "Test description",
         'location': "Test location",
@@ -39,7 +38,7 @@ def test_create_modify_delete_agenda(testapp, upcoming_event):
 
     # Attempt to create an agenda entry as a regular user (Expects 403)
     unprivileged_entry = testapp.put_json('/agenda', dict({ 
-        'event_uuid': current_event.json_body['uuid'],
+        'event_uuid': current_event_uuid,
         'title': "Test agenda entry as unprivileged",
         'description': "Test description",
         'location': "Test location",
@@ -56,7 +55,7 @@ def test_create_modify_delete_agenda(testapp, upcoming_event):
     ### Test to modify a newly created agenda entry as an admin (privileged) and as a regular user (unprivileged)
     # Attempt to modify the newly created agenda entry as an admin, set everything (Expects 200)
     privileged_modification_setall = testapp.patch_json('/agenda/' + privileged_entry.json_body['uuid'], dict({ 
-        'event_uuid': current_event.json_body['uuid'],
+        'event_uuid': current_event_uuid,
         'title': "Modified the title",
         'description': "Modified the description",
         'location': "Modified the location",
@@ -74,7 +73,7 @@ def test_create_modify_delete_agenda(testapp, upcoming_event):
 
     # Attempt to modify the newly created agenda entry as an admin, reset everything (Expects 200)
     privileged_modification_resetall = testapp.patch_json('/agenda/' + privileged_entry.json_body['uuid'], dict({ 
-        'event_uuid': current_event.json_body['uuid'],
+        'event_uuid': current_event_uuid,
         'title': "Default title",
         'description': "Default description",
         'location': "Default location",
@@ -92,7 +91,7 @@ def test_create_modify_delete_agenda(testapp, upcoming_event):
 
     # Attempt to modify the newly created agenda entry as a regular user, set everything (Expects 403)
     unprivileged_modification_setall = testapp.patch_json('/agenda/' + privileged_entry.json_body['uuid'], dict({ 
-        'event_uuid': current_event.json_body['uuid'],
+        'event_uuid': current_event_uuid,
         'title': "Modified the title a regular user",
         'description': "Modified the description",
         'location': "Modified the location",

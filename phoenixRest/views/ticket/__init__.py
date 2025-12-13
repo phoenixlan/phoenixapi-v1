@@ -8,8 +8,9 @@ from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
 from phoenixRest.models.tickets.ticket_type import TicketType
 from phoenixRest.models.core.user import User
+from phoenixRest.models.core.event import Event
 from phoenixRest.models.tickets.ticket import Ticket
-from phoenixRest.models.core.event import get_current_event
+from phoenixRest.models.core.event import get_current_events
 
 from phoenixRest.utils import validate
 from phoenixRest.resource import resource
@@ -50,7 +51,7 @@ def get_all_tickets(context, request):
     return request.db.query(Ticket).order_by(Ticket.ticket_id).all()
 
 @view_config(name='', context=TicketResource, request_method='POST', renderer='json', permission='create')
-@validate(json_body={'recipient': str, 'ticket_type': str})
+@validate(json_body={'recipient': str, 'ticket_type': str, 'event_uuid': str})
 def create_ticket(context, request):
     receiving_user = request.db.query(User).filter(User.uuid == request.json_body['recipient']).first()
     if not receiving_user:
@@ -66,7 +67,22 @@ def create_ticket(context, request):
             "error": "Ticket type not found"
         }
 
-    ticket = Ticket(receiving_user, None, ticket_type, get_current_event(request))
+    event = request.db.query(Event).filter(Event.uuid == request.json_body["event_uuid"]).first()
+    if event is None:
+        request.response.status = 400
+        return {
+            "error": "Event not found"
+        }
+
+    active_events = list(map(lambda u: str(u), get_current_events(request.db)))
+    if str(event.uuid) not in active_events:
+        request.response.status = 400
+        return {
+            "error": f"Event is not current - you can't create a ticket for a non-curent event"
+        }
+
+
+    ticket = Ticket(receiving_user, None, ticket_type, event)
     request.db.add(ticket)
     request.db.flush()
 

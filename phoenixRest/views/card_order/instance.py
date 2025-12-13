@@ -54,7 +54,7 @@ def generate_crew_card_from_order(context, request):
     context.cardOrderInstance.last_updated = datetime.now()
     context.cardOrderInstance.updated_by_user = request.user
     
-    return generate_badge(request, context.cardOrderInstance.subject_user, get_current_event(request))
+    return generate_badge(request, context.cardOrderInstance.subject_user, context.cardOrderInstance.event)
 
 # Marks the order as finished
 @view_config(name="finish", context=CardOrderInstanceResource, request_method="PATCH", renderer="json", permission="finish")

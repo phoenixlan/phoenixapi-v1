@@ -14,20 +14,22 @@ def test_card_order(testapp:TestApp, upcoming_event):
     #? ---- __init__.py ----
     # Admin orders a card for themself
     res = testapp.post_json("/card_order/", dict({
-        "user_uuid" : admin_uuid
+        "user_uuid" : admin_uuid,
+        "event_uuid": str(upcoming_event.uuid)
     }), headers=dict({
         'Authorization': "Bearer " + admin_user_token
     }), status=200)
     
     # Admin orders a card with the wrong user uuid and it fails
     res = testapp.post_json("/card_order/", dict({
-        "user_uuid" : str(uuid.uuid4())
+        "user_uuid" : str(uuid.uuid4()),
+        "event_uuid": str(upcoming_event.uuid)
     }), headers=dict({
         'Authorization': "Bearer " + admin_user_token
     }), status=400)
     
     # Admin views all card orders, i.e the one they created
-    res = testapp.get("/card_order/", headers=dict({
+    res = testapp.get(f"/event/{upcoming_event.uuid}/card_orders", headers=dict({
         'Authorization': "Bearer " + admin_user_token
     }), status=200).json_body
     assert len(res) == 1
@@ -61,7 +63,8 @@ def test_card_order(testapp:TestApp, upcoming_event):
     
     # Admin orders a new card for themself
     res = testapp.post_json("/card_order/", dict({
-        "user_uuid" : admin_uuid
+        "user_uuid" : admin_uuid,
+        "event_uuid": str(upcoming_event.uuid)
     }), headers=dict({
         'Authorization': "Bearer " + admin_user_token
     }), status=200).json_body
@@ -80,15 +83,8 @@ def test_card_order(testapp:TestApp, upcoming_event):
     }), status=400)
     
     # Admin views all card orders for the current event
-    res = testapp.get("/card_order/", headers=dict({
+    res = testapp.get(f"/event/{upcoming_event.uuid}/card_orders", headers=dict({
         'Authorization': "Bearer " + admin_user_token
     }), status=200)
     assert len(res.json_body) == 2
     
-    # Admin views all card orders for a specified event, which happens to be the current one for convenience
-    current_event_uuid = testapp.get("/event/current/", status=200).json_body["uuid"]
-    
-    res = testapp.get(f"/card_order/", params=f"event_uuid={current_event_uuid}", headers=dict({
-        'Authorization': "Bearer " + admin_user_token
-    }), status=200)
-    assert len(res.json_body) == 2

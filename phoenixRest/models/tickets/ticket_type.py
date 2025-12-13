@@ -12,6 +12,8 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import UUID
 
+from sqlalchemy.orm import relationship
+
 from phoenixRest.models import Base
 
 import uuid
@@ -19,6 +21,9 @@ import uuid
 class TicketType(Base):
     __tablename__ = "ticket_type"
     uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
+
+    event_brand_uuid = Column(UUID(as_uuid=True), ForeignKey("event_brand.uuid"), nullable=True)
+    event_brand = relationship("EventBrand")
 
     name = Column(Text, nullable=False)
 
@@ -45,6 +50,7 @@ class TicketType(Base):
     def __json__(self, request):
         return {
             'uuid': str(self.uuid),
+            'event_brand_uuid': str(self.event_brand_uuid),
             'name': self.name,
             'price': self.price,
             'refundable': self.refundable,

@@ -2,9 +2,7 @@ from phoenixRest.models.core.event import Event
 
 from datetime import datetime
 
-def test_ticket_voucher_flow(testapp, upcoming_event):
-    testapp.ensure_typical_event()
-
+def test_ticket_voucher_flow(testapp, upcoming_event, ticket_types):
     # test is an admin
     sender_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
     receiver_token, refresh = testapp.auth_get_tokens('jeff@example.com', 'sixcharacters')
@@ -14,12 +12,8 @@ def test_ticket_voucher_flow(testapp, upcoming_event):
     receiver_user = testapp.get_user(receiver_token)
     third_party_user = testapp.get_user(third_party_token)
 
-    # Current event
-    current_event = testapp.get('/event/current', status=200).json_body
-    assert current_event['uuid'] is not None
-
     # Get existing ticket types
-    res = testapp.get('/event/%s/ticketType' % current_event['uuid'], headers=dict({
+    res = testapp.get('/event/%s/ticketType' % upcoming_event.uuid, headers=dict({
         "Authorization": "Bearer " + sender_token
     }), status=200)
     ticket_type = res.json_body[0]
@@ -60,7 +54,8 @@ def test_ticket_voucher_flow(testapp, upcoming_event):
     voucher = testapp.post_json('/ticket_voucher', dict({
         'ticket_type_uuid': ticket_type['uuid'],
         'recipient_user_uuid': receiver_user['uuid'],
-        'last_use_event_uuid': current_event['uuid']
+        'last_use_event_uuid': str(upcoming_event.uuid),
+        'event_brand_uuid': str(upcoming_event.event_brand.uuid)
     }), headers=dict({
         "Authorization": "Bearer " + sender_token
     }), status=200).json_body
@@ -103,7 +98,7 @@ def test_ticket_voucher_flow(testapp, upcoming_event):
     assert len(jeff_owned_tickets_pre) + 1 == len(jeff_owned_tickets_post)
 
     assert post_burn_voucher['ticket'] is not None
-    assert post_burn_voucher['ticket']['event']['uuid'] == current_event['uuid']
+    assert post_burn_voucher['ticket']['event']['uuid'] == str(upcoming_event.uuid)
 
     # Assert the ticket voucher is now burned
     jeff_owned_vouchers = testapp.get('/user/%s/ticket_vouchers' % receiver_user['uuid'], headers=dict({
@@ -112,9 +107,7 @@ def test_ticket_voucher_flow(testapp, upcoming_event):
     assert len(jeff_owned_vouchers) == 1
     assert jeff_owned_vouchers[0]['is_used'] == True
 
-def test_expired_voucher_flow(testapp, db, upcoming_event):
-    testapp.ensure_typical_event()
-
+def test_expired_voucher_flow(testapp, db, upcoming_event, ticket_types):
     # test is an admin
     sender_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
     receiver_token, refresh = testapp.auth_get_tokens('jeff@example.com', 'sixcharacters')
@@ -122,15 +115,11 @@ def test_expired_voucher_flow(testapp, db, upcoming_event):
     sender_user = testapp.get_user(sender_token)
     receiver_user = testapp.get_user(receiver_token)
 
-    # Current event
-    current_event = testapp.get('/event/current', status=200).json_body
-    assert current_event['uuid'] is not None
-    
     # Find an old event
     old_event = db.query(Event).filter(Event.end_time < datetime.now()).first()
 
     # Get existing ticket types
-    res = testapp.get('/event/%s/ticketType' % current_event['uuid'], headers=dict({
+    res = testapp.get('/event/%s/ticketType' % upcoming_event.uuid, headers=dict({
         "Authorization": "Bearer " + sender_token
     }), status=200)
     ticket_type = res.json_body[0]
@@ -145,6 +134,7 @@ def test_expired_voucher_flow(testapp, db, upcoming_event):
         'ticket_type_uuid': ticket_type['uuid'],
         'recipient_user_uuid': receiver_user['uuid'],
         'last_use_event_uuid': str(old_event.uuid),
+        'event_brand_uuid': str(upcoming_event.event_brand.uuid)
     }), headers=dict({
         "Authorization": "Bearer " + sender_token
     }), status=200).json_body

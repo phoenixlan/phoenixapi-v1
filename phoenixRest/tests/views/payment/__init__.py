@@ -6,11 +6,8 @@ import transaction
 
 from datetime import datetime, timedelta
 
-def _create_store_session(testapp, token):
-    res = testapp.get('/event/current', status=200)
-    assert res.json_body['uuid'] is not None
-
-    res = testapp.get('/event/%s/ticketType' % res.json_body['uuid'], headers=dict({
+def _create_store_session(testapp, event, token):
+    res = testapp.get('/event/%s/ticketType' % event.uuid, headers=dict({
         "Authorization": "Bearer " + token
     }), status=200)
 
@@ -18,7 +15,8 @@ def _create_store_session(testapp, token):
     res = testapp.put_json('/store_session', dict({
         'cart': [
             {'qty': 1, 'uuid': res.json_body[0]['uuid']}
-        ]
+        ],
+        'event_uuid': str(event.uuid)
     }), headers=dict({
         "Authorization": "Bearer " + token
     }), status=200)
@@ -28,20 +26,16 @@ def _create_store_session(testapp, token):
     assert store_session is not None
     return store_session
 
-def test_ticket_sale_start_limit(testapp, db, upcoming_event):
-    testapp.ensure_typical_event()
+def test_ticket_sale_start_limit(testapp, db, upcoming_event, ticket_types):
     # Jeff doesn't have permission to buy tickets any time
     token, refresh = testapp.auth_get_tokens('jeff@example.com', 'sixcharacters')
 
-    current_event = testapp.get('/event/current', status=200).json_body
-    assert current_event['uuid'] is not None
-
     # Make sure buying tickets is illegal
-    event_instance = db.query(Event).filter(Event.uuid == current_event['uuid']).first()
+    event_instance = db.query(Event).filter(Event.uuid == upcoming_event.uuid).first()
     event_instance.booking_time = datetime.now() + timedelta(days=1)
     transaction.commit()
 
-    res = testapp.get('/event/%s/ticketType' % current_event['uuid'], headers=dict({
+    res = testapp.get('/event/%s/ticketType' % upcoming_event.uuid, headers=dict({
         "Authorization": "Bearer " + token
     }), status=200)
 
@@ -55,11 +49,10 @@ def test_ticket_sale_start_limit(testapp, db, upcoming_event):
     }), status=400)
 
 # Test if we can create a payment
-def test_payment_flow_vipps(testapp, upcoming_event):
-    testapp.ensure_typical_event()
+def test_payment_flow_vipps(testapp, upcoming_event, ticket_types):
     token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
 
-    store_session = _create_store_session(testapp, token)
+    store_session = _create_store_session(testapp, upcoming_event, token)
     # Create a payment
     res = testapp.post_json('/payment', dict({
         'store_session': store_session,
@@ -137,11 +130,10 @@ def test_payment_flow_vipps(testapp, upcoming_event):
     
 
 # Test if we can create a payment
-def test_payment_flow_stripe(testapp, upcoming_event):
-    testapp.ensure_typical_event()
+def test_payment_flow_stripe(testapp, upcoming_event, ticket_types):
     token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
 
-    store_session = _create_store_session(testapp, token)
+    store_session = _create_store_session(testapp, upcoming_event, token)
     # Create a payment
     res = testapp.post_json('/payment', dict({
         'store_session': store_session,

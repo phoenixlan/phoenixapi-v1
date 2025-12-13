@@ -8,7 +8,8 @@ from sqlalchemy import (
     Integer,
     Boolean,
     Enum,
-    Table
+    Table,
+    func
 )
 from sqlalchemy.dialects.postgresql import UUID
 
@@ -17,6 +18,7 @@ from sqlalchemy import and_
 
 from phoenixRest.models import Base
 
+from phoenixRest.models.core.event_brand import EventBrand
 from phoenixRest.models.core.user import User
 from phoenixRest.models.tickets.ticket import Ticket
 from phoenixRest.models.tickets.ticket_type import TicketType
@@ -40,6 +42,9 @@ EventTicketTypeAssociation = Table('event_ticket_type_static_assoc', Base.metada
 class Event(Base):
     __tablename__ = "event"
     uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
+
+    event_brand_uuid = Column(UUID(as_uuid=True), ForeignKey("event_brand.uuid"), nullable=True)
+    event_brand = relationship("EventBrand", back_populates="events")
 
     booking_time = Column(DateTime, nullable=False)
     
@@ -69,7 +74,7 @@ class Event(Base):
 
     cancellation_reason = Column(Text)
 
-    def __init__(self, name: str, start_time: DateTime, end_time: DateTime, max_participants: int):
+    def __init__(self, name: str, start_time: DateTime, end_time: DateTime, max_participants: int, event_brand):
         self.name = name
         self.start_time = start_time
         self.end_time = end_time
@@ -77,12 +82,14 @@ class Event(Base):
         self.priority_seating_time_delta = 60*30
         self.seating_time_delta = 60*60
         self.max_participants = max_participants
+        self.event_brand = event_brand
 
 
     def __json__(self, request):
         return {
             'name': str(self.name),
             'uuid': str(self.uuid),
+            'event_brand_uuid': str(self.event_brand_uuid),
             'participant_age_limit_inclusive': self.participant_age_limit_inclusive,
             'crew_age_limit_inclusive': self.crew_age_limit_inclusive,
             'booking_time': int(self.booking_time.timestamp()),
@@ -109,10 +116,25 @@ class Event(Base):
             )) \
             .count()
 
-def get_current_event(request):
-    firstEvent = request.db.query(Event).filter(Event.end_time > datetime.now()).order_by(Event.start_time.asc()).first()
+def get_current_events(db):
+    """Returns the uuid of all active events, one per brand.
+    We use uuid as it is more useful"""
+    ranked_sub = db.query(
+        Event.uuid.label("uuid"), 
+        func.row_number().over(partition_by=Event.event_brand, order_by=Event.end_time.asc()).label("rank")
+    ).filter(Event.end_time > datetime.now()).subquery()
+
+    current_events = list(map(lambda row: row[0], db.query(ranked_sub.c.uuid).filter(ranked_sub.c.rank == 1).all()))
+    log.info(f"Current events: {current_events}")
+
+    return current_events
+
+
+def get_current_event(db, brand: "Brand"):
+    """Returns the current event for a given brand"""
+    firstEvent = db.query(Event).filter(Event.end_time > datetime.now(), Event.event_brand_uuid == brand.uuid).order_by(Event.start_time.asc()).first()
     if firstEvent is None:
-        logging.warning("There are no new events")
+        logging.warning(f"There are no new events for brand {brand.uuid}")
         return None
     else:
         # TODO we want to return ticket types some time? Maybe?

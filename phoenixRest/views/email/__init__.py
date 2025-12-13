@@ -9,6 +9,7 @@ from phoenixRest.models.core.user import User
 from phoenixRest.models.core.consent_withdrawal_code import ConsentWithdrawalCode
 from phoenixRest.models.core.user_consent import UserConsent, ConsentType
 from phoenixRest.models.core.event import Event, get_current_event
+from phoenixRest.models.core.event_brand import EventBrand
 from phoenixRest.models.tickets.ticket import Ticket
 from phoenixRest.models.tickets.ticket_voucher import TicketVoucher
 from phoenixRest.models.tickets.ticket_type import TicketType
@@ -41,8 +42,8 @@ class MailType(Enum):
     crew_info = auto()
     competition_info = auto()
 
-def get_recipients_by_category(request, category, argument):
-    current_event = get_current_event(request)
+def get_recipients_by_category(request, category, argument, brand):
+    current_event = get_current_event(request.db, brand)
     db = request.db
     current_user_uuid = request.user.uuid
 
@@ -198,9 +199,16 @@ class MarketingResource(object):
         self.request = request
 
 @view_config(name='dryrun', context=MarketingResource, request_method='POST', renderer='json', permission='test_email')
-@validate(json_body={'recipient_category': str, 'subject': str, 'body': str})
+@validate(json_body={'recipient_category': str, 'subject': str, 'body': str, 'brand_uuid': str})
 def test_mail(context, request):
     """Returns the amount of people who will receive the mail"""
+
+    brand = request.db.query(EventBrand).filter(EventBrand.uuid == request.json_body["brand_uuid"]).first()
+    if not brand:
+        request.response.status = 400
+        return {
+            "error": "Unknown brand"
+        }
 
     argument = request.json_body.get('argument')
 
@@ -217,7 +225,7 @@ def test_mail(context, request):
     # Parse the markdown just to ensure no exception is raised. Maybe we do more validation in the future
     mistune.html(request.json_body['body'])
 
-    recipients = get_recipients_by_category(request, category, argument)
+    recipients = get_recipients_by_category(request, category, argument, brand)
 
     # Test that all the info extraction functions also work
     for recipient in recipients:
@@ -227,8 +235,15 @@ def test_mail(context, request):
     }
 
 @view_config(name='send', context=MarketingResource, request_method='POST', renderer='json', permission='test_email')
-@validate(json_body={'recipient_category': str, 'subject': str, 'body': str})
+@validate(json_body={'recipient_category': str, 'subject': str, 'body': str, 'brand_uuid': str})
 def send_mail(context, request):
+    brand = request.db.query(EventBrand).filter(EventBrand.uuid == request.json_body["brand_uuid"]).first()
+    if not brand:
+        request.response.status = 400
+        return {
+            "error": "Unknown brand"
+        }
+
     argument = request.json_body.get('argument')
 
     category_str = request.json_body['recipient_category']
@@ -243,7 +258,7 @@ def send_mail(context, request):
     email_subject = request.json_body['subject']
     email_body = mistune.html(request.json_body['body'])
 
-    recipients = get_recipients_by_category(request, category, argument)
+    recipients = get_recipients_by_category(request, category, argument, brand)
 
     for recipient in recipients:
         template_file, template_context = get_mail_details_by_category(request, category, recipient)

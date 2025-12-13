@@ -17,6 +17,7 @@ from sqlalchemy.orm import relationship
 
 from phoenixRest.models import Base
 
+from phoenixRest.models.core.event_brand import EventBrand
 from phoenixRest.models.core.user import User
 
 from datetime import datetime, timedelta
@@ -27,7 +28,10 @@ import uuid
 class Crew(Base):
     __tablename__ = "crew"
     uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
-    
+
+    event_brand = Column(UUID(as_uuid=True), ForeignKey("event_brand.uuid"), nullable=True)
+    event = relationship("EventBrand")    
+
     name = Column(Text, nullable=False)
     description = Column(Text, nullable=False)
 
@@ -49,6 +53,7 @@ class Crew(Base):
     def __json__(self, request):
         return {
             'uuid': str(self.uuid),
+            'event_brand_uuid': str(self.event_brand_uuid),
             'name': self.name,
             'description': self.description,
             'active': self.active,
