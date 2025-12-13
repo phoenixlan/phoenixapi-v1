@@ -3,8 +3,6 @@ from phoenixRest.models.core.user_consent import UserConsent, ConsentType
 from phoenixRest.models.core.consent_withdrawal_code import ConsentWithdrawalCode
 
 def test_consent_withdrawal(testapp, db, upcoming_event):
-    testapp.ensure_typical_event()
-
     test_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
     target_token, refresh = testapp.auth_get_tokens('adam@example.com', 'sixcharacters')
 
@@ -26,7 +24,8 @@ def test_consent_withdrawal(testapp, db, upcoming_event):
     consenting_user_result = testapp.post_json('/email/dryrun', dict({
         'recipient_category': "event_notification",
         'subject': "hello",
-        'body': "# Foo bar\nHello"
+        'body': "# Foo bar\nHello",
+        'brand_uuid': str(upcoming_event.event_brand.uuid)
     }), headers=dict({
         "Authorization": "Bearer " + test_token
     }), status=200).json_body

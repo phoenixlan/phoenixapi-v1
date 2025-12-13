@@ -7,7 +7,7 @@ from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 from sqlalchemy import and_
 from sqlalchemy.orm import joinedload
 
-from phoenixRest.models.core.event import Event, get_current_event
+from phoenixRest.models.core.event import Event, get_current_events
 from phoenixRest.models.core.user import User
 from phoenixRest.models.core.avatar import Avatar
 
@@ -77,7 +77,7 @@ def get_applications_mine(request):
     return applications
 
 @view_config(context=ApplicationViews, name='', request_method='PUT', renderer='json', permission='create')
-@validate(json_body={'crews': list, 'contents': str})
+@validate(json_body={'crews': list, 'contents': str, 'event_uuid': str})
 def create_application(context, request):
     if request.user.avatar is None:
         request.response.status = 400
@@ -105,7 +105,7 @@ def create_application(context, request):
     crew_list = list(map(lambda crew: request.db.query(Crew).filter(Crew.uuid == crew).first(), request.json_body['crews']))
 
     if None in crew_list:
-        request.response.status = 404
+        request.response.status = 400
         return {
             "error": "Crew not found"
         }
@@ -117,8 +117,20 @@ def create_application(context, request):
                 "error": "You cannot apply to %s" % crew.name
             }
     
+    event = request.db.query(Event).filter(Event.uuid == request.json_body['event_uuid']).first()
+    if not event:
+        request.response.status = 400
+        return {
+            "error": "Event not found"
+        }
+
     # Fetch current event
-    event = get_current_event(request)
+    active_events = list(map(lambda u: str(u), get_current_events(request.db)))
+    if str(event.uuid) not in active_events:
+        request.response.status = 400
+        return {
+            "error": "Event is not current - you can't create an application for a non-current event"
+        }
 
     application = Application(user=request.user, 
                         event=event,

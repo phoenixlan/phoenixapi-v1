@@ -1,3 +1,4 @@
+from phoenixRest.models.core.event_brand import EventBrand
 from pyramid.paster import get_appsettings
 import pytest
 import transaction
@@ -46,25 +47,71 @@ def testapp(app, tm, db):
     })
 
 @pytest.fixture
-def upcoming_event(db):
+def event_brand(db):
+    """Creates an event brand that an event can be associated with"""
+    brand = EventBrand("Event brand!")
+    db.add(brand)
+    db.flush()
+    return brand
+
+@pytest.fixture
+def admin_token(testapp):
+    privileged_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
+    return privileged_token
+
+@pytest.fixture
+def upcoming_event(db, event_brand):
     """Creates an event that has not yet happened, but where ticketsale hasn't started yet"""
 
     event_start = datetime.now() + timedelta(days=62)
     event_end = datetime.now() + timedelta(days=65)
 
-    e = Event("Test event", event_start, event_end, 400)
+    e = Event("Test event", event_start, event_end, 400, event_brand)
     db.add(e)
     db.flush()
     return e
 
 @pytest.fixture
-def ticketsale_ongoing_event(db):
+def ticketsale_ongoing_event(db, event_brand):
     """Creates an event that has not yet happened, where the ticket sale is currently ongoing"""
 
     event_start = datetime.now() + timedelta(days=10)
     event_end = datetime.now() + timedelta(days=13)
 
-    e = Event("Test event(Ticket sale ongoing)", event_start, event_end, 400)
+    e = Event("Test event(Ticket sale ongoing)", event_start, event_end, 400, event_brand)
     db.add(e)
     db.flush()
     return e
+
+@pytest.fixture
+def ongoing_ticket_types(db, testapp, ticketsale_ongoing_event, admin_token):
+    """Adds existing ticket types to the current event (ticketsale ongoing)"""
+
+    all_ticket_types = testapp.get('/ticketType', headers=dict({
+        'Authorization': "Bearer " + admin_token
+    }), status=200).json_body
+
+    for ticket_type in all_ticket_types:
+        testapp.put_json('/event/%s/ticketType' % ticketsale_ongoing_event.uuid, dict({
+            'ticket_type_uuid': ticket_type['uuid']
+        }), headers=dict({
+            'Authorization': "Bearer " + admin_token
+        }), status=200)
+    
+    
+@pytest.fixture
+def ticket_types(db, testapp, upcoming_event, admin_token):
+    """Adds existing ticket types to the _upcoming event_ (sale not ongoing)"""
+
+    all_ticket_types = testapp.get('/ticketType', headers=dict({
+        'Authorization': "Bearer " + admin_token
+    }), status=200).json_body
+
+    for ticket_type in all_ticket_types:
+        testapp.put_json('/event/%s/ticketType' % upcoming_event.uuid, dict({
+            'ticket_type_uuid': ticket_type['uuid']
+        }), headers=dict({
+            'Authorization': "Bearer " + admin_token
+        }), status=200)
+    
+    

@@ -338,19 +338,15 @@ def get_owned_tickets(context, request):
 def get_ticket_vouchers(context, request):
     return request.db.query(TicketVoucher).filter(TicketVoucher.recipient_user == context.userInstance).all()
 
-# We only care about transfers from this event
 @view_config(context=UserInstanceResource, name='ticket_transfers', request_method='GET', renderer='json', permission='user_list_ticket_transfers')
+@validate(get={"event_uuid": str})
 def get_ticket_transfers(context, request):
-    event = None
-    if 'event_uuid' in request.GET:
-        event = request.db.query(Event).filter(Event.uuid == request.GET['event_uuid']).first()
-        if event is None:
-            request.response.status = 404
-            return {
-                'error': "Event not found"
-            }
-    else:
-        event = get_current_event(request)
+    event = request.db.query(Event).filter(Event.uuid == request.GET['event_uuid']).first()
+    if event is None:
+        request.response.status = 404
+        return {
+            'error': "Event not found"
+        }
 
     transfers = request.db.query(TicketTransfer).filter(and_(TicketTransfer.ticket.has(Ticket.event_uuid == event.uuid), or_(
         or_(TicketTransfer.from_user == context.userInstance),
@@ -611,7 +607,7 @@ def create_discord_mapping_oauth_url(context, request):
 # Generates a crew card
 @view_config(context=UserInstanceResource, name='crew_card', request_method='GET', renderer='pillow', permission='get_crew_card')
 def create_crew_card(context, request):
-    return generate_badge(request, context.userInstance, get_current_event(request))
+    return generate_badge(request, context.userInstance, get_current_event(request.db))
 
 @view_config(context=UserInstanceResource, name='applications', request_method='GET', renderer='json', permission='get_applications')
 def get_applications(context, request):

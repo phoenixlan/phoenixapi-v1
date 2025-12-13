@@ -24,8 +24,7 @@ log = logging.getLogger(__name__)
 @resource(name='event')
 class EventViews(object):
     __acl__ = [
-        (Allow, Everyone, 'current::get'),
-        (Allow, Everyone, 'get'),
+        (Allow, Everyone, 'list'),
         (Allow, ADMIN, 'create'),
 
         # Authenticated pages
@@ -45,11 +44,7 @@ class EventViews(object):
         node.__name__ = key
         return node
 
-@view_config(context=EventViews, name='current', request_method='GET', renderer='json', permission='current::get')
-def current(request):
-    return get_current_event(request)
-
-@view_config(context=EventViews, request_method='GET', renderer='json', permission='get')
+@view_config(context=EventViews, request_method='GET', renderer='json', permission='list')
 def get_events(request):
     # Find all events and sort them by start time
     events = request.db.query(Event).order_by(Event.start_time.asc()).all()
@@ -64,7 +59,3 @@ def create_event(request):
     request.db.add(event)
     request.db.flush()
     return event
-
-@view_config(context=EventViews, name='current', request_method='OPTIONS', renderer='string', permission='current::get')
-def token_options(request):
-    return ""

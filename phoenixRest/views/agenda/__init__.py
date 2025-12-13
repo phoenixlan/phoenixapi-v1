@@ -21,7 +21,6 @@ log = logging.getLogger(__name__)
 @resource(name='agenda')
 class AgendaViews(object):
     __acl__ = [
-        (Allow, Everyone, 'get'),
         (Allow, ADMIN, 'create'),
         (Allow, EVENT_ADMIN, 'create'),
         (Allow, INFO_ADMIN, 'create'),
@@ -35,16 +34,6 @@ class AgendaViews(object):
         node.__parent__ = self
         node.__name__ = key
         return node
-
-
-
-@view_config(context=AgendaViews, request_method='GET', renderer='json', permission='get')
-def get_agenda_entries(request):
-    # Find all events and sort them by start time
-    entries = request.db.query(AgendaEntry).filter(AgendaEntry.event == get_current_event(request)).order_by(AgendaEntry.time.asc()).all()
-    return entries 
-
-
 
 @view_config(context=AgendaViews, request_method='PUT', renderer='json', permission='create')
 @validate(json_body={'event_uuid': str, 'title': str, 'description': str, 'location': str, 'time': int, 'duration': int, 'pinned': bool})

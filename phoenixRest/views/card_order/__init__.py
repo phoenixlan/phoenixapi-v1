@@ -5,7 +5,7 @@ from pyramid.view import view_config
 from phoenixRest.resource import resource
 from phoenixRest.utils import validate
 
-from phoenixRest.models.core.event import Event, get_current_event
+from phoenixRest.models.core.event import Event, get_current_events
 from phoenixRest.models.core.user import User
 from phoenixRest.models.crew.card_order import CardOrder
 from phoenixRest.views.card_order.instance import CardOrderInstanceResource
@@ -15,11 +15,7 @@ class CardOrderResource(object):
     __acl__ = [
         # Roles with permission to create a new card order
          (Allow, CHIEF, "create"),
-         (Allow, ADMIN, "create"),
-        # Roles with permission to view all card orders for current event
-         (Allow, CHIEF, "view_all"),
-         (Allow, CREW_CARD_PRINTER, "view_all"),
-         (Allow, ADMIN, "view_all"),
+         (Allow, ADMIN, "create")
     ]   
          
     def __init__(self, request):
@@ -33,13 +29,20 @@ class CardOrderResource(object):
 
 # Creates a new card order
 @view_config(name="", context=CardOrderResource, request_method="POST", renderer="json", permission="create")
-@validate(json_body={"user_uuid": str})
+@validate(json_body={"user_uuid": str, "event_uuid": str})
 def create_card_order(context, request):
-    current_event = get_current_event(request)
-    if current_event is None:
+    event = request.db.query(Event).filter(Event.uuid == request.json_body['event_uuid']).first()
+    if not event:
         request.response.status = 400
         return {
-            "error": "Current event not found"
+            "error": "Event not found"
+        }
+
+    active_events = list(map(lambda u: str(u), get_current_events(request.db)))
+    if str(event.uuid) not in active_events:
+        request.response.status = 400
+        return {
+            "error": "Event is not current - you can't create an application for a non-current event"
         }
     
     subject_user_uuid = request.json_body["user_uuid"]
@@ -52,25 +55,8 @@ def create_card_order(context, request):
     
     creator_user = request.user
     
-    card_order = CardOrder(current_event, subject_user, creator_user)
+    card_order = CardOrder(event, subject_user, creator_user)
     request.db.add(card_order)
     request.db.flush()
     
     return card_order
-
-# Get all card orders for specified or current event
-@view_config(name="", context=CardOrderResource, request_method="GET", renderer="json", permission="view_all")
-def get_card_orders(context, request):
-    event = None
-    # We either get the specified event or the current event
-    if "event_uuid" in request.GET:
-        event = request.db.query(Event).filter(Event.uuid == request.GET["event_uuid"]).first()
-        if event is None:
-            request.response.status = 400
-            return {
-                'error': "Event not found"
-            }
-    else:
-        event = get_current_event(request)
-    
-    return request.db.query(CardOrder).filter(CardOrder.event_uuid == event.uuid).all()

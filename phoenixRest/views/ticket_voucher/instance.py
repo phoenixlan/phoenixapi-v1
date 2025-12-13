@@ -60,7 +60,7 @@ def burn_voucher(context, request):
 
     # Mint the ticket!
     context.ticketVoucherInstance.used = datetime.now()
-    ticket = Ticket(context.ticketVoucherInstance.recipient_user, None, context.ticketVoucherInstance.ticket_type, get_current_event(request))
+    ticket = Ticket(context.ticketVoucherInstance.recipient_user, None, context.ticketVoucherInstance.ticket_type, get_current_event(request.db, context.ticketVoucherInstance.event_brand))
     context.ticketVoucherInstance.ticket = ticket
 
     # Save it

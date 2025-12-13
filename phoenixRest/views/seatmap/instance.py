@@ -64,17 +64,21 @@ def get_seatmap(context, request):
     return context.seatmapInstance
 
 @view_config(context=SeatmapInstanceViews, name='availability', request_method='GET', renderer='json', permission='seatmap_get_availability')
+@validate(get={"event_uuid": str})
 def get_seatmap_availability(context, request):
-    event = None
-    if 'event_uuid' in request.GET:
-        event = request.db.query(Event).filter(Event.uuid == request.GET['event_uuid']).first()
-        if event is None:
-            request.response.status = 404
-            return {
-                'error': "Event not found"
-            }
-    else:
-        event = get_current_event(request)
+    event = request.db.query(Event).filter(Event.uuid == request.GET['event_uuid']).first()
+    if event is None:
+        request.response.status = 400
+        return {
+            'error': "Event not found"
+        }
+
+    if not event.seatmap or event.seatmap.uuid != context.seatmapInstance.uuid:
+        request.response.status = 400
+        return {
+            'error': "Specified event does not use this seatmap"
+        }
+        
     
     seatmap = request.db.query(Seatmap) \
         .join(Row, Row.seatmap_uuid == Seatmap.uuid) \

@@ -3,7 +3,7 @@ import transaction
 
 from phoenixRest.models.crew.position_mapping import PositionMapping
 
-def test_create_delete_position_mapping(testapp):
+def test_create_delete_position_mapping(testapp, upcoming_event):
     # Log in as the test user
     token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
     test_user_token, _ = testapp.auth_get_tokens('adam@example.com', 'sixcharacters')
@@ -16,7 +16,8 @@ def test_create_delete_position_mapping(testapp):
 
     created_mapping = testapp.post_json('/position_mapping', {
         "position_uuid": position_candidates[0]['uuid'],
-        "user_uuid": test_user['uuid']
+        "user_uuid": test_user['uuid'],
+        "event_uuid": str(upcoming_event.uuid)
     }, headers=dict({
         "Authorization": "Bearer " + token
     }), status=200).json_body
@@ -51,7 +52,7 @@ def test_create_delete_position_mapping(testapp):
     }), status=404)
     
 # Make sure a permissionless user can't make permission mappings. Low-hanging fruit to test
-def test_no_permissionless_promotion(testapp):
+def test_no_permissionless_promotion(testapp, upcoming_event):
     # Log in as the test user
     token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
     test_user_token, _ = testapp.auth_get_tokens('adam@example.com', 'sixcharacters')
@@ -64,7 +65,8 @@ def test_no_permissionless_promotion(testapp):
 
     testapp.post_json('/position_mapping', {
         "position_uuid": position_candidates[0]['uuid'],
-        "user_uuid": test_user['uuid']
+        "user_uuid": test_user['uuid'],
+        "event_uuid": str(upcoming_event.uuid)
     }, headers=dict({
         "Authorization": "Bearer " + test_user_token
     }), status=403)

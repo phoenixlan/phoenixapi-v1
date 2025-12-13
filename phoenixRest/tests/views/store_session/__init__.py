@@ -1,12 +1,8 @@
 # Test if we can reserve a store session
-def test_create_store_session(testapp, upcoming_event):
-    testapp.ensure_typical_event()
-    res = testapp.get('/event/current', status=200)
-    assert res.json_body['uuid'] is not None
-
+def test_create_store_session(testapp, upcoming_event, ticket_types):
     token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
 
-    res = testapp.get('/event/%s/ticketType' % res.json_body['uuid'], headers=dict({
+    res = testapp.get('/event/%s/ticketType' % upcoming_event.uuid, headers=dict({
         "Authorization": "Bearer " + token
     }), status=200)
 
@@ -14,7 +10,8 @@ def test_create_store_session(testapp, upcoming_event):
     res = testapp.put_json('/store_session', dict({
         'cart': [
             {'qty': 1, 'uuid': res.json_body[0]['uuid']}
-        ]
+        ],
+        'event_uuid': str(upcoming_event.uuid)
     }), headers=dict({
         "Authorization": "Bearer " + token
     }), status=200)

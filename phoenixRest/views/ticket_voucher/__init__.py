@@ -6,6 +6,7 @@ from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
 from phoenixRest.models.core.user import User
 from phoenixRest.models.core.event import Event
+from phoenixRest.models.core.event import EventBrand
 from phoenixRest.models.tickets.ticket_voucher import TicketVoucher
 from phoenixRest.models.tickets.ticket_type import TicketType
 
@@ -44,30 +45,37 @@ def get_vouchers(context, request):
     return request.db.query(TicketVoucher).all()
 
 @view_config(name='', context=TicketVoucherResource, request_method='POST', renderer='json', permission='create')
-@validate(json_body={'recipient_user_uuid': str, 'ticket_type_uuid': str, 'last_use_event_uuid': str})
+@validate(json_body={'recipient_user_uuid': str, 'ticket_type_uuid': str, 'last_use_event_uuid': str, 'event_brand_uuid': str})
 def create_voucher(context, request):
     recipient_user = request.db.query(User).filter(User.uuid == request.json_body['recipient_user_uuid']).first()
     if not recipient_user:
-        request.response.status = 404
+        request.response.status = 400
         return {
             "error": "recipient_user not found"
         }
     
     ticket_type = request.db.query(TicketType).filter(TicketType.uuid == request.json_body['ticket_type_uuid']).first()
     if not ticket_type:
-        request.response.status = 404
+        request.response.status = 400
         return {
             "error": "ticket_type not found"
         }
 
     last_use_event = request.db.query(Event).filter(Event.uuid == request.json_body['last_use_event_uuid']).first()
     if not last_use_event:
-        request.response.status = 404
+        request.response.status = 400
         return {
             "error": "last_use_event not found"
         }
+        
+    brand = request.db.query(EventBrand).filter(EventBrand.uuid == request.json_body['event_brand_uuid']).first()
+    if not brand:
+        request.response.status = 400
+        return {
+            "error": "Brand not found"
+        }
 
-    voucher = TicketVoucher(request.user, recipient_user, ticket_type, last_use_event)
+    voucher = TicketVoucher(request.user, recipient_user, ticket_type, brand, last_use_event)
     request.db.add(voucher)
     request.db.flush()
 

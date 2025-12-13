@@ -8,7 +8,7 @@ from pyramid.httpexceptions import (
 from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
 from phoenixRest.models.core.user import User
-from phoenixRest.models.core.event import get_current_event
+from phoenixRest.models.core.event import get_current_events
 from phoenixRest.models.tickets.ticket_transfer import TicketTransfer
 from phoenixRest.models.tickets.ticket import Ticket
 from phoenixRest.models.tickets.seat import Seat
@@ -76,8 +76,21 @@ def get_ticket(context, request):
 @validate(json_body={'seat_uuid': str})
 def seat_ticket(context, request):
     seat = request.db.query(Seat).filter(Seat.uuid == request.json_body['seat_uuid']).first()
-    event = get_current_event(request)
+    event = context.ticketInstance.event
+    
+    active_events = list(map(lambda u: str(u), get_current_events(request.db)))
+    if str(event.uuid) not in active_events:
+        request.response.status = 400
+        return {
+            "error": "You cannot seat a ticket for an event that is not current"
+        }
 
+    if event.seatmap_uuid != seat.row.seatmap.uuid:
+        request.response.status = 400
+        return {
+            "error": "The seat belongs to a different seatmap than that of the event the ticket belongs to"
+        }
+        
     seating_time = event.booking_time + timedelta(seconds=event.seating_time_delta)
 
     if not context.ticketInstance.ticket_type.seatable:
