@@ -51,8 +51,9 @@ def upcoming_event(db):
 
     event_start = datetime.now() + timedelta(days=62)
     event_end = datetime.now() + timedelta(days=65)
+    event_booking = datetime.now() + timedelta(days=30)
 
-    e = Event("Test event", event_start, event_end, 400)
+    e = Event("Test event", event_start, event_end, event_booking, 3600, 1800, 400, None, None, None, None, None)
     db.add(e)
     db.flush()
     return e
@@ -63,8 +64,9 @@ def ticketsale_ongoing_event(db):
 
     event_start = datetime.now() + timedelta(days=10)
     event_end = datetime.now() + timedelta(days=13)
+    event_booking = datetime.now()
 
-    e = Event("Test event(Ticket sale ongoing)", event_start, event_end, 400)
+    e = Event("Test event(Ticket sale ongoing)", event_start, event_end, event_booking, 3600, 1800, 400, None, None, None, None, None)
     db.add(e)
     db.flush()
     return e

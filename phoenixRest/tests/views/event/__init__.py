@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 
 # Test getting the current event
 def test_get_event(testapp, upcoming_event):
@@ -63,9 +63,9 @@ def test_create_event(testapp):
     # Attempt to create an event entry as an admin (Expects 200)
     privileged_entry = testapp.put_json('/event', dict({ 
         'name': "Privileged test event",
-        'start_time': int(datetime.datetime.now().timestamp() + timedelta(days=63)),
-        'end_time': int(datetime.datetime.now().timestamp() + timedelta(days=65)),
-        'booking_time': int(datetime.datetime.now().timestamp()),
+        'start_time': int(datetime.now().timestamp() + 172800),
+        'end_time': int(datetime.now().timestamp() + 86400),
+        'booking_time': int(datetime.now().timestamp()),
         'priority_seating_time_delta': 1800,
         'seating_time_delta': 3600,
         'max_participants': 200
@@ -76,9 +76,9 @@ def test_create_event(testapp):
     # Attempt to create an event entry as a regular user (Expects 403)
     unprivileged_entry = testapp.put_json('/event', dict({ 
         'name': "Unrivileged test event",
-        'start_time': int(datetime.datetime.now().timestamp() + timedelta(days=63)),
-        'end_time': int(datetime.datetime.now().timestamp() + timedelta(days=65)),
-        'booking_time': int(datetime.datetime.now().timestamp()),
+        'start_time': int(datetime.now().timestamp() + 172800),
+        'end_time': int(datetime.now().timestamp() + 86400),
+        'booking_time': int(datetime.now().timestamp()),
         'priority_seating_time_delta': 1800,
         'seating_time_delta': 3600,
         'max_participants': 403
