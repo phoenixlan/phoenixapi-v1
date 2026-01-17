@@ -39,6 +39,8 @@ from phoenixRest.resource import RootResource
 
 from phoenixRest.services import ServiceManager, setup_service_manager
 
+OAUTH_EXPIRY = 1*60 if "DEBUG" in os.environ else 10*60
+
 @subscriber(NewRequest)
 def log_request(evt):
     log.info("%s %s" % (evt.request.method, evt.request.url))
@@ -100,7 +102,7 @@ def main(global_config, **settings):
     # JWT
     config.set_authorization_policy(ACLAuthorizationPolicy())
     config.include('pyramid_jwt')
-    config.set_jwt_authentication_policy(JWT_SECRET, auth_type="Bearer" ,expiration=60*60 if "DEBUG" in os.environ else 10*60, callback=add_role_principals)
+    config.set_jwt_authentication_policy(JWT_SECRET, auth_type="Bearer" ,expiration=OAUTH_EXPIRY, callback=add_role_principals)
 
     # Pillow renderer
     config.add_renderer("pillow", ".features.pillow_renderer.PillowRendererFactory")

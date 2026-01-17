@@ -12,6 +12,7 @@ from phoenixRest.models.crew.position import Position
 from phoenixRest.models.core.event import get_current_event
 from phoenixRest.models.core.oauth.oauthCode import OauthCode
 from phoenixRest.models.core.oauth.refreshToken import OauthRefreshToken
+from phoenixRest import OAUTH_EXPIRY
 
 from phoenixRest.utils import validate
 
@@ -147,12 +148,15 @@ def token(request):
                 "error": "Invalid token"
             }
     
-        #refreshToken.refresh()
+        refreshToken.refresh()
+        request.db.add(refreshToken)
         # The refresh token was valid
 
         return {
             'access_token': generate_token(refreshToken.user, request),
-            #'refresh_token': refreshToken.token
+            'token_type': "Bearer",
+            'refresh_token': refreshToken.token,
+            'expires': OAUTH_EXPIRY
         }
     else:
         request.response.status = 400
