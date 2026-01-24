@@ -89,7 +89,7 @@ def test_create_event(testapp):
     # Attempt to get the event entry uuid (Expects True)
     assert privileged_entry.json_body['uuid'] != None
 
-def test_edit_event(testapp):
+def test_edit_event(testapp, upcoming_event):
 
     # Test coverage:
     #    Title                  Active  Description
@@ -97,24 +97,24 @@ def test_edit_event(testapp):
     #  * Security check:        [X]     Test permissions. Test that admins can edit and regular users cannot.
     #  * Dependency check:      [ ]     Test dependencies programmed in views/. (Not in use)
 
+    # Get current event
+    current_event = testapp.get('/event/current', status=200)
+    assert current_event.json_body['uuid'] is not None
+
     # Login with test accounts with admin privileges and no rights
     privileged_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
     unprivileged_token, refresh = testapp.auth_get_tokens('jeff@example.com', 'sixcharacters')
 
-    # Get current event
-    event = testapp.get('/event/current', status=200)
-    assert event.json_body['uuid'] is not None
-
     ### Test to edit an event as an admin (privileged) and as a regular user (unprivileged)
     # Attempt to edit an event as an admin (Expects 200)
-    privileged_entry = testapp.patch_json('/event/%s/edit' % event.json_body['uuid'], dict({
+    privileged_entry = testapp.patch_json('/event/%s/edit' % current_event.json_body['uuid'], dict({
         'name': "Edit event name as admin",
     }), headers=dict({
         "Authorization": "Bearer " + privileged_token
     }), status=200)
 
     # Attempt to create an event entry as a regular user (Expects 403)
-    unprivileged_entry = testapp.patch_json('/event/%s/edit' % event.json_body['uuid'], dict({
+    unprivileged_entry = testapp.patch_json('/event/%s/edit' % current_event.json_body['uuid'], dict({
         'name': "Edit event name as user",
     }), headers=dict({
         "Authorization": "Bearer " + unprivileged_token
