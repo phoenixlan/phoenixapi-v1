@@ -121,4 +121,4 @@ def test_edit_event(testapp):
     }), status=403)
 
     # Attempt to get the event entry uuid (Expects True)
-    # assert privileged_entry.json_body['uuid'] != None
+    assert privileged_entry.json_body['data']['name'] == "Edit event name as admin"
