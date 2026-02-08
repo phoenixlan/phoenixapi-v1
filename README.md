@@ -20,6 +20,15 @@ VIPPS_CALLBACK_URL
 VIPPS_MERCHANT_SERIAL_NUMBER
 ```
 
+Dependencies can be installed using `pip install -e '.[dev]'`. It is recommended that you work in a virtualenv. I.e do this:
+
+```
+virtualenv venv
+source venv/bin/activate
+pip install -e '.[dev]'
+```
+
+Then run `source venv/bin/activate` in every terminal you want to do stuff in.
 
 ## Starting the server
 
