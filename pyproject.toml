@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools >= 77.0.3"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "phoenixRest"
+requires-python = ">=3.9"
+description = "Open source event management system"
+readme = "README.md"
+
+dependencies = [
+    'pyramid',
+    'pyramid_chameleon',
+    'pyramid_tm',
+    'pyramid_jinja2',
+    'pyramid-jwt',
+    'sqlalchemy',
+    'gunicorn',
+    'zope.sqlalchemy',
+    'alembic',
+    'sqlalchemy_utils',
+    'passlib',
+    'argon2_cffi',
+    'qrcode',
+    'requests',
+    'sentry-sdk',
+    'Pillow',
+    'stripe',
+    'mistune',
+    'pika'
+]
+
+[project.entry-points."paste.app_factory"]
+main = "phoenixRest:main"
+
+[project.optional-dependencies]
+
+dev = [
+    'pyramid_debugtoolbar',
+    'pycodestyle',
+    'pytest',
+    'pytest-cov',
+    'webtest',
+]
