@@ -14,7 +14,7 @@ class PubsubMailService(MailService):
         service_manager.get_service('pubsub').ensure_task_queue('email')
 
         self.from_address = settings['api.automated_email_address']
-        self.sender = "Phoenix LAN"
+        self.sender = settings["api.name"]
     
     def _send_mail_impl(self, to: str, subject: str, body: str):
         log.info("Sending mail to %s, subj %s" % (to, subject))

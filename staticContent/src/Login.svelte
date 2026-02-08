@@ -4,6 +4,8 @@
 	import Logo from './components/Logo.svelte';
 	import Panel from './components/Panel.svelte';
 
+	import { fetchMetadata } from "./metadata"
+
 	import Spinner from 'svelte-spinner';
 
 	import { Textfield, Button } from 'svelte-mui';
@@ -53,22 +55,32 @@
 </script>
 
 <main>
-	<Logo />
+	{#await fetchMetadata() }
+		<div class="spinnerContainer">
+			<Spinner
+				size="50"
+				speed="750"
+				color="#999"
+				thickness="2"
+				gap="40"
+			/>
+		</div>
+	{:then metadata} 
+	<Logo url={metadata["logo"]}/>
 	<div class="divider"> </div>
 	<Panel>
 		<OauthSecurity>
 			<h1>Logg inn</h1>
-			<p><i>Du bruker den samme kontoen for alle tjenester hos Phoenix LAN</i></p>
-			<p><b>NB: Vi støtter ikke lenger å logge inn med brukernavn - vi vil senere bruke dette som display-navn</b></p>
+			<p><i>Du bruker den samme kontoen for alle tjenester hos { metadata["name"] }</i></p>
 			<form id="loginForm" on:submit|preventDefault={handleLogin}>
 				<Textfield
-			        name="username"
-			        autocomplete="off"
-			        required
-			        bind:value={username}
-			        label="E-post addresse"
-			        message="Skriv inn e-post addressen du registrerte med"
-			    />
+					name="username"
+					autocomplete="off"
+					required
+					bind:value={username}
+					label="E-post addresse"
+					message="Skriv inn e-post addressen du registrerte med"
+				/>
 				<Textfield
 					type="password"
 					name="password"
@@ -98,6 +110,10 @@
 			<p><a href={"forgot.html?client_id=" + encodeURIComponent(GET_PARAMS['client_id']) + "&redirect_uri=" + encodeURIComponent(GET_PARAMS['redirect_uri'])}>Glemt passord?</a></p>
 		</OauthSecurity>
 	</Panel>
+	{:catch error}
+		<h1>Feil</h1>
+		<p>Fikk ikke lastet siden. Prøv på nytt om et par minutter</p>
+	{/await}
 </main>
 
 <style>
