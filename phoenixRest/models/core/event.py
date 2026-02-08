@@ -26,6 +26,8 @@ from phoenixRest.models.tickets.seatmap import Seatmap
 
 from datetime import datetime, timedelta
 
+from typing import Optional
+
 import logging
 log = logging.getLogger(__name__)
 
@@ -68,7 +70,9 @@ class Event(Base):
 
     cancellation_reason = Column(Text)
 
-    def __init__(self, name: str, start_time: DateTime, end_time: DateTime, booking_time: DateTime, priority_seating_time_delta: int, seating_time_delta: int, max_participants: int, participant_age_limit_inclusive: int, crew_age_limit_inclusive: int, theme: str, location_uuid: str, seatmap_uuid: str):
+    def __init__(self, name: str, start_time: DateTime, end_time: DateTime, booking_time: DateTime, priority_seating_time_delta: int, seating_time_delta: int, 
+                 max_participants: int, participant_age_limit_inclusive: int, crew_age_limit_inclusive: int, theme: Optional[str], location_uuid: Optional[str], 
+                 seatmap_uuid: Optional[str]):
         self.name = name
         self.start_time = start_time
         self.end_time = end_time
