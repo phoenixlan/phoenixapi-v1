@@ -230,19 +230,44 @@ def edit_event(context, request):
             'data': error
         }
     
-    if update_name is True: context.eventInstance.name = request.json_body['name']
-    if update_start_time is True: context.eventInstance.start_time = start_time
-    if update_end_time is True: context.eventInstance.end_time = end_time
-    if update_booking_time is True: context.eventInstance.booking_time = booking_time
-    if update_priority_seating_time_delta is True: context.eventInstance.priority_seating_time_delta = request.json_body['priority_seating_time_delta']
-    if update_seating_time_delta is True: context.eventInstance.seating_time_delta = request.json_body['seating_time_delta']
-    if update_max_participants is True: context.eventInstance.max_participants = request.json_body['max_participants']
-    if update_participant_age_limit_inclusive is True: context.eventInstance.participant_age_limit_inclusive = request.json_body['participant_age_limit_inclusive']
-    if update_crew_age_limit_inclusive is True: context.eventInstance.crew_age_limit_inclusive = request.json_body['crew_age_limit_inclusive']
-    if update_theme is True: context.eventInstance.theme = request.json_body['theme']
-    if update_location_uuid is True: context.eventInstance.location_uuid = request.json_body['location_uuid']
-    if update_seatmap_uuid is True: context.eventInstance.seatmap_uuid = request.json_body['seatmap_uuid']
-    if update_cancellation_reason is True: context.eventInstance.cancellation_reason = request.json_body['cancellation_reason']
+    if update_name is True:
+        context.eventInstance.name = request.json_body['name']
+
+    if update_start_time is True:
+        context.eventInstance.start_time = start_time
+
+    if update_end_time is True:
+        context.eventInstance.end_time = end_time
+
+    if update_booking_time is True:
+        context.eventInstance.booking_time = booking_time
+
+    if update_priority_seating_time_delta is True:
+        context.eventInstance.priority_seating_time_delta = request.json_body['priority_seating_time_delta']
+    
+    if update_seating_time_delta is True:
+        context.eventInstance.seating_time_delta = request.json_body['seating_time_delta']
+    
+    if update_max_participants is True:
+        context.eventInstance.max_participants = request.json_body['max_participants']
+    
+    if update_participant_age_limit_inclusive is True:
+        context.eventInstance.participant_age_limit_inclusive = request.json_body['participant_age_limit_inclusive']
+    
+    if update_crew_age_limit_inclusive is True:
+        context.eventInstance.crew_age_limit_inclusive = request.json_body['crew_age_limit_inclusive']
+    
+    if update_theme is True:
+        context.eventInstance.theme = request.json_body['theme']
+    
+    if update_location_uuid is True:
+        context.eventInstance.location_uuid = request.json_body['location_uuid']
+    
+    if update_seatmap_uuid is True:
+        context.eventInstance.seatmap_uuid = request.json_body['seatmap_uuid']
+    
+    if update_cancellation_reason is True:
+        context.eventInstance.cancellation_reason = request.json_body['cancellation_reason']
     
     return {
         'info': 'Event information updated successfully',
