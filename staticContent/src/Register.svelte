@@ -11,6 +11,7 @@
 
 	import { Textfield, Button, Radio, Datefield, Checkbox } from 'svelte-mui';
 	import OauthSecurity from './components/OauthSecurity.svelte';
+    import { fetchMetadata } from './metadata';
 
 	var GET_PARAMS = {};
    	location.search.substr(1).split("&").forEach(function(item) {GET_PARAMS[item.split("=")[0]] = decodeURIComponent(item.split("=")[1]) });
@@ -115,7 +116,18 @@
 	}
 </script>
 <main>
-	<Logo />
+	{#await fetchMetadata()}
+		<div class="registering">
+			<Spinner
+				size="50"
+				speed="750"
+				color="#999"
+				thickness="2"
+				gap="40"
+			/>
+		</div>
+	{:then metadata}
+	<Logo url={metadata["logo"]}/>
 	<div class="divider"> </div>
 	<Panel>
 		<OauthSecurity optional=true>
@@ -232,7 +244,7 @@
 					label="Foresattes telefonnummer"
 					message="Obligatorisk dersom du er under 18 år"
 				/>
-				<Checkbox bind:checked={tosAccepted}>Jeg godtar brukervilkårene for Phoenix LAN</Checkbox>
+				<Checkbox bind:checked={tosAccepted}>Jeg godtar brukervilkårene for {metadata["name"]}</Checkbox>
 				<p>Brukervilkår finner du <a href="tos.html" target="_blank">her.</a></p>
 				<Checkbox bind:checked={eventNoticeConsented}>Send meg en e-post med påminnelse om kommende arrangementer</Checkbox>
 			</form>
@@ -263,7 +275,7 @@
 				<Fa icon={faCheck} style="font-size: 3em; color: green;"/>
 				<h1>Sjekk inboksen din</h1>
 				<p>Du må verifisere mail-kontoen for å logge inn. Du skal ha fått en mail. Sjekk inboksen din for å fortsette. Det kan ta et par minutter før mailen kommer. Husk å sjekke søppelpost!</p>
-				<p>Mottok du ikke mailen? Kontakt oss: <a href="mailto:info@phoenixlan.no">info@phoenixlan.no</a></p>
+				<p>Mottok du ikke mailen? Kontakt oss: <a href={"mailto:"+metadata["contact"]}>{metadata["contact"]}</a></p>
 			</div>
 			{:else}
 			<div class="loginPrompt">
@@ -272,6 +284,10 @@
 			{/if}
 		</OauthSecurity>
 	</Panel>
+	{:catch error}
+		<h1>Feil</h1>
+		<p>Fikk ikke lastet siden. Prøv på nytt om et par minutter</p>
+	{/await}
 </main>
 
 <style>
