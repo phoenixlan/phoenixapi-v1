@@ -38,6 +38,8 @@ class TicketInstanceResource(object):
             (Allow, ADMIN, 'check_in'),
             (Allow, TICKET_ADMIN, 'check_in'),
             (Allow, TICKET_CHECKIN, 'check_in'),
+            (Allow, ADMIN, 'view_ticket_transfer_log'),
+            (Allow, TICKET_ADMIN, 'view_ticket_transfer_log'),
         ]
         if self.ticketInstance is not None:
             acl = acl + [
@@ -184,5 +186,6 @@ def transfer_ticket(context, request):
     return transfer
 
 
-
-
+@view_config(context=TicketInstanceResource, name='transfer_log', request_method='GET', renderer='json', permission='view_ticket_transfer_log')
+def transfer_log(context, request):
+    return request.db.query(TicketTransfer).filter(TicketTransfer.ticket == context.ticketInstance).all()
