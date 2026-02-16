@@ -8,7 +8,7 @@ from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 from phoenixRest.models.core.user import User
 from phoenixRest.models.core.consent_withdrawal_code import ConsentWithdrawalCode
 from phoenixRest.models.core.user_consent import UserConsent, ConsentType
-from phoenixRest.models.core.event import Event, get_current_event
+from phoenixRest.models.core.event import Event, get_current_event, get_most_recent_event
 from phoenixRest.models.tickets.ticket import Ticket
 from phoenixRest.models.tickets.ticket_voucher import TicketVoucher
 from phoenixRest.models.tickets.ticket_type import TicketType
@@ -40,6 +40,8 @@ class MailType(Enum):
     participant_info = auto()
     crew_info = auto()
     competition_info = auto()
+    last_event_participants = auto()
+    last_event_crew = auto()
 
 def get_recipients_by_category(request, category, argument):
     current_event = get_current_event(request)
@@ -91,6 +93,41 @@ def get_recipients_by_category(request, category, argument):
                     ),
                     User.uuid == current_user_uuid)
                 ).all()
+        case MailType.last_event_participants:
+            most_recent_event = get_most_recent_event(request)
+            
+            ticket_owner_uuids = db.query(Ticket.owner_uuid) \
+                .filter(Ticket.event_uuid == most_recent_event.uuid).subquery()
+            
+            return db.query(User) \
+                .filter(or_(
+                    User.uuid.in_(ticket_owner_uuids),
+                    User.uuid == current_user_uuid
+                )).all()
+        case MailType.last_event_crew:
+            most_recent_event = get_most_recent_event(request)
+            # Fetch all positions with crew bindings
+            # It is technically possible to have a position but not be in a crew
+            # (For example, in order to give someone access to buying more tickets than usual)
+            positions_with_crew_membership = db.query(Position.uuid) \
+                .filter(Position.crew != None).subquery()
+
+            # Fetch all position mappings for current event that are connected to a crew
+            current_crew_list = db.query(PositionMapping.user_uuid) \
+                .filter(and_(
+                    or_(
+                        PositionMapping.event_uuid == most_recent_event.uuid,
+                        PositionMapping.event_uuid == None)
+                    ),
+                    PositionMapping.position_uuid.in_(positions_with_crew_membership)
+                ).subquery()
+            
+            # And then fetch all users that are in this list
+            return db.query(User) \
+                .filter(or_(
+                    User.uuid.in_(current_crew_list),
+                    User.uuid == current_user_uuid
+                )).all()
         case MailType.participant_info:
             # Get all user UUIDs that have tickets for this event
             ticket_owner_uuids = db.query(Ticket.owner_uuid) \
