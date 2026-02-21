@@ -32,7 +32,7 @@ jobs:
           export NEW_VERSION=$(echo "$MAJOR.$MINOR.$NEW_PATCH")
           echo "Determined new tag: $NEW_VERSION"
           echo "VERSION=$NEW_VERSION" >> "$GITHUB_OUTPUT"
-          echo -e \"$NEW_VERSION,${GITHUB_SHA}\" > .tags
+          echo -e \"$NEW_VERSION,${GITHUB_SHA},latest\" > .tags
       - name: Login to docker repo
         uses: docker/login-action@v2
         with:
