@@ -29,5 +29,5 @@ jobs:
           context: .
           push: true
           tags: |
-            ghcr.io/phoenixlan/${{ github.event.repository.name }}-prod:latest
-            ghcr.io/phoenixlan/${{ github.event.repository.name }}-prod:${{ github.sha }}
+            ghcr.io/phoenixlan/${{ github.event.repository.name }}:latest
+            ghcr.io/phoenixlan/${{ github.event.repository.name }}:${{ github.sha }}
