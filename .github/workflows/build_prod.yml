@@ -1,6 +1,8 @@
 name: build-prod
 on: 
- - workflow_dispatch
+  push:
+    branches:
+    - master
 jobs:
   run_tests:
     secrets: inherit

@@ -1,6 +1,8 @@
 name: build-api
 on: 
- - push
+  push:
+    branches:
+    - !master
 jobs:
   run_tests:
     secrets: inherit

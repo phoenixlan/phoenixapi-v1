@@ -38,6 +38,9 @@ dependencies = [
 [project.entry-points."paste.app_factory"]
 main = "phoenixRest:main"
 
+[project.scripts]
+mailWorker = "phoenixRest.scripts.worker:main"
+
 [project.optional-dependencies]
 
 dev = [
