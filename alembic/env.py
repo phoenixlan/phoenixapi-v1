@@ -101,7 +101,8 @@ def run_migrations_offline():
     raise NotImplementedError("Currently broken")
     if "POSTGRES_USER" in os.environ and "POSTGRES_PASSWORD" in os.environ and "DB_HOST" in os.environ:
         print("Setting up postgresql connection url")
-        connectionUri = "postgresql://%s:%s@%s/phoenix" % (os.environ['POSTGRES_USER'], os.environ['POSTGRES_PASSWORD'], os.environ['DB_HOST'])
+        database = os.environ.get("DATABASE", "phoenix")
+        connectionUri = "postgresql://%s:%s@%s/%s" % (os.environ['POSTGRES_USER'], os.environ['POSTGRES_PASSWORD'], os.environ['DB_HOST'], database)
         url = connectionUri
     else:
         print("No connection uri :(")
@@ -124,7 +125,8 @@ def run_migrations_online():
     section = config.get_section(config.config_ini_section)
     if "POSTGRES_USER" in os.environ and "POSTGRES_PASSWORD" in os.environ and "DB_HOST" in os.environ:
         print("Setting up postgresql connection url")
-        connectionUri = "postgresql://%s:%s@%s/phoenix" % (os.environ['POSTGRES_USER'], os.environ['POSTGRES_PASSWORD'], os.environ['DB_HOST'])
+        database = os.environ.get("DATABASE", "phoenix")
+        connectionUri = "postgresql://%s:%s@%s/%s" % (os.environ['POSTGRES_USER'], os.environ['POSTGRES_PASSWORD'], os.environ['DB_HOST'], database)
         section['sqlalchemy.url'] = connectionUri
 
     connectable = engine_from_config(
