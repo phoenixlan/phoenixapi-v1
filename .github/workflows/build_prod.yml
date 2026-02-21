@@ -18,6 +18,19 @@ jobs:
         uses: actions/checkout@v3
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
+      - name: Determine version
+        id: version
+        run: |
+          export MAJOR=$( git describe --abbrev=0 | cut -d. -f1)
+          export MINOR=$(git describe --abbrev=0 | cut -d. -f2)
+          export PATCH=$( git describe --abbrev=0 | cut -d. -f3 )
+          export DIST_FROM_TAG=$(git describe | cut -d- -f2)
+          echo "Detected tag: $MAJOR.$MINOR.$PATCH"
+          export NEW_PATCH=$(($PATCH+$DIST_FROM_TAG))
+          export NEW_VERSION=$(echo "$MAJOR.$MINOR.$NEW_PATCH")
+          echo "Determined new tag: $NEW_VERSION"
+          echo "VERSION=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+          echo -e \"$NEW_VERSION,${GITHUB_SHA}\" > .tags
       - name: Login to docker repo
         uses: docker/login-action@v2
         with:
@@ -31,5 +44,4 @@ jobs:
           context: .
           push: true
           tags: |
-            ghcr.io/phoenixlan/${{ github.event.repository.name }}:latest
-            ghcr.io/phoenixlan/${{ github.event.repository.name }}:${{ github.sha }}
+            ghcr.io/phoenixlan/${{ github.event.repository.name }}:${{ steps.version.outputs.VERSION }}
