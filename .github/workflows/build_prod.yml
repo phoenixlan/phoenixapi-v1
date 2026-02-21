@@ -8,6 +8,9 @@ jobs:
   build_docker-prod:
     runs-on: ubuntu-latest
     needs: run_tests
+    permissions:
+      packages: write
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -16,9 +19,9 @@ jobs:
       - name: Login to docker repo
         uses: docker/login-action@v2
         with:
-          registry: docker.infra.phoenixlan.no
-          username: ${{ secrets.REGISTRY_USERNAME}}
-          password: ${{ secrets.REGISTRY_PASSWORD }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and push
         uses: docker/build-push-action@v3
         with:
@@ -26,5 +29,5 @@ jobs:
           context: .
           push: true
           tags: |
-            docker.infra.phoenixlan.no/web/${{ github.event.repository.name }}-prod:latest
-            docker.infra.phoenixlan.no/web/${{ github.event.repository.name }}-prod:${{ github.sha }}
+            ghcr.io/phoenixlan/${{ github.event.repository.name }}-prod:latest
+            ghcr.io/phoenixlan/${{ github.event.repository.name }}-prod:${{ github.sha }}
