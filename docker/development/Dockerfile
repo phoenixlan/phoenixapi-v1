@@ -1,4 +1,4 @@
-FROM python:3.10
+FROM python:3.12
 
 RUN mkdir -p /srv/phoenixRest && groupadd -r phoenixRest && useradd -r -g phoenixRest phoenixRest; \
 chown phoenixRest:phoenixRest /srv/phoenixRest
@@ -7,7 +7,7 @@ chown phoenixRest:phoenixRest /srv/phoenixRest
 WORKDIR /srv/phoenixRest
 COPY . /srv/phoenixRest
 
-RUN rm -r docker && pip install -e . && pip install psycopg2; \
+RUN rm -r docker && pip install -e ".[dev]" && pip install psycopg2; \
 rm -r phoenixRest; mv alembic-docker.ini alembic.ini; \
 chmod +x /srv/phoenixRest/docker-startup.sh && \
 mkdir /uploads && chown phoenixRest /uploads

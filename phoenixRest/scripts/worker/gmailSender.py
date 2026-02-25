@@ -1,6 +1,7 @@
 from typing import List
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from email.utils import parseaddr
 from google.oauth2 import service_account
 from googleapiclient import discovery
 import base64
@@ -29,7 +30,10 @@ class GmailSender:
         return discovery.build('gmail', 'v1', credentials=delegated_creds)
 
     def send_email(self, from_address: str, to_addresses: List[str], subject: str, body: str):
-        service = self._build_service(from_address)
+        # from_address may contain a display name (e.g. "Name<email>"), but
+        # the Google API impersonation subject must be a plain email address.
+        _, plain_email = parseaddr(from_address)
+        service = self._build_service(plain_email or from_address)
 
         for to_address in to_addresses:
             msg = MIMEMultipart('alternative')

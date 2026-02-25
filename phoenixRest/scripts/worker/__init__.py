@@ -5,6 +5,7 @@ import os
 import requests
 import json
 import argparse
+import traceback
 
 from .mailgunSender import MailgunSender
 from .smtpSender import SmtpSender
@@ -65,7 +66,7 @@ def main(argv=sys.argv):
             log.info("Done sending e-mail")
             ch.basic_ack(delivery_tag=method.delivery_tag)
         except Exception as err:
-            log.warn("Failed to send e-mail: %s" % err)
+            log.warn("Failed to send e-mail: %s" % traceback.format_exc())
 
     channel.basic_consume(queue=listen_topic,
                         auto_ack=False,
