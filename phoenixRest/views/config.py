@@ -23,4 +23,5 @@ def server_config(request):
         "name": request.registry.settings["api.name"],
         "logo": request.registry.settings["api.logo"],
         "contact": request.registry.settings["api.contact"],
+        "features": request.feature_flags
     }
