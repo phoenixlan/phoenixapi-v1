@@ -247,6 +247,12 @@ def activate_account(context, request):
 @view_config(context=UserViews, name='connect_discord', request_method='GET', renderer='templates/connect_discord.jinja2', permission='connect_discord')
 @validate(get={"state": str, "code": str})
 def connect_discord(context, request):
+    if 'discord' not in request.feature_flags:
+        request.response.status = 400
+        return {
+            "error": "Discord functionality is not enabled"
+        }
+
     code = request.GET["code"]
     state = request.GET["state"]
     oauth_state = request.db.query(DiscordMappingOauthState) \

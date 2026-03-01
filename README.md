@@ -40,6 +40,26 @@ New pyramid views goes in `views.py`, and are registered in `__init__.py`. Pyram
 
 In order to create alembic migrations(needed for the actual database to be updated when you change a model), run `docker-compose run rest alembic revision --autogenerate -m "Revision name"`. This will auto-detect changes. Be sure to look over what changes were detected before actually applying it.
 
+## Setting up payment
+
+### Stripe
+
+Get a SK from Stripe website. Pass it to the API as the `STRIPE_API_KEY` environment variable.
+
+Set up a webhook, listening for `payment_intent.succeeded`. Provide the webhook secret as `STRIPE_ENDPOINT_SECRET`
+
+## Feature flags
+
+Feature flags can be configured in the `paste.ini` to enable or disable features. These are currently in use:
+
+ * `crew` - enables crew applications
+ * `membership` - enables organizational membership
+   - This is usually used to collect membership bonuses from the government, for youth orgs.
+ * `discord` - enables discord linking
+ * `avatar` - enables avatar upload
+ * `seatmap` - enables seatmaps
+ * `vipps` - enables payment by vipps
+ * `stripe` - enables payment by stripe
 
 ## Relevant documentation
 

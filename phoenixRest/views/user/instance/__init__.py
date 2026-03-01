@@ -439,6 +439,12 @@ def activate_user(context, request):
 @view_config(context=UserInstanceResource, name='avatar', request_method='POST', renderer='json', permission='avatar_upload')
 @validate(post={'x': str, 'y': str, 'w': str, 'h': str})
 def upload_avatar(context, request):
+    if 'avatar' not in request.feature_flags:
+        request.response.status = 400
+        return {
+            "error": "Avatar upload is not enabled"
+        }
+
     if context.userInstance.avatar is not None:
         raise HTTPBadRequest("You already have an avatar, delete that first")
     log.info("%s" % request.POST)
@@ -559,6 +565,12 @@ def get_membership_information(context, request):
 
 @view_config(context=UserInstanceResource, name='discord_mapping', request_method='GET', renderer='json', permission='get_discord_mapping')
 def get_discord_mapping(context, request):
+    if 'discord' not in request.feature_flags:
+        request.response.status = 400
+        return {
+            "error": "Discord functionality is not enabled"
+        }
+
     if context.userInstance.discord_mapping is None:
         request.response.status = 404
         return {
@@ -568,6 +580,12 @@ def get_discord_mapping(context, request):
 
 @view_config(context=UserInstanceResource, name='discord_mapping', request_method='DELETE', renderer='json', permission='delete_discord_mapping')
 def remove_discord_mapping(context, request):
+    if 'discord' not in request.feature_flags:
+        request.response.status = 400
+        return {
+            "error": "Discord functionality is not enabled"
+        }
+
     if context.userInstance.discord_mapping is None:
         request.response.status = 404
         return {
@@ -585,6 +603,12 @@ def remove_discord_mapping(context, request):
 # Creates the URL which the user needs to visit in order to authenticate with Discord.
 @view_config(context=UserInstanceResource, name='discord_mapping', request_method='POST', renderer='json', permission='create_discord_mapping')
 def create_discord_mapping_oauth_url(context, request):
+    if 'discord' not in request.feature_flags:
+        request.response.status = 400
+        return {
+            "error": "Discord functionality is not enabled"
+        }
+
     if not DISCORD_ENABLED:
         request.response.status = 400
         log.warn("User tried to initiate Discord mapping flow, but Discord functionality is not enabled on this server")

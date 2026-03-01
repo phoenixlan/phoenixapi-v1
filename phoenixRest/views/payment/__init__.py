@@ -62,7 +62,19 @@ def create_payment(context, request):
         return {
             "error": "Invalid payment provider"
         }
-    
+
+    if chosen_provider == PaymentProvider.vipps and 'vipps' not in request.feature_flags:
+        request.response.status = 400
+        return {
+            "error": "Vipps payments are not enabled"
+        }
+
+    if chosen_provider == PaymentProvider.stripe and 'stripe' not in request.feature_flags:
+        request.response.status = 400
+        return {
+            "error": "Stripe payments are not enabled"
+        }
+
     # Store session
     store_session = request.db.query(StoreSession).filter(StoreSession.uuid == request.json_body['store_session']).first()
 

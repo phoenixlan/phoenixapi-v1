@@ -79,6 +79,12 @@ def get_applications_mine(request):
 @view_config(context=ApplicationViews, name='', request_method='PUT', renderer='json', permission='create')
 @validate(json_body={'crews': list, 'contents': str})
 def create_application(context, request):
+    if 'crew' not in request.feature_flags:
+        request.response.status = 400
+        return {
+            "error": "Crew applications are not enabled"
+        }
+
     if request.user.avatar is None:
         request.response.status = 400
         return {
