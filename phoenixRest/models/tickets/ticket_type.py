@@ -28,18 +28,21 @@ class TicketType(Base):
 
     seatable = Column(Boolean, nullable=False, default=True)
 
+    grants_admission= Column(Boolean, nullable=False, server_default='true')
+
     requires_membership = Column(Boolean, server_default="false", nullable=False)
     grants_membership = Column(Boolean, server_default="true", nullable=False)
     
     description = Column(Text)
     
 
-    def __init__(self, name: str, price: int, description: str, refundable: bool, seatable: bool):
+    def __init__(self, name: str, price: int, description: str, refundable: bool, seatable: bool, grants_admission: bool):
         self.name = name
         self.price = price
         self.description = description 
         self.refundable = refundable
         self.seatable = seatable
+        self.grants_admission = grants_admission
 
 
     def __json__(self, request):
@@ -49,6 +52,7 @@ class TicketType(Base):
             'price': self.price,
             'refundable': self.refundable,
             'seatable': self.seatable,
+            'grants_admission': self.grants_admission,
             'description': self.description,
             'requires_membership': self.requires_membership,
             'grants_membership': self.grants_membership
