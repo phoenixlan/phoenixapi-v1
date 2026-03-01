@@ -59,7 +59,7 @@ def test_long_payment_str(db, testapp):
     multisal = db.query(TicketType).filter(TicketType.name == "Multisal").first()
 
     # Invent some weird non-ticket type to overflow things
-    weirdType = TicketType("Weird long ticket type. it's a very long name. How long? Too long!", 20, "test type", False, False)
+    weirdType = TicketType("Weird long ticket type. it's a very long name. How long? Too long!", 20, "test type", False, False, False)
     db.add(weirdType)
 
     # Create cart entry

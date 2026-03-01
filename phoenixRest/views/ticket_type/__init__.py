@@ -40,8 +40,9 @@ def get_all_ticket_types(context, request):
     return request.db.query(TicketType).order_by(TicketType.name).all()
 
 @view_config(name='', context=TicketTypeResource, request_method='POST', renderer='json', permission='create')
-@validate(json_body={'name': str, 'price': int, 'refundable': bool, 'seatable': bool, 'description': str})
+@validate(json_body={'name': str, 'price': int, 'refundable': bool, 'seatable': bool, 'description': str, 'grants_admission': bool})
 def create_ticket_type(context, request):
+    # TODO: broken
     entrance = TicketType(request.json_body['name'])
     request.db.add(entrance)
     request.db.flush()
