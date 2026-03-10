@@ -148,6 +148,7 @@ def get_totp(context, request):
         context.ticketInstance.totp = totp
         request.db.add(totp)
         
+    # Not providing a serializer on the model here is intentional to force a crash if for some reason another endpoint wants to include the totp
     return {
         "totp": context.ticketInstance.totp.totp
     }
