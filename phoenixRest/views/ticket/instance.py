@@ -145,8 +145,11 @@ def get_totp(context, request):
 
     if context.ticketInstance.totp is None:
         totp = TicketTotp(context.ticketInstance)
-        context.ticketInstance.totp = totp
         request.db.add(totp)
+        request.db.flush()
+        log.info(f"No totp, creating new: {totp.totp}")
+    else:
+        log.info(f"totp already exists: {context.ticketInstance.totp.totp}")
         
     # Not providing a serializer on the model here is intentional to force a crash if for some reason another endpoint wants to include the totp
     return {
@@ -174,6 +177,15 @@ def transfer_ticket(context, request):
         return {
             'error': "The ticket can still be returned to the original owner, so you cannot transfer it further"
         }
+
+    # Reset the totp token so the previous owner can't check it in any more
+    if context.ticketInstance.totp is not None:
+        log.info(f"There is a totp, so deleting it: {context.ticketInstance.totp}")
+        request.db.delete(context.ticketInstance.totp)
+        context.ticketInstance.totp = None
+    else:
+        log.info("No totp, no deletion necessary")
+
     
     transfer = TicketTransfer(request.user, transfer_target, context.ticketInstance)
     request.db.add(transfer)
@@ -197,9 +209,6 @@ def transfer_ticket(context, request):
         "hours": expiry_offset/60/60,
         "ticket": context.ticketInstance
     })
-
-    # Reset the totp token so you previous owner can't check it in any more
-    request.db.delete(context.ticketInstance.totp)
 
     return transfer
 
