@@ -35,5 +35,5 @@ class TicketTotp(Base):
 
     def __init__(self, ticket):
         self.ticket = ticket
-        self.totp = base64.b64encode(secrets.token_bytes(nbytes=20)).decode("ascii")
+        self.totp = base64.b32encode(secrets.token_bytes(nbytes=20)).decode("ascii")
 
