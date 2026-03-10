@@ -149,7 +149,7 @@ def get_totp(context, request):
         request.db.add(totp)
         
     return {
-        "totp": context.ticketInstance.totp
+        "totp": context.ticketInstance.totp.totp
     }
 
 @view_config(context=TicketInstanceResource, name='transfer', request_method='POST', renderer='json', permission='transfer_ticket')
