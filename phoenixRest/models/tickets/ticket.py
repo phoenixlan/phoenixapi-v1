@@ -53,7 +53,7 @@ class Ticket(Base):
 
     created = Column(DateTime, nullable=False)
 
-    totp= relationship("TicketTotp", back_populates="ticket")
+    totp= relationship("TicketTotp", back_populates="ticket", uselist=False)
 
     checked_in = Column(DateTime, nullable=True)
 
