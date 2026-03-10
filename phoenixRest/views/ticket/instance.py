@@ -1,3 +1,4 @@
+from phoenixRest.models.tickets.ticket_totp import TicketTotp
 from operator import and_
 from pyramid.view import view_config, view_defaults
 from pyramid.httpexceptions import (
@@ -21,6 +22,7 @@ from sqlalchemy import and_
 
 from datetime import datetime, timedelta
 
+import secrets
 import logging
 log = logging.getLogger(__name__)
 
@@ -50,6 +52,8 @@ class TicketInstanceResource(object):
 
                 # Ticket owner can seat their own ticket
                 (Allow, "%s" % self.ticketInstance.owner.uuid, 'seat_ticket'),
+                # Ticket owner can get totp
+                (Allow, "%s" % self.ticketInstance.owner.uuid, 'get_totp'),
             ]
             if self.ticketInstance.seater is not None:
                 # Seaters can also seat the ticket
@@ -135,6 +139,18 @@ def set_seater(context, request):
 
     return context.ticketInstance
 
+@view_config(context=TicketInstanceResource, name='totp', request_method='GET', renderer='json', permission='get_totp')
+def get_totp(context, request):
+    """Gets (or generates) the totp for the ticket, allowing for secure checkin if wanted""" 
+
+    if context.ticketInstance.totp is None:
+        totp = TicketTotp(context.ticketInstance)
+        context.ticketInstance.totp = totp
+        request.db.add(totp)
+        
+    return {
+        "totp": context.ticketInstance.totp
+    }
 
 @view_config(context=TicketInstanceResource, name='transfer', request_method='POST', renderer='json', permission='transfer_ticket')
 @validate(json_body={'user_email': str})
@@ -180,6 +196,9 @@ def transfer_ticket(context, request):
         "hours": expiry_offset/60/60,
         "ticket": context.ticketInstance
     })
+
+    # Reset the totp token so you previous owner can't check it in any more
+    context.ticketInstance.totp = None
 
     return transfer
 

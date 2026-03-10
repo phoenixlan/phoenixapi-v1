@@ -53,6 +53,8 @@ class Ticket(Base):
 
     created = Column(DateTime, nullable=False)
 
+    totp= relationship("TicketTotp", back_populates="ticket")
+
     checked_in = Column(DateTime, nullable=True)
 
     def __init__(self, buyer: User, payment: Payment, ticket_type: TicketType, event):

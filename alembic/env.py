@@ -63,7 +63,8 @@ from phoenixRest.models.tickets import (
     ticket,
     ticket_transfer,
     ticket_voucher,
-    seatmap_background
+    seatmap_background,
+    ticket_totp
 )
 
 from phoenixRest.models.tickets.payment_providers import (
