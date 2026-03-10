@@ -199,7 +199,7 @@ def transfer_ticket(context, request):
     })
 
     # Reset the totp token so you previous owner can't check it in any more
-    context.ticketInstance.totp = None
+    request.db.remove(context.ticketInstance.totp)
 
     return transfer
 
