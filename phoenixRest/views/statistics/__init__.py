@@ -177,12 +177,12 @@ def get_ticket_sales_stats(context, request):
         if include_free:
             possible_ticket_type_partial = possible_ticket_type_partial.filter(and_(
                 #TicketType.price != 0,
-                TicketType.seatable == True
+                TicketType.grants_admission == True
                 ))
         else:
             possible_ticket_type_partial = possible_ticket_type_partial.filter(and_(
                 TicketType.price != 0,
-                TicketType.seatable == True
+                TicketType.grants_admission == True
             ))
         possible_ticket_types = possible_ticket_type_partial.subquery()
 
