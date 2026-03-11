@@ -24,6 +24,7 @@ log = logging.getLogger(__name__)
 @resource(name='position')
 class PositionResource(object):
     __acl__ = [
+        (Allow, ADMIN, 'getAll'),
         (Allow, MEMBER, 'getAll'),
         (Allow, ADMIN, 'create_position'),
     ]
