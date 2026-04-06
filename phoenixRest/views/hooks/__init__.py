@@ -130,6 +130,7 @@ def vipps_hook(context, request):
             log.warning("Security issue: tried to activate a payment that was not in state: initiated")
             raise HTTPBadRequest("Tried to request a hook on a payment which has already gotten a callback")
         if capture_vipps_payment(vipps_payment):
+            vipps_payment.state = "CAPTURED"
             finalize_vipps_payment(request, vipps_payment)
             log.info("Successfully registered vipps sale")
         else:

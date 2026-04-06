@@ -311,7 +311,9 @@ def forgot_password(context, request):
         }
     url = request.registry.settings["oauth.%s.redirect_url" % client_id]
 
-    user = request.db.query(User).filter(or_(User.username == request.json_body['login'], User.email == request.json_body['login'])).first()
+    forgot_key = request.json_body['login'].strip()
+
+    user = request.db.query(User).filter(User.email == forgot_key.lower()).first()
     if not user:
         log.warn("Got a forgot password request for an account that doesn't exist")
     else:

@@ -110,7 +110,7 @@
 				error = resp.error
 			} catch(e) {
 				registerState = STATES.failure;
-				error = `En ukjent feil har oppstått, kontakt info@phoenixlan.no: ${e}`
+				error = `En ukjent feil har oppstått, kontakt oss for mer hjelp: ${e}`
 			}
 		}
 	}
