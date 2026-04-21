@@ -105,14 +105,14 @@ class Event(Base):
             'cancellation_reason': self.cancellation_reason
         }
     
-    """
-    Returns a numer prepresenting the total number of tickets left for the event
-    """
     def get_total_ticket_availability(self, request):
+        """
+        Returns a numer prepresenting the total number of tickets left for the event
+        """
         return self.max_participants - request.db.query(Ticket) \
             .join(TicketType, Ticket.ticket_type_uuid == TicketType.uuid) \
             .filter(and_(
-                TicketType.seatable == True,
+                TicketType.grants_admission == True,
                 Ticket.event_uuid == self.uuid
             )) \
             .count()
