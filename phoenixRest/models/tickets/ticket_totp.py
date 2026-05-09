@@ -22,7 +22,9 @@ from datetime import datetime, timedelta
 import secrets
 import base64
 import pyotp
+import logging
 
+log = logging.getLogger(__name__)
 
 def gen_totp():
     return base64.b32encode(secrets.token_bytes(nbytes=20)).decode("ascii")
@@ -45,5 +47,5 @@ class TicketTotp(Base):
         self.ticket = ticket
 
     def verify(self, totp_input):
-        totp = pyotp.TOTP(self.totp)
-        return totp.verify(totp_input)
+        totp = pyotp.TOTP(self.totp, digits=8)
+        return totp.verify(totp_input, valid_window=1)
