@@ -1,4 +1,3 @@
-
 from sqlalchemy import (
     Column,
     DateTime,
@@ -10,7 +9,7 @@ from sqlalchemy import (
     Boolean,
     Enum,
     Table,
-    Identity
+    Identity,
 )
 from sqlalchemy.dialects.postgresql import UUID
 
@@ -22,20 +21,29 @@ from datetime import datetime, timedelta
 
 import secrets
 import base64
+import pyotp
+
 
 def gen_totp():
     return base64.b32encode(secrets.token_bytes(nbytes=20)).decode("ascii")
 
+
 class TicketTotp(Base):
     """Enables some additional protection against ticket abuse"""
+
     __tablename__ = "ticket_totp"
-    ticket_id = Column(Integer, ForeignKey("ticket.ticket_id"), nullable=False, primary_key=True)
+    ticket_id = Column(
+        Integer, ForeignKey("ticket.ticket_id"), nullable=False, primary_key=True
+    )
     ticket = relationship("Ticket", back_populates="totp")
 
-    totp= Column(Text, nullable=False, default=gen_totp)
+    totp = Column(Text, nullable=False, default=gen_totp)
 
     created = Column(DateTime, nullable=False, default=datetime.now)
 
     def __init__(self, ticket):
         self.ticket = ticket
 
+    def verify(self, totp_input):
+        totp = pyotp.TOTP(self.totp)
+        return totp.verify(totp_input)

@@ -73,6 +73,20 @@ class TicketInstanceResource(object):
 
 @view_config(context=TicketInstanceResource, name='', request_method='GET', renderer='json', permission='view_ticket')
 def get_ticket(context, request):
+    if "totp" in request.GET:
+        totp = context.ticketInstance.totp
+        if totp is None:
+            request.response.status = 403
+            return {
+                'error': "Ticket doesn't have a totp code"
+            }
+            
+        if not totp.verify(request.GET["totp"]):
+            request.response.status = 403
+            return {
+                'error': "Invalid totp - counterfeit ticket"
+            }
+            
     return context.ticketInstance
 
 
@@ -114,6 +128,21 @@ def seat_ticket(context, request):
 
 @view_config(context=TicketInstanceResource, name='check_in', request_method='POST', renderer='json', permission='check_in')
 def check_in_ticket(context, request):
+    # If the totp parameter is set, we verify
+    if "totp" in request.GET:
+        totp = context.ticketInstance.totp
+        if totp is None:
+            request.response.status = 403
+            return {
+                'error': "Ticket doesn't have a totp code"
+            }
+
+        if not totp.verify(request.GET["totp"]):
+            request.response.status = 403
+            return {
+                'error': "Invalid totp - counterfeit ticket"
+            }
+            
     if context.ticketInstance.checked_in is not None:
         request.response.status = 400;
         return {

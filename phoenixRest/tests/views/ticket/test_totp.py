@@ -2,6 +2,7 @@ from phoenixRest.tests.views.ticket.test_seating import ensure_ticket
 from phoenixRest.models.tickets.ticket_totp import TicketTotp
 
 import transaction
+import pyotp
 import time
 
 def test_totp_generated_when_none_exists(testapp, upcoming_event):
@@ -112,3 +113,61 @@ def test_ticket_transfer_totp_cleanup(db, testapp, upcoming_event):
 
     assert len(db.query(TicketTotp).all()) == 0
     transaction.commit()
+
+
+def test_get_ticket_verifies_totp_when_set(testapp, upcoming_event):
+    testapp.ensure_typical_event()
+    token, refresh = testapp.auth_get_tokens("test@example.com", "sixcharacters")
+
+    current_event = testapp.get("/event/current", status=200).json_body
+    ticket = ensure_ticket(testapp, token, current_event["uuid"])
+
+    totp_res = testapp.get(
+        "/ticket/%s/totp" % ticket["ticket_id"],
+        headers=dict({"Authorization": "Bearer " + token}),
+        status=200,
+    ).json_body
+    totp_secret = totp_res["totp"]
+
+    valid_code = pyotp.TOTP(totp_secret).now()
+
+    testapp.get(
+        "/ticket/%s?totp=%s" % (ticket["ticket_id"], valid_code),
+        headers=dict({"Authorization": "Bearer " + token}),
+        status=200,
+    )
+
+    testapp.get(
+        "/ticket/%s?totp=%s" % (ticket["ticket_id"], "000000"),
+        headers=dict({"Authorization": "Bearer " + token}),
+        status=403,
+    )
+
+
+def test_checkin_verifies_totp_when_set(testapp, upcoming_event):
+    testapp.ensure_typical_event()
+    token, refresh = testapp.auth_get_tokens("test@example.com", "sixcharacters")
+
+    current_event = testapp.get("/event/current", status=200).json_body
+    ticket = ensure_ticket(testapp, token, current_event["uuid"])
+
+    totp_res = testapp.get(
+        "/ticket/%s/totp" % ticket["ticket_id"],
+        headers=dict({"Authorization": "Bearer " + token}),
+        status=200,
+    ).json_body
+    totp_secret = totp_res["totp"]
+
+    valid_code = pyotp.TOTP(totp_secret).now()
+
+    testapp.post(
+        "/ticket/%s/check_in?totp=foo" % ticket["ticket_id"],
+        headers=dict({"Authorization": "Bearer " + token}),
+        status=403,
+    )
+
+    testapp.post(
+        "/ticket/%s/check_in?totp=%s" % (ticket["ticket_id"], valid_code),
+        headers=dict({"Authorization": "Bearer " + token}),
+        status=200,
+    )
