@@ -129,7 +129,7 @@ def test_get_ticket_verifies_totp_when_set(testapp, upcoming_event):
     ).json_body
     totp_secret = totp_res["totp"]
 
-    valid_code = pyotp.TOTP(totp_secret).now()
+    valid_code = pyotp.TOTP(totp_secret, digits=8).now()
 
     testapp.get(
         "/ticket/%s?totp=%s" % (ticket["ticket_id"], valid_code),
@@ -158,7 +158,7 @@ def test_checkin_verifies_totp_when_set(testapp, upcoming_event):
     ).json_body
     totp_secret = totp_res["totp"]
 
-    valid_code = pyotp.TOTP(totp_secret).now()
+    valid_code = pyotp.TOTP(totp_secret, digits=8).now()
 
     testapp.post(
         "/ticket/%s/check_in?totp=foo" % ticket["ticket_id"],
