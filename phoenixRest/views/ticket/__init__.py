@@ -18,6 +18,7 @@ from phoenixRest.roles import ADMIN, TICKET_ADMIN, TICKET_CHECKIN
 
 from phoenixRest.views.ticket.instance import TicketInstanceResource
 
+from sqlalchemy.orm import joinedload
 from datetime import datetime
 
 import logging
@@ -47,7 +48,7 @@ class TicketResource(object):
 
 @view_config(name='', context=TicketResource, request_method='GET', renderer='json', permission='getAll')
 def get_all_tickets(context, request):
-    return request.db.query(Ticket).order_by(Ticket.ticket_id).all()
+    return request.db.query(Ticket).order_by(Ticket.ticket_id).options(joinedload(Ticket.owner), joinedload(Ticket.buyer), joinedload(Ticket.seater), joinedload(Ticket.ticket_type), joinedload(Ticket.payment), joinedload(Ticket.seat)).all()
 
 @view_config(name='', context=TicketResource, request_method='POST', renderer='json', permission='create')
 @validate(json_body={'recipient': str, 'ticket_type': str})

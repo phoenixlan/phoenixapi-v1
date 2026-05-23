@@ -89,7 +89,7 @@ def get_all_applications(context, request):
 
 @view_config(context=EventInstanceResource, name='ticket', request_method='GET', renderer='json', permission='event_tickets_get')
 def get_tickets(context, request):
-    tickets = request.db.query(Ticket).filter(Ticket.event_uuid == context.eventInstance.uuid).order_by(Ticket.ticket_id).all()
+    tickets = request.db.query(Ticket).filter(Ticket.event_uuid == context.eventInstance.uuid).order_by(Ticket.ticket_id).options(joinedload(Ticket.owner), joinedload(Ticket.buyer), joinedload(Ticket.seater), joinedload(Ticket.ticket_type), joinedload(Ticket.payment), joinedload(Ticket.seat)).all()
     return tickets
 
 @view_config(context=EventInstanceResource, name='new_memberships', request_method='GET', renderer='json', permission='event_memberships_get')

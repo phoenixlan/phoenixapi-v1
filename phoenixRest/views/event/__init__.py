@@ -34,7 +34,6 @@ class EventViews(object):
     ]
     def __init__(self, request):
         self.request = request
-        log.info("event class init")
 
     def __getitem__(self, key):
         """Traverse to a specific crew item"""
@@ -58,7 +57,6 @@ def get_events(request):
 @view_config(context=EventViews, request_method='PUT', renderer='json', permission='create')
 @validate(json_body={'booking_time': int, 'priority_seating_time_delta': int, 'seating_time_delta': int, 'start_time': int, 'end_time': int, 'name': str, 'max_participants': int})
 def create_event(context, request):
-
     # Create an error list
     error = list()
 
