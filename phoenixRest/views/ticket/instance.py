@@ -176,9 +176,9 @@ def get_totp(context, request):
         totp = TicketTotp(context.ticketInstance)
         request.db.add(totp)
         request.db.flush()
-        log.info(f"No totp, creating new: {totp.totp}")
+        log.debug("No totp, creating new")
     else:
-        log.info(f"totp already exists: {context.ticketInstance.totp.totp}")
+        log.debug("totp already exists")
         
     # Not providing a serializer on the model here is intentional to force a crash if for some reason another endpoint wants to include the totp
     return {
