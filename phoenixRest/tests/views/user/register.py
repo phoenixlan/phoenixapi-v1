@@ -44,6 +44,31 @@ def test_smoketest_registration(testapp):
     })
     user_registration_result = testapp.post_json('/user/register', user_register_obj, status=200).json_body
     assert user_registration_result['message'] == "An e-mail has been sent"
+    
+def test_registration_uppercase_email(testapp, db):
+    # ensure you can register
+    user_register_obj = dict({
+        "username": "testfoo_123",
+        "firstname": "Jeff",
+        "surname": "Jefferson",
+        "password": "test123",
+        "passwordRepeat": "test123",
+        "email": "TESTFOO@example.com",
+        "emailRepeat": "TESTFOO@example.com",
+        "gender": "male",
+        "dateOfBirth": "1998-03-27",
+        "phone": "90000000", # Fake
+        "guardianPhone": "", # Over 18, so this should be allowed
+        "address": "1 fake street",
+        "zip": "1337",
+        "event_notice_consent": True,
+        "clientId": "phoenix-crew-test"
+    })
+    user_registration_result = testapp.post_json('/user/register', user_register_obj, status=200).json_body
+    assert user_registration_result['message'] == "An e-mail has been sent"
+
+    user = db.query(User).filter(User.username == "testfoo_123").first()
+    assert user.email == "testfoo@example.com"
 
 def test_register_validation(testapp):
     # Ensure we validate the registration form

@@ -302,7 +302,9 @@ def connect_discord(context, request):
 @view_config(context=UserViews, name='forgot', request_method="POST", renderer='json', permission="register")
 @validate(json_body={'login': str, 'client_id': str})
 def forgot_password(context, request):
-    log.info("Processing forgot password request for %s" % request.json_body['login'])
+    forgot_key = request.json_body['login'].strip()
+    log.info("Processing forgot password request for %s, or \"%s\"" % (forgot_key, forgot_key.lower()))
+
     client_id = request.json_body.get("client_id")
     if client_id not in request.registry.settings["oauth.valid_client_ids"].split(","):
         request.response.status = 400
@@ -310,8 +312,6 @@ def forgot_password(context, request):
             "error": "Invalid OAuth client ID"
         }
     url = request.registry.settings["oauth.%s.redirect_url" % client_id]
-
-    forgot_key = request.json_body['login'].strip()
 
     user = request.db.query(User).filter(User.email == forgot_key.lower()).first()
     if not user:
