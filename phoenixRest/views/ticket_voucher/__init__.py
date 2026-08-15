@@ -15,7 +15,7 @@ from phoenixRest.views.ticket_voucher.instance import TicketVoucherInstanceResou
 from phoenixRest.utils import validate
 from phoenixRest.resource import resource
 
-from phoenixRest.roles import ADMIN, TICKET_ADMIN
+from phoenixRest.roles import ADMIN
 
 from sqlalchemy import and_, or_, extract
 
@@ -25,11 +25,9 @@ log = logging.getLogger(__name__)
 @resource(name='ticket_voucher')
 class TicketVoucherResource(object):
     __acl__ = [
-        (Allow, ADMIN, 'create'),
-        (Allow, TICKET_ADMIN, 'create'),
+        (Allow, ADMIN(), 'create'),
 
-        (Allow, ADMIN, 'get'),
-        (Allow, TICKET_ADMIN, 'get'),
+        (Allow, ADMIN(), 'get'),
     ]
     def __init__(self, request):
         self.request = request
@@ -88,5 +86,3 @@ def create_voucher(context, request):
     })
 
     return voucher
-
-

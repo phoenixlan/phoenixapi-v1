@@ -24,7 +24,7 @@ log = logging.getLogger(__name__)
 class CrewViews(object):
     __acl__ = [
         (Allow, Everyone, 'getAll'),
-        (Allow, ADMIN, 'create'),
+        (Allow, ADMIN(), 'create'),
 
         # Authenticated pages
         #(Allow, Authenticated, Authenticated),
@@ -59,4 +59,3 @@ def create_crew(request):
                   description=request.json_body['description'])
     request.db.add(crew)
     return crew
-

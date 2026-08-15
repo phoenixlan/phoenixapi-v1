@@ -18,6 +18,7 @@ from phoenixRest.roles import ADMIN, TICKET_ADMIN, TICKET_CHECKIN
 from phoenixRest.utils import validate 
 
 from sqlalchemy import and_
+from sqlalchemy.orm import joinedload
 
 from datetime import datetime, timedelta
 
@@ -28,16 +29,16 @@ log = logging.getLogger(__name__)
 class TicketInstanceResource(object):
     def __acl__(self):
         acl = [
-            (Allow, ADMIN, 'view_ticket'),
-            (Allow, TICKET_ADMIN, 'view_ticket'),
-            (Allow, TICKET_CHECKIN, 'view_ticket'),
-            (Allow, ADMIN, 'seat_ticket'),
-            (Allow, TICKET_ADMIN, 'seat_ticket'),
-            (Allow, ADMIN, 'set_seater'),
-            (Allow, TICKET_ADMIN, 'set_seater'),
-            (Allow, ADMIN, 'check_in'),
-            (Allow, TICKET_ADMIN, 'check_in'),
-            (Allow, TICKET_CHECKIN, 'check_in'),
+            (Allow, ADMIN(), 'view_ticket'),
+            (Allow, TICKET_ADMIN(self.ticketInstance.event.event_brand_uuid), 'view_ticket'),
+            (Allow, TICKET_CHECKIN(self.ticketInstance.event.event_brand_uuid), 'view_ticket'),
+            (Allow, ADMIN(), 'seat_ticket'),
+            (Allow, TICKET_ADMIN(self.ticketInstance.event.event_brand_uuid), 'seat_ticket'),
+            (Allow, ADMIN(), 'set_seater'),
+            (Allow, TICKET_ADMIN(self.ticketInstance.event.event_brand_uuid), 'set_seater'),
+            (Allow, ADMIN(), 'check_in'),
+            (Allow, TICKET_ADMIN(self.ticketInstance.event.event_brand_uuid), 'check_in'),
+            (Allow, TICKET_CHECKIN(self.ticketInstance.event.event_brand_uuid), 'check_in'),
         ]
         if self.ticketInstance is not None:
             acl = acl + [
@@ -62,7 +63,10 @@ class TicketInstanceResource(object):
     def __init__(self, request, ticket_id):
         self.request = request
 
-        self.ticketInstance = request.db.query(Ticket).filter(Ticket.ticket_id == ticket_id).first()
+        self.ticketInstance = request.db.query(Ticket) \
+            .options(joinedload(Ticket.event)) \
+            .filter(Ticket.ticket_id == ticket_id) \
+            .first()
 
         if self.ticketInstance is None:
             raise HTTPNotFound("Ticket not found")
@@ -195,7 +199,6 @@ def transfer_ticket(context, request):
     })
 
     return transfer
-
 
 
 

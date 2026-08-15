@@ -186,15 +186,18 @@ def get_mail_details_by_category(request, category, user):
 
 @resource(name='email')
 class MarketingResource(object):
-    __acl__ = [
-        (Allow, ADMIN, 'send_email'),
-        (Allow, TICKET_ADMIN, 'send_email'),
-        (Allow, INFO_ADMIN, 'send_email'),
+    def __acl__(self):
+        brand_uuid = self.request.json_body['brand_uuid']
+        return [
+            (Allow, ADMIN(), 'send_email'),
+            (Allow, TICKET_ADMIN(brand_uuid), 'send_email'),
+            (Allow, INFO_ADMIN(brand_uuid), 'send_email'),
 
-        (Allow, ADMIN, 'test_email'),
-        (Allow, TICKET_ADMIN, 'test_email'),
-        (Allow, INFO_ADMIN, 'test_email'),
-    ]
+            (Allow, ADMIN(), 'test_email'),
+            (Allow, TICKET_ADMIN(brand_uuid), 'test_email'),
+            (Allow, INFO_ADMIN(brand_uuid), 'test_email'),
+        ]
+
     def __init__(self, request):
         self.request = request
 
@@ -275,6 +278,4 @@ def send_mail(context, request):
     return {
         "sent": len(recipients)
     }
-
-
 

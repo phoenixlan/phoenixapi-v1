@@ -21,7 +21,7 @@ log = logging.getLogger(__name__)
 class EventBrandResource(object):
     __acl__ = [
         (Allow, Everyone, 'get'),
-        (Allow, ADMIN, 'create'),
+        (Allow, ADMIN(), 'create'),
     ]
     def __init__(self, request):
         self.request = request

@@ -13,7 +13,8 @@ def ensure_seatmap(testapp, token, event_uuid):
     
     seatmap = testapp.put_json('/seatmap', dict({
         'name': 'Test seatmap',
-        'description': 'seatmap'
+        'description': 'seatmap',
+        'event_brand_uuid': event['event_brand_uuid']
     }), headers=dict({
         "Authorization": "Bearer " + token
     }), status=200).json_body
@@ -84,7 +85,8 @@ def test_seatmap_wrong_event(testapp, db, upcoming_event, ticket_types):
     # Create a seatmap that is NOT associated with the event
     seatmap = testapp.put_json('/seatmap', dict({
         'name': 'Test seatmap',
-        'description': 'seatmap'
+        'description': 'seatmap',
+        'event_brand_uuid': str(upcoming_event.event_brand_uuid)
     }), headers=dict({
         "Authorization": "Bearer " + token
     }), status=200).json_body
@@ -258,7 +260,8 @@ def test_ticket_seating_wrong_seatmap(testapp, db, upcoming_event, ticket_types)
     # Create a DIFFERENT seatmap that is NOT associated with the event
     other_seatmap = testapp.put_json('/seatmap', dict({
         'name': 'Other seatmap',
-        'description': 'different seatmap'
+        'description': 'different seatmap',
+        'event_brand_uuid': str(upcoming_event.event_brand_uuid)
     }), headers=dict({
         "Authorization": "Bearer " + token
     }), status=200).json_body

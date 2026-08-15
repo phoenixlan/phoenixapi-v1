@@ -25,7 +25,7 @@ log = logging.getLogger(__name__)
 class EventViews(object):
     __acl__ = [
         (Allow, Everyone, 'list'),
-        (Allow, ADMIN, 'create'),
+        (Allow, ADMIN(), 'create'),
 
         # Authenticated pages
         #(Allow, Authenticated, Authenticated),

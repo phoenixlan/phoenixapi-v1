@@ -14,7 +14,7 @@ from phoenixRest.models.tickets.ticket_type import TicketType
 from phoenixRest.utils import validate
 from phoenixRest.resource import resource
 
-from phoenixRest.roles import ADMIN, TICKET_BYPASS_TICKETSALE_START_RESTRICTION, TICKET_WHOLESALE, TICKET_ADMIN
+from phoenixRest.roles import ADMIN, TICKET_BYPASS_TICKETSALE_START_RESTRICTION, TICKET_WHOLESALE
 
 from datetime import datetime
 
@@ -25,11 +25,9 @@ log = logging.getLogger(__name__)
 class StoreSessionResource(object):
     __acl__ = [
         (Allow, Authenticated, 'create'),
-        (Allow, ADMIN, 'fetch_all'),
-        (Allow, TICKET_ADMIN, 'fetch_all'),
+        (Allow, ADMIN(), 'fetch_all'),
 
-        (Allow, ADMIN, 'fetch_active'),
-        (Allow, TICKET_ADMIN, 'fetch_active'),
+        (Allow, ADMIN(), 'fetch_active'),
 
         # Authenticated pages
         #(Allow, Authenticated, Authenticated),
@@ -70,7 +68,9 @@ def create_store_session(context, request):
         }
 
 
-    if datetime.now() < event.booking_time and TICKET_BYPASS_TICKETSALE_START_RESTRICTION not in request.effective_principals:
+    if datetime.now() < event.booking_time and \
+            ADMIN() not in request.effective_principals and \
+            TICKET_BYPASS_TICKETSALE_START_RESTRICTION(event.event_brand_uuid) not in request.effective_principals:
         request.response.status = 400
         return {
             'error': "The ticket sale hasn't started yet"
@@ -131,7 +131,9 @@ def create_store_session(context, request):
             }
 
         store_session.cart_entries.append(StoreSessionCartEntry(ticket_type, entry['qty']))
-    if total_qty > int(max_purchase_amt) and not TICKET_WHOLESALE in request.effective_principals:
+    if total_qty > int(max_purchase_amt) and \
+            ADMIN() not in request.effective_principals and \
+            TICKET_WHOLESALE(event.event_brand_uuid) not in request.effective_principals:
         request.response.status = 400
         return {
             "error": "You can only buy %s tickets at a time" % max_purchase_amt
@@ -146,4 +148,3 @@ def create_store_session(context, request):
     request.db.add(store_session)
     request.db.flush()
     return store_session
-

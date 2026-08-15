@@ -18,9 +18,11 @@ from phoenixRest.models.tickets.row import Row
 from phoenixRest.models.tickets.seatmap import Seatmap
 from phoenixRest.models.tickets.ticket_type import TicketType
 
+from phoenixRest.views.event.agenda import EventAgendaResource
+
 from phoenixRest.mappers.user import map_user_simple_with_secret_fields
 
-from phoenixRest.roles import ADMIN, EVENT_ADMIN, CHIEF, HR_ADMIN, TICKET_ADMIN, TICKET_CHECKIN
+from phoenixRest.roles import ADMIN, BRAND_ADMIN, CHIEF, HR_ADMIN, TICKET_ADMIN, TICKET_CHECKIN
 
 from phoenixRest.utils import validate
 
@@ -32,40 +34,40 @@ from datetime import datetime
 import logging
 log = logging.getLogger(__name__)
 
-class EventInstanceResource(object):
+class EventInstanceResource(dict):
     def __acl__(self):
         acl = [
             (Allow, Everyone, 'event_get'),
-            (Allow, ADMIN, 'event_get'),
-            (Allow, EVENT_ADMIN, 'event_get'),
+            (Allow, ADMIN(), 'event_get'),
+            (Allow, BRAND_ADMIN(self.eventInstance.event_brand_uuid), 'event_get'),
 
             (Allow, Everyone, 'event_ticket_type_get'),
-            (Allow, ADMIN, 'event_ticket_type_get'),
-            (Allow, EVENT_ADMIN, 'event_ticket_type_get'),
+            (Allow, ADMIN(), 'event_ticket_type_get'),
+            (Allow, BRAND_ADMIN(self.eventInstance.event_brand_uuid), 'event_ticket_type_get'),
 
             (Allow, Everyone, 'ticket_availability_get'),
 
-            (Allow, ADMIN, 'event_tickets_get'),
-            (Allow, TICKET_ADMIN, 'event_tickets_get'),
-            (Allow, TICKET_CHECKIN, 'event_tickets_get'),
+            (Allow, ADMIN(), 'event_tickets_get'),
+            (Allow, TICKET_ADMIN(self.eventInstance.event_brand_uuid), 'event_tickets_get'),
+            (Allow, TICKET_CHECKIN(self.eventInstance.event_brand_uuid), 'event_tickets_get'),
 
-            (Allow, ADMIN, 'event_memberships_get'),
-            (Allow, TICKET_ADMIN, 'event_memberships_get'),
-            (Allow, HR_ADMIN, 'event_memberships_get'),
+            (Allow, ADMIN(), 'event_memberships_get'),
+            (Allow, TICKET_ADMIN(self.eventInstance.event_brand_uuid), 'event_memberships_get'),
+            (Allow, HR_ADMIN(self.eventInstance.event_brand_uuid), 'event_memberships_get'),
 
-            (Allow, ADMIN, 'add_ticket_type'),
-            (Allow, TICKET_ADMIN, 'add_ticket_type'),
+            (Allow, ADMIN(), 'add_ticket_type'),
+            (Allow, TICKET_ADMIN(self.eventInstance.event_brand_uuid), 'add_ticket_type'),
 
-            (Allow, CHIEF, 'applications_get'),
-            (Allow, ADMIN, 'applications_get'),
+            (Allow, CHIEF(self.eventInstance.event_brand_uuid), 'applications_get'),
+            (Allow, ADMIN(), 'applications_get'),
 
-            (Allow, CHIEF, 'list_card_orders'),
-            (Allow, ADMIN, 'list_card_orders'),
-            (Allow, CREW_CARD_PRINTER, 'list_card_orders'),
+            (Allow, CHIEF(self.eventInstance.event_brand_uuid), 'list_card_orders'),
+            (Allow, ADMIN(), 'list_card_orders'),
+            (Allow, CREW_CARD_PRINTER(self.eventInstance.event_brand_uuid), 'list_card_orders'),
 
             (Allow, Everyone, 'list_agenda_entries'),
 
-            (Allow, ADMIN, 'event_update'),
+            (Allow, ADMIN(), 'event_update'),
         ]
         return acl
 
@@ -75,6 +77,8 @@ class EventInstanceResource(object):
 
         if self.eventInstance is None:
             raise HTTPNotFound("Event not found")
+
+        self["agenda"] = EventAgendaResource(request, self.eventInstance)
 
 @view_config(context=EventInstanceResource, name='', request_method='GET', renderer='json', permission='event_get')
 def get_event(context, request):
@@ -174,6 +178,9 @@ def update_event(context, request):
             if not seatmap:
                 request.response.status = 400
                 return {'error': 'Seatmap not found'}
+            if seatmap.event_brand_uuid != event.event_brand_uuid:
+                request.response.status = 400
+                return {'error': 'Seatmap belongs to a different event brand'}
             event.seatmap = seatmap
         else:
             event.seatmap = None

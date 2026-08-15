@@ -9,7 +9,7 @@ from phoenixRest.models.tickets.ticket_type import TicketType
 from phoenixRest.utils import validate
 from phoenixRest.resource import resource
 
-from phoenixRest.roles import ADMIN, TICKET_ADMIN
+from phoenixRest.roles import ADMIN
 
 from phoenixRest.views.seatmap.instance import SeatmapInstanceViews
 
@@ -23,10 +23,8 @@ class TicketTypeResource(object):
     __acl__ = [
         # Don't allow anyone to fetch ticket types from here
         # Anyone could use the event-specific endpoint instead.
-        (Allow, ADMIN, 'getAll'),
-        (Allow, TICKET_ADMIN, 'getAll'),
-        (Allow, ADMIN, 'create'),
-        (Allow, TICKET_ADMIN, 'create'),
+        (Allow, ADMIN(), 'getAll'),
+        (Allow, ADMIN(), 'create'),
 
         # Authenticated pages
         #(Allow, Authenticated, Authenticated),
@@ -46,6 +44,4 @@ def create_ticket_type(context, request):
     request.db.add(entrance)
     request.db.flush()
     return entrance
-
-
 

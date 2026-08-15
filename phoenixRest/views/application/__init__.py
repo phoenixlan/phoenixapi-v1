@@ -18,7 +18,7 @@ from phoenixRest.models.crew.application_crew_mapping import ApplicationCrewMapp
 from phoenixRest.utils import validate
 from phoenixRest.resource import resource
 
-from phoenixRest.roles import ADMIN, CHIEF
+from phoenixRest.roles import ADMIN
 
 from phoenixRest.views.application.instance import ApplicationInstanceResource
 
@@ -30,8 +30,7 @@ log = logging.getLogger(__name__)
 @resource(name='application')
 class ApplicationViews(object):
     __acl__ = [
-        (Allow, CHIEF, 'list'),
-        (Allow, ADMIN, 'list'),
+        (Allow, ADMIN(), 'list'),
 
         (Allow, Authenticated, 'self'),
         (Allow, Authenticated, 'create'),

@@ -28,7 +28,7 @@ log = logging.getLogger(__name__)
 @resource(name='position_mapping')
 class PositionMappingResource(object):
     __acl__ = [
-        (Allow, ADMIN, 'create_position_mapping'),
+        (Allow, ADMIN(), 'create_position_mapping'),
     ]
     def __init__(self, request):
         self.request = request

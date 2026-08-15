@@ -38,14 +38,14 @@ class SeatmapInstanceViews(object):
     def __acl__(self):
         return [
         (Allow, Authenticated, 'seatmap_get_availability'),
-        (Allow, ADMIN, 'create_row'),
-        (Allow, TICKET_ADMIN, 'create_row'),
+        (Allow, ADMIN(), 'create_row'),
+        (Allow, TICKET_ADMIN(self.seatmapInstance.event_brand_uuid), 'create_row'),
 
-        (Allow, ADMIN, 'upload_background'),
-        (Allow, TICKET_ADMIN, 'upload_background'),
+        (Allow, ADMIN(), 'upload_background'),
+        (Allow, TICKET_ADMIN(self.seatmapInstance.event_brand_uuid), 'upload_background'),
 
-        (Allow, ADMIN, 'seatmap_view'),
-        (Allow, TICKET_ADMIN, 'seatmap_view'),
+        (Allow, ADMIN(), 'seatmap_view'),
+        (Allow, TICKET_ADMIN(self.seatmapInstance.event_brand_uuid), 'seatmap_view'),
         # Authenticated pages
         #(Allow, Authenticated, Authenticated),
         #(Deny, Everyone, Authenticated),
@@ -166,5 +166,4 @@ def create_row(context, request):
     request.db.add(row)
     request.db.flush()
     return row
-
 

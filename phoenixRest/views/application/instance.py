@@ -26,25 +26,29 @@ import logging
 log = logging.getLogger(__name__)
 
 from PIL import Image
+from sqlalchemy.orm import joinedload
 
 class ApplicationInstanceResource(object):
     def __acl__(self):
         acl = [
             (Allow, "%s" % self.applicationInstance.user.uuid, 'application_get'),
-            (Allow, ADMIN, 'application_get'),
-            (Allow, CHIEF, 'application_get'),
+            (Allow, ADMIN(), 'application_get'),
+            (Allow, CHIEF(self.applicationInstance.event.event_brand_uuid), 'application_get'),
 
-            (Allow, ADMIN, 'application_edit'),
-            (Allow, CHIEF, 'application_edit'),
+            (Allow, ADMIN(), 'application_edit'),
+            (Allow, CHIEF(self.applicationInstance.event.event_brand_uuid), 'application_edit'),
 
-            (Allow, ADMIN, 'application_hide'),
-            (Allow, CHIEF, 'application_hide'),
+            (Allow, ADMIN(), 'application_hide'),
+            (Allow, CHIEF(self.applicationInstance.event.event_brand_uuid), 'application_hide'),
         ]
         return acl
 
     def __init__(self, request, uuid):
         self.request = request
-        self.applicationInstance = request.db.query(Application).filter(Application.uuid == uuid).first()
+        self.applicationInstance = request.db.query(Application) \
+            .options(joinedload(Application.event)) \
+            .filter(Application.uuid == uuid) \
+            .first()
 
         if self.applicationInstance is None:
             raise HTTPNotFound("Application not found")

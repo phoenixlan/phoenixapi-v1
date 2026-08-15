@@ -1,5 +1,5 @@
 from pyramid.authorization import Allow
-from phoenixRest.roles import CHIEF, CREW_CARD_PRINTER, ADMIN
+from phoenixRest.roles import ADMIN
 
 from pyramid.view import view_config
 from phoenixRest.resource import resource
@@ -14,8 +14,7 @@ from phoenixRest.views.card_order.instance import CardOrderInstanceResource
 class CardOrderResource(object):
     __acl__ = [
         # Roles with permission to create a new card order
-         (Allow, CHIEF, "create"),
-         (Allow, ADMIN, "create")
+         (Allow, ADMIN(), "create")
     ]   
          
     def __init__(self, request):

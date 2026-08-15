@@ -8,7 +8,7 @@ from phoenixRest.models.crew.position import Position
 
 from phoenixRest.resource import resource
 
-from phoenixRest.roles import ADMIN, MEMBER
+from phoenixRest.roles import ADMIN
 
 from phoenixRest.models.crew.team import Team
 from phoenixRest.models.crew.crew import Crew
@@ -24,8 +24,8 @@ log = logging.getLogger(__name__)
 @resource(name='position')
 class PositionResource(object):
     __acl__ = [
-        (Allow, MEMBER, 'getAll'),
-        (Allow, ADMIN, 'create_position'),
+        (Allow, ADMIN(), 'getAll'),
+        (Allow, ADMIN(), 'create_position'),
     ]
     def __init__(self, request):
         self.request = request

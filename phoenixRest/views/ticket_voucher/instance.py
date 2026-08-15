@@ -23,8 +23,8 @@ log = logging.getLogger(__name__)
 class TicketVoucherInstanceResource(object):
     def __acl__(self):
         acl = [
-            (Allow, ADMIN, 'burn'),
-            (Allow, TICKET_ADMIN, 'burn'),
+            (Allow, ADMIN(), 'burn'),
+            (Allow, TICKET_ADMIN(self.ticketVoucherInstance.event_brand_uuid), 'burn'),
             # Authenticated pages
             #(Allow, Authenticated, Authenticated),
             #(Deny, Everyone, Authenticated),

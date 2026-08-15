@@ -15,7 +15,7 @@ from phoenixRest.models.core.event import get_current_event
 from phoenixRest.utils import validate
 from phoenixRest.resource import resource
 
-from phoenixRest.roles import ADMIN, TICKET_ADMIN
+from phoenixRest.roles import ADMIN
 
 from phoenixRest.views.payment.instance import PaymentInstanceResource
 
@@ -28,8 +28,7 @@ log = logging.getLogger(__name__)
 class PaymentResource(object):
     __acl__ = [
         (Allow, Authenticated, 'create'),
-        (Allow, ADMIN, 'fetch_all'),
-        (Allow, TICKET_ADMIN, 'fetch_all'),
+        (Allow, ADMIN(), 'fetch_all'),
 
         # Authenticated pages
         #(Allow, Authenticated, Authenticated),
