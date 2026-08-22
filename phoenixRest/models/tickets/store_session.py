@@ -51,6 +51,7 @@ class StoreSession(Base):
         return {
             'uuid': str(self.uuid),
             'user_uuid': self.user_uuid,
+            'name': self.user.firstname + " " + self.user.lastname,
             'entries': self.cart_entries,
             'total': self.get_total(),
             'created': int(self.created.timestamp()),
