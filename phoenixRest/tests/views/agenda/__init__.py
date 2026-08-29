@@ -6,7 +6,7 @@ import logging
 def test_get_agenda(testapp, upcoming_event):
     return testapp.get(f"/event/{upcoming_event.uuid}/agenda", status=200)
 
-def test_create_modify_delete_agenda(testapp, upcoming_event):
+def test_create_modify_delete_agenda(testapp, upcoming_event, admin_user, jeff_user):
 
     # Test coverage:
     #    Title                  Active  Description
@@ -16,8 +16,8 @@ def test_create_modify_delete_agenda(testapp, upcoming_event):
 
 
     # Login with test accounts with admin privileges and no rights
-    privileged_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
-    unprivileged_token, refresh = testapp.auth_get_tokens('jeff@example.com', 'sixcharacters')
+    privileged_token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
+    unprivileged_token, refresh = testapp.auth_get_tokens(jeff_user.email, 'sixcharacters')
     
     # Attempt to get current event
     current_event_uuid = str(upcoming_event.uuid)

@@ -1,8 +1,8 @@
 from datetime import datetime, timedelta, date
 import time
 
-def test_list_users(testapp):
-    token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
+def test_list_users(testapp, admin_user):
+    token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
 
     # Get some info about the current user
     users = testapp.get('/user', headers=dict({
@@ -11,9 +11,9 @@ def test_list_users(testapp):
 
     assert len(users) > 0
 
-def test_get_user(testapp):
-    token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
-    permissionless_token, refresh = testapp.auth_get_tokens('jeff@example.com', 'sixcharacters')
+def test_get_user(testapp, admin_user, jeff_user):
+    token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
+    permissionless_token, refresh = testapp.auth_get_tokens(jeff_user.email, 'sixcharacters')
 
     # Get the UUID for the current user
     currentUser = testapp.get('/user/current', headers=dict({
@@ -30,9 +30,9 @@ def test_get_user(testapp):
         "Authorization": "Bearer " + permissionless_token 
         }), status=403)
 
-def test_permissionless_user_fetch_applications(testapp):
-    token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
-    permissionless_token, refresh = testapp.auth_get_tokens('jeff@example.com', 'sixcharacters')
+def test_permissionless_user_fetch_applications(testapp, admin_user, jeff_user):
+    token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
+    permissionless_token, refresh = testapp.auth_get_tokens(jeff_user.email, 'sixcharacters')
 
     user = testapp.get_user(token)
 
@@ -47,7 +47,7 @@ def test_permissionless_user_fetch_applications(testapp):
 
     testapp.get('/user/%s/applications' % user['uuid'], status=403)
 
-def test_modify_user(testapp):
+def test_modify_user(testapp, admin_user, jeff_user, adam_user):
     
     # Test coverage:
     #    Title                  Active  Description
@@ -56,10 +56,10 @@ def test_modify_user(testapp):
     #  * Dependency check:      [X]     Test dependencies programmed in views/, ex. no empty fields.
 
     # Login with test accounts with admin privileges and no rights
-    privileged_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
-    unprivileged_token, refresh = testapp.auth_get_tokens('jeff@example.com', 'sixcharacters')
-    primary_testuser_token, refresh = testapp.auth_get_tokens('adam@example.com', 'sixcharacters')
-    secondary_testuser_token, refresh = testapp.auth_get_tokens('jeff@example.com', 'sixcharacters')
+    privileged_token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
+    unprivileged_token, refresh = testapp.auth_get_tokens(jeff_user.email, 'sixcharacters')
+    primary_testuser_token, refresh = testapp.auth_get_tokens(adam_user.email, 'sixcharacters')
+    secondary_testuser_token, refresh = testapp.auth_get_tokens(jeff_user.email, 'sixcharacters')
 
     # Get a user to test against
     testuser = testapp.get_user(primary_testuser_token)
@@ -216,7 +216,7 @@ def test_modify_user(testapp):
         "Authorization": "Bearer " + privileged_token
     }), status=400)
 
-def test_activate_user(testapp):
+def test_activate_user(testapp, admin_user, jeff_user, adam_user):
     # Test coverage:
     #    Title                  Active  Description
     #  * Functionality check:   [X]     Test functionality. Test that a user are able to activate a user
@@ -224,9 +224,9 @@ def test_activate_user(testapp):
     #  * Dependency check:      [ ]     Test dependencies programmed in views/ (Not in use)
 
     # Login with test accounts with admin privileges and no rights
-    privileged_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
-    unprivileged_token, refresh = testapp.auth_get_tokens('jeff@example.com', 'sixcharacters')
-    primary_testuser_token, refresh = testapp.auth_get_tokens('adam@example.com', 'sixcharacters')
+    privileged_token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
+    unprivileged_token, refresh = testapp.auth_get_tokens(jeff_user.email, 'sixcharacters')
+    primary_testuser_token, refresh = testapp.auth_get_tokens(adam_user.email, 'sixcharacters')
 
     # Get a user to test against
     testuser = testapp.get_user(primary_testuser_token)

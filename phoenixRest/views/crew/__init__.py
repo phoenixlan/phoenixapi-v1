@@ -46,7 +46,7 @@ def get_all_crew(context, request):
     query = request.db.query(Crew)
 
     log.debug("Principals: %s" % request.effective_principals)
-    if "role:admin" not in request.effective_principals:
+    if ADMIN() not in request.effective_principals:
         log.info("Reducing crew list as the requester is not admin")
         query = query.filter(Crew.active == True)
     

@@ -26,8 +26,8 @@ class TestApp(webtest.TestApp):
 
         return res.json_body['access_token'], res.json_body['refresh_token']
     
-    def ensure_typical_event(self):
-        token, refresh = self.auth_get_tokens('test@example.com', 'sixcharacters')
+    def ensure_typical_event(self, admin_user):
+        token, refresh = self.auth_get_tokens(admin_user.email, 'sixcharacters')
 
         current_event = self.get('/event/current', status=200).json_body
 

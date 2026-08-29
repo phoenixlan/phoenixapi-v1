@@ -10,18 +10,18 @@ import logging
 log = logging.getLogger(__name__)
 
 @pytest.mark.skip(reason="Known broken")
-def test_participant_history_smoketest(db, testapp):
+def test_participant_history_smoketest(db, testapp, admin_user, jeff_user, adam_user):
     """Test participant history using seeded data
     """
     # test is an admin
-    token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
-    unprivileged_token, refresh = testapp.auth_get_tokens('jeff@example.com', 'sixcharacters')
+    token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
+    unprivileged_token, refresh = testapp.auth_get_tokens(jeff_user.email, 'sixcharacters')
     unprivileged_user = testapp.get_user(unprivileged_token)
 
-    unprivileged_token_two, _ = testapp.auth_get_tokens('adam@example.com', 'sixcharacters')
+    unprivileged_token_two, _ = testapp.auth_get_tokens(adam_user.email, 'sixcharacters')
     unprivileged_user_two = testapp.get_user(unprivileged_token_two)
 
-    testapp.ensure_typical_event()
+    testapp.ensure_typical_event(admin_user)
 
     stats = testapp.get('/statistics/participant_history', headers=dict({
         "Authorization": "Bearer " + token
@@ -134,12 +134,12 @@ def test_participant_history_smoketest(db, testapp):
     test_event(str(all_sorted_events[5].uuid), [], [])
 
 @pytest.mark.skip(reason="Known broken")
-def test_participant_history_crew(db, testapp):
+def test_participant_history_crew(db, testapp, admin_user, jeff_user):
     """Test participant history, but this time we add some crew memberships to be tested
     """
     # test is an admin
-    token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
-    unprivileged_token, refresh = testapp.auth_get_tokens('jeff@example.com', 'sixcharacters')
+    token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
+    unprivileged_token, refresh = testapp.auth_get_tokens(jeff_user.email, 'sixcharacters')
     unprivileged_user = testapp.get_user(unprivileged_token)
 
     stats = testapp.get('/statistics/participant_history', headers=dict({

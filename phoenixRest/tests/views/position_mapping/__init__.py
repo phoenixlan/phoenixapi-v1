@@ -3,10 +3,10 @@ import transaction
 
 from phoenixRest.models.crew.position_mapping import PositionMapping
 
-def test_create_delete_position_mapping(testapp, upcoming_event):
+def test_create_delete_position_mapping(testapp, upcoming_event, admin_user, adam_user):
     # Log in as the test user
-    token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
-    test_user_token, _ = testapp.auth_get_tokens('adam@example.com', 'sixcharacters')
+    token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
+    test_user_token, _ = testapp.auth_get_tokens(adam_user.email, 'sixcharacters')
 
     test_user = testapp.get_user(test_user_token)
 
@@ -52,10 +52,10 @@ def test_create_delete_position_mapping(testapp, upcoming_event):
     }), status=404)
     
 # Make sure a permissionless user can't make permission mappings. Low-hanging fruit to test
-def test_no_permissionless_promotion(testapp, upcoming_event):
+def test_no_permissionless_promotion(testapp, upcoming_event, admin_user, adam_user):
     # Log in as the test user
-    token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
-    test_user_token, _ = testapp.auth_get_tokens('adam@example.com', 'sixcharacters')
+    token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
+    test_user_token, _ = testapp.auth_get_tokens(adam_user.email, 'sixcharacters')
 
     test_user = testapp.get_user(test_user_token)
 

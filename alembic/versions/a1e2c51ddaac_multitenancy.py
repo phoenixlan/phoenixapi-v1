@@ -24,8 +24,8 @@ def upgrade():
     sa.PrimaryKeyConstraint('uuid', name=op.f('pk_event_brand')),
     sa.UniqueConstraint('uuid', name=op.f('uq_event_brand_uuid'))
     )
-    op.add_column('crew', sa.Column('event_brand', sa.UUID(), nullable=True))
-    op.create_foreign_key(op.f('fk_crew_event_brand_event_brand'), 'crew', 'event_brand', ['event_brand'], ['uuid'])
+    op.add_column('crew', sa.Column('event_brand_uuid', sa.UUID(), nullable=True))
+    op.create_foreign_key(op.f('fk_crew_event_brand_uuid_event_brand'), 'crew', 'event_brand', ['event_brand_uuid'], ['uuid'])
     op.add_column('event', sa.Column('event_brand_uuid', sa.UUID(), nullable=True))
     op.create_foreign_key(op.f('fk_event_event_brand_uuid_event_brand'), 'event', 'event_brand', ['event_brand_uuid'], ['uuid'])
     op.add_column('location', sa.Column('event_brand_uuid', sa.UUID(), nullable=True))
@@ -67,7 +67,7 @@ def downgrade():
     op.drop_column('location', 'event_brand_uuid')
     op.drop_constraint(op.f('fk_event_event_brand_uuid_event_brand'), 'event', type_='foreignkey')
     op.drop_column('event', 'event_brand_uuid')
-    op.drop_constraint(op.f('fk_crew_event_brand_event_brand'), 'crew', type_='foreignkey')
-    op.drop_column('crew', 'event_brand')
+    op.drop_constraint(op.f('fk_crew_event_brand_uuid_event_brand'), 'crew', type_='foreignkey')
+    op.drop_column('crew', 'event_brand_uuid')
     op.drop_table('event_brand')
     # ### end Alembic commands ###

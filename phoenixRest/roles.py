@@ -12,7 +12,7 @@ def role_lambda(template):
     return inner
 
 
-ADMIN = lambda: "role:admin" # Site administrator. Full access to PII and everything.
+ADMIN = lambda: "role:global:admin" # Site administrator. Full access to PII and everything.
 
 BRAND_ADMIN = role_lambda("role:brand:%s") # Admin for a brand
 CHIEF = role_lambda("role:brand:%s:chief") # Chief for a crew

@@ -2,11 +2,11 @@ from phoenixRest.models.core.event import Event
 
 from datetime import datetime
 
-def test_ticket_voucher_flow(testapp, upcoming_event, ticket_types):
+def test_ticket_voucher_flow(testapp, upcoming_event, ticket_types, admin_user, jeff_user, adam_user):
     # test is an admin
-    sender_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
-    receiver_token, refresh = testapp.auth_get_tokens('jeff@example.com', 'sixcharacters')
-    third_party_token, refresh = testapp.auth_get_tokens('adam@example.com', 'sixcharacters')
+    sender_token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
+    receiver_token, refresh = testapp.auth_get_tokens(jeff_user.email, 'sixcharacters')
+    third_party_token, refresh = testapp.auth_get_tokens(adam_user.email, 'sixcharacters')
 
     sender_user = testapp.get_user(sender_token)
     receiver_user = testapp.get_user(receiver_token)
@@ -107,10 +107,10 @@ def test_ticket_voucher_flow(testapp, upcoming_event, ticket_types):
     assert len(jeff_owned_vouchers) == 1
     assert jeff_owned_vouchers[0]['is_used'] == True
 
-def test_expired_voucher_flow(testapp, db, upcoming_event, ticket_types):
+def test_expired_voucher_flow(testapp, db, upcoming_event, ticket_types, admin_user, jeff_user):
     # test is an admin
-    sender_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
-    receiver_token, refresh = testapp.auth_get_tokens('jeff@example.com', 'sixcharacters')
+    sender_token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
+    receiver_token, refresh = testapp.auth_get_tokens(jeff_user.email, 'sixcharacters')
 
     sender_user = testapp.get_user(sender_token)
     receiver_user = testapp.get_user(receiver_token)

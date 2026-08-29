@@ -1,9 +1,9 @@
 
-def test_ticket_transfer_flow(testapp, upcoming_event, ticket_types):
+def test_ticket_transfer_flow(testapp, upcoming_event, ticket_types, admin_user, jeff_user, adam_user):
     # test is an admin
-    sender_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
-    receiver_token, refresh = testapp.auth_get_tokens('jeff@example.com', 'sixcharacters')
-    receiver_2_token , refresh = testapp.auth_get_tokens('adam@example.com', 'sixcharacters')
+    sender_token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
+    receiver_token, refresh = testapp.auth_get_tokens(jeff_user.email, 'sixcharacters')
+    receiver_2_token , refresh = testapp.auth_get_tokens(adam_user.email, 'sixcharacters')
 
     # Get user UUID
     sender_user = testapp.get_user(sender_token)
@@ -135,4 +135,3 @@ def test_ticket_transfer_flow(testapp, upcoming_event, ticket_types):
     }), headers=dict({
         "Authorization": "Bearer " + sender_token
     }), status=400)
-

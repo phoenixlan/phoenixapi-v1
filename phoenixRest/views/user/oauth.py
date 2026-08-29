@@ -27,7 +27,9 @@ def generate_token(user: User, request):
     # Extract positions that are for current event, or that are lifetime
     current_events = get_current_events(request.db)
 
-    current_positions = request.db.query(Position).join(PositionMapping).filter(and_(
+    # Position mappings that are currently applicable
+    # The key insight here is that we never care about mappings belonging to old events: they are considered read-only
+    current_position_mappings = request.db.query(PositionMapping).join(Position).filter(and_(
         PositionMapping.user == user, 
         or_(
             PositionMapping.event == None,
@@ -35,24 +37,50 @@ def generate_token(user: User, request):
         )
     )).all()
 
-    position_map = [ position.permissions for position in current_positions ] 
+    # Validate: It is technically possible to create a position binding bound to an event that does not belong to the brand of a position.
+    # If this happens, crash and burn instead of giving the user an invalid, possibly exploitable token
+    for mapping in current_position_mappings:
+        if mapping.event_uuid is not None:
+            log.info(f"Checking mapping with event uuid {mapping.event_uuid} and position brand uuid {mapping.position.event_brand_uuid} vs {mapping.event.event_brand_uuid}")
+            if mapping.event.event_brand_uuid != mapping.position.event_brand_uuid:
+                raise ValueError(f"Position mapping {mapping.uuid} is invalid - bound to event {mapping.event_uuid} of brand {mapping.event.event_brand_uuid} but position belongs to brand {mapping.position.event_brand_uuid}")
 
-    flat_list = [item for sublist in position_map for item in sublist]
+    def get_scoped_permissions(position_map):
+        """Takes a permission mapping and deduces the proper scoped principals given the position.
+        We do this by checking the position we are mapping the user to: 
+        A position mapped to a brand is limited, if it isn't its a special global permission"""
 
-    flat_set = set([entry.permission for entry in flat_list])
+        if position_map.position.event_brand_uuid is not None:
+            # This position belongs to an event brand
+            return [ f"brand:{position_map.position.event_brand_uuid}:{permission.permission}" for permission in position_map.position.permissions ]
+        else:
+            # This position does not belong to a brand, so we apply it globally
+            # TODO: with this system, only permissions that support global scope will work here
+            return [ f"global:{permission.permission}" for permission in position_map.position.permissions ]
+
+    # Create a set of all permissions you have
+    # A list of list of strings
+    permission_map = [ get_scoped_permissions(mapping) for mapping in current_position_mappings] 
+
+    # Flat list of all permissions
+    flat_set = set([item for sublist in permission_map for item in sublist])
 
     # Add permissions caused by positions
-    for position in current_positions:
-        if position.crew is not None:
-            flat_set.add("member")
-        if position.chief and position.crew is not None:
-            flat_set.add("chief:%s" % position.crew.uuid)
-            # This is only added once since flat_set is a set
-            flat_set.add("chief")
+    for mapping in current_position_mappings:
+        if mapping.position.crew is not None:
+            # The user is a crew member for a given brand
+            flat_set.add(f"brand:{mapping.position.crew.event_brand_uuid}:member")
+            flat_set.add(f"member")
+        if mapping.position.chief and mapping.position.crew is not None:
+            # The user is chief for a given crew
+            flat_set.add(f"chief:{mapping.position.crew.uuid}")
+            flat_set.add(f"chief")
+            # The user is chief for any crew in a given brand
+            flat_set.add(f"brand:{mapping.position.crew.event_brand_uuid}:chief")
 
     flat_set.add("user:%s" % user.uuid)
 
-    log.debug("Permissions: %s" % flat_set)
+    log.info("Permissions: %s" % flat_set)
 
     return request.create_jwt_token(str(user.uuid), roles=list(flat_set))
 
@@ -72,7 +100,6 @@ def login(request):
             # Create a code that can be exchanged for an oauth token
             code = OauthCode(user)
             request.db.add(code)
-            log.warning("Created oauth code: %s" % code.code)
             return {
                 'code': code.code
             }
@@ -92,8 +119,6 @@ def token(request):
     # Oauth compliant
     if request.POST['grant_type'] == 'authorization_code':
         # Exchange access code for token
-        log.info("Looking for: %s" % request.POST['code'])
-
         code = request.db.query(OauthCode).filter(OauthCode.code == request.POST['code']).first()
         if code is None:
             log.info("Not seen before code")

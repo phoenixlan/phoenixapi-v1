@@ -3,10 +3,10 @@ from phoenixRest.models.core.event import Event
 from datetime import datetime, timedelta
 
 
-def test_event_brand_create_and_list(testapp, db):
+def test_event_brand_create_and_list(testapp, db, admin_user):
     """Test creating and listing event brands"""
     # Admin token is required for creating brands
-    token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
+    token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
 
     # List event brands - should be empty initially
     res = testapp.get('/event_brand', status=200)

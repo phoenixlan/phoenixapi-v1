@@ -1,6 +1,6 @@
 # Get ticket types for an event(we will use the current one)
-def test_get_ticket_types(testapp, upcoming_event):
-    token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
+def test_get_ticket_types(testapp, upcoming_event, admin_user):
+    token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
 
     # Ensure there are ticket types. By default there aren't
     res = testapp.get('/event/%s/ticketType' % upcoming_event.uuid, headers=dict({
@@ -27,5 +27,4 @@ def test_get_ticket_types(testapp, upcoming_event):
     }), status=200)
 
     assert len(res.json_body) == 1
-
 

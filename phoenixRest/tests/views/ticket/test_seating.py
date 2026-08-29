@@ -77,10 +77,10 @@ def ensure_ticket(testapp, token, event_uuid):
     assert len(owned_tickets) > 0
     return owned_tickets[0]
 
-def test_seatmap_wrong_event(testapp, db, upcoming_event, ticket_types):
+def test_seatmap_wrong_event(testapp, db, upcoming_event, ticket_types, admin_user):
     """Test that accessing seatmap availability with wrong event returns 400"""
     # test is an admin
-    token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
+    token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
 
     # Create a seatmap that is NOT associated with the event
     seatmap = testapp.put_json('/seatmap', dict({
@@ -97,9 +97,9 @@ def test_seatmap_wrong_event(testapp, db, upcoming_event, ticket_types):
         "Authorization": "Bearer " + token
     }), status=400)
 
-def test_ticket_seating(testapp, db, upcoming_event, ticket_types):
+def test_ticket_seating(testapp, db, upcoming_event, ticket_types, admin_user):
     # test is an admin
-    token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
+    token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
 
     # Current event
     seatmap = ensure_seatmap(testapp, token, upcoming_event.uuid)
@@ -172,10 +172,10 @@ def test_ticket_seating(testapp, db, upcoming_event, ticket_types):
     assert ticket['seat'] is not None
     assert ticket['seat']['uuid'] == seat['uuid']
 
-def test_ticket_seating_non_current_event(testapp, db, event_brand, ticket_types):
+def test_ticket_seating_non_current_event(testapp, db, event_brand, ticket_types, admin_user):
     """Test that seating a ticket for a non-current event is rejected"""
     # test is an admin
-    token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
+    token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
     
     # Strategy: Create an even that is currently current. Set everything up. Then change its start and end time.
     earlier_event = Event("Earlier event", datetime.now() + timedelta(days=20), datetime.now() + timedelta(days=22), 400, event_brand)
@@ -248,10 +248,10 @@ def test_ticket_seating_non_current_event(testapp, db, event_brand, ticket_types
     assert 'error' in response
     assert 'not current' in response['error']
 
-def test_ticket_seating_wrong_seatmap(testapp, db, upcoming_event, ticket_types):
+def test_ticket_seating_wrong_seatmap(testapp, db, upcoming_event, ticket_types, admin_user):
     """Test that seating a ticket on a seat from a different seatmap is rejected"""
     # test is an admin
-    token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
+    token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
 
     # Create seatmap for the event
     seatmap = ensure_seatmap(testapp, token, upcoming_event.uuid)

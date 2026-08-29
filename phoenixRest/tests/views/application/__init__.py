@@ -37,19 +37,17 @@ def create_application(testapp:TestApp, token, application_crews: list, event):
 
     return application_uuid
 
-def test_create_accept_appliations(testapp, upcoming_event):
+def test_create_accept_appliations(testapp, upcoming_event, admin_user, greg_user, testcrew):
     # Log in as the test user
-    token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
-    applicant_token, refresh = testapp.auth_get_tokens('greg@example.com', 'sixcharacters')
+    token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
+    applicant_token, refresh = testapp.auth_get_tokens(greg_user.email, 'sixcharacters')
 
-    application_crew_candidates = list(filter(lambda crew: crew["is_applyable"], testapp.get('/crew', status=200).json_body))
-
-    application_uuid = create_application(testapp, applicant_token, [application_crew_candidates[0]['uuid'], application_crew_candidates[1]['uuid']], upcoming_event)
+    application_uuid = create_application(testapp, applicant_token, [str(testcrew.uuid)], upcoming_event)
 
     # Try to accept the application
     res = testapp.patch_json('/application/%s' % application_uuid, dict({
         'answer': 'That\'s a very poggers application',
-        'crew_uuid': application_crew_candidates[0]['uuid'],
+        'crew_uuid': str(testcrew.uuid),
         'state': 'accepted'
     }), headers=dict({
         "Authorization": "Bearer " + token
@@ -71,14 +69,14 @@ def test_create_accept_appliations(testapp, upcoming_event):
 
     correct_mappings = list(filter(lambda mapping: mapping['event_uuid'] == str(upcoming_event.uuid), applicant_user['position_mappings']))
     assert len(correct_mappings) == 1
-    assert correct_mappings[0]['position']['crew_uuid'] == application_crew_candidates[0]['uuid']
+    assert correct_mappings[0]['position']['crew_uuid'] == str(testcrew.uuid)
     
-def test_create_reject_appliations(testapp, upcoming_event):
+def test_create_reject_appliations(testapp, upcoming_event, admin_user, greg_user, testcrew):
     # Log in as the test user
-    token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
-    applicant_token, refresh = testapp.auth_get_tokens('greg@example.com', 'sixcharacters')
+    token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
+    applicant_token, refresh = testapp.auth_get_tokens(greg_user.email, 'sixcharacters')
 
-    application_crew = list(filter(lambda crew: crew["is_applyable"], testapp.get('/crew', status=200).json_body))[0]['uuid']
+    application_crew = str(testcrew.uuid)
 
     application_uuid = create_application(testapp, applicant_token, [application_crew], upcoming_event)
 
@@ -107,13 +105,11 @@ def test_create_reject_appliations(testapp, upcoming_event):
     correct_mappings = list(filter(lambda mapping: mapping['event_uuid'] == str(upcoming_event.uuid), applicant_user['position_mappings']))
     assert len(correct_mappings) == 0
     
-def hide_application(testapp, token, application_crews: list, upcoming_event):
-    token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
-    applicant_token, refresh = testapp.auth_get_tokens('greg@example.com', 'sixcharacters')
+def hide_application(testapp, token, application_crews: list, upcoming_event, admin_user, greg_user):
+    token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
+    applicant_token, refresh = testapp.auth_get_tokens(greg_user.email, 'sixcharacters')
 
     user = testapp.get_user(token)
-
-    application_crew_candidates = list(filter(lambda crew: crew["is_applyable"], testapp.get('/crew', status=200).json_body))
 
     my_application_list = testapp.get('/application/my' % application_uuid, headers=dict({
         "Authorization": "Bearer " + applicant_token
@@ -121,7 +117,7 @@ def hide_application(testapp, token, application_crews: list, upcoming_event):
 
     assert len(my_application_list) == 0
 
-    application_uuid = create_application(testapp, applicant_token, [application_crew_candidates[0]['uuid'], application_crew_candidates[1]['uuid']], upcoming_event)
+    application_uuid = create_application(testapp, applicant_token, application_crews, upcoming_event)
 
     my_application_list = testapp.get('/application/my', headers=dict({
         "Authorization": "Bearer " + applicant_token
@@ -152,9 +148,9 @@ def hide_application(testapp, token, application_crews: list, upcoming_event):
 
     assert len(my_application_list) == 0
 
-def test_cannot_create_application_noncurrent_event(testapp, db, event_brand):
+def test_cannot_create_application_noncurrent_event(testapp, db, event_brand, greg_user, testcrew):
     # Log in as applicant
-    applicant_token, refresh = testapp.auth_get_tokens('greg@example.com', 'sixcharacters')
+    applicant_token, refresh = testapp.auth_get_tokens(greg_user.email, 'sixcharacters')
 
     # Get the current user and upload an avatar (required for applications)
     currentUser = testapp.get('/user/current', headers=dict({
@@ -177,7 +173,7 @@ def test_cannot_create_application_noncurrent_event(testapp, db, event_brand):
 
     # Attempt to create an application for the past event - should fail
     res = testapp.put_json('/application', dict({
-        'crews': [application_crew_candidates[0]['uuid']],
+        'crews': [str(testcrew.uuid)],
         'contents': 'I want to join please',
         'event_uuid': str(past_event.uuid)
     }), headers=dict({

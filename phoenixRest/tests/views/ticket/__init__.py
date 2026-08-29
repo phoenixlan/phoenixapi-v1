@@ -1,8 +1,8 @@
 
-def test_ticket_creation_permissions(testapp, upcoming_event, ticket_types):
+def test_ticket_creation_permissions(testapp, upcoming_event, ticket_types, admin_user, jeff_user):
     # test is an admin
-    privileged_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
-    unprivileged_token, refresh = testapp.auth_get_tokens('jeff@example.com', 'sixcharacters')
+    privileged_token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
+    unprivileged_token, refresh = testapp.auth_get_tokens(jeff_user.email, 'sixcharacters')
 
     # Get user UUID
     privileged_user = testapp.get_user(privileged_token)

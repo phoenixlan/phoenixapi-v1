@@ -4,15 +4,15 @@ from phoenixRest.models.core.consent_withdrawal_code import ConsentWithdrawalCod
 from phoenixRest.models.core.user import User
 from phoenixRest.models.crew.position import Position
 
-def test_crew_mail_dryryn(db, testapp, upcoming_event):
+def test_crew_mail_dryryn(db, testapp, upcoming_event, admin_user, greg_user, jeff_user, adam_user):
     """Tests that crew members receive mail when the crew_info category is used.
     Participants should not receive these mails.
     
     Assumes nobody has consented to marketing mail"""
 
     # test is an admin
-    sender_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
-    adam_token, refresh = testapp.auth_get_tokens('adam@example.com', 'sixcharacters')
+    sender_token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
+    adam_token, refresh = testapp.auth_get_tokens(adam_user.email, 'sixcharacters')
 
     sender_user = testapp.get_user(sender_token)
     adam_user = testapp.get_user(adam_token)
@@ -115,15 +115,15 @@ def test_crew_mail_dryryn(db, testapp, upcoming_event):
     assert consenting_user_pre == consenting_user_post
 
 
-def test_participant_mail_dryrun(testapp, upcoming_event, ticket_types):
+def test_participant_mail_dryrun(testapp, upcoming_event, ticket_types, admin_user, greg_user, jeff_user, adam_user):
     """Tests that all participants get e-mails when the participant_info category is used.
     Crew members should not receive these mails if they don't have a ticket
     
     Assumes nobody has consented to marketing mail"""
 
     # test is an admin
-    sender_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
-    adam_token, refresh = testapp.auth_get_tokens('adam@example.com', 'sixcharacters')
+    sender_token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
+    adam_token, refresh = testapp.auth_get_tokens(adam_user.email, 'sixcharacters')
 
     sender_user = testapp.get_user(sender_token)
     adam_user = testapp.get_user(adam_token)
@@ -205,9 +205,9 @@ def test_participant_mail_dryrun(testapp, upcoming_event, ticket_types):
     assert crew_mail_test_pre == crew_mail_test_post
     assert consenting_user_pre == consenting_user_post
 
-def test_invalid_mail_category_dryrun(testapp, upcoming_event):
+def test_invalid_mail_category_dryrun(testapp, upcoming_event, admin_user):
     # test is an admin
-    sender_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
+    sender_token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
 
     target_users = testapp.post_json('/email/dryrun', dict({
         'recipient_category': "swag",
@@ -218,10 +218,10 @@ def test_invalid_mail_category_dryrun(testapp, upcoming_event):
         "Authorization": "Bearer " + sender_token
     }), status=400)
 
-def test_consent_mail_age_limit(db, testapp, upcoming_event):
+def test_consent_mail_age_limit(db, testapp, upcoming_event, admin_user, greg_user, jeff_user, adam_user):
     # test is an admin
-    sender_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
-    adam_token, refresh = testapp.auth_get_tokens('adam@example.com', 'sixcharacters')
+    sender_token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
+    adam_token, refresh = testapp.auth_get_tokens(adam_user.email, 'sixcharacters')
 
     sender_user = testapp.get_user(sender_token)
     adam_user = testapp.get_user(adam_token)
@@ -247,4 +247,3 @@ def test_consent_mail_age_limit(db, testapp, upcoming_event):
     }), status=200).json_body
 
     assert consenting_user_result['count'] == 2 # Only the current user
-

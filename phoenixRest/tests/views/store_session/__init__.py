@@ -1,6 +1,6 @@
 # Test if we can reserve a store session
-def test_create_store_session(testapp, upcoming_event, ticket_types):
-    token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
+def test_create_store_session(testapp, upcoming_event, ticket_types, admin_user):
+    token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
 
     res = testapp.get('/event/%s/ticketType' % upcoming_event.uuid, headers=dict({
         "Authorization": "Bearer " + token
@@ -17,4 +17,3 @@ def test_create_store_session(testapp, upcoming_event, ticket_types):
     }), status=200)
 
     assert res.json_body['uuid'] is not None
-

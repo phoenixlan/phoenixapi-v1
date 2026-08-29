@@ -2,9 +2,9 @@ from phoenixRest.models.core.user import User
 from phoenixRest.models.core.user_consent import UserConsent, ConsentType
 from phoenixRest.models.core.consent_withdrawal_code import ConsentWithdrawalCode
 
-def test_consent_withdrawal(testapp, db, upcoming_event):
-    test_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
-    target_token, refresh = testapp.auth_get_tokens('adam@example.com', 'sixcharacters')
+def test_consent_withdrawal(testapp, db, upcoming_event, admin_user, adam_user):
+    test_token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
+    target_token, refresh = testapp.auth_get_tokens(adam_user.email, 'sixcharacters')
 
     test_user = testapp.get_user(test_token)
     target_user = testapp.get_user(target_token)

@@ -1,11 +1,11 @@
 from phoenixRest.models.core.event import Event
 
-def test_smoketest_ticket_sales(db, testapp, ticketsale_ongoing_event, ongoing_ticket_types):
+def test_smoketest_ticket_sales(db, testapp, ticketsale_ongoing_event, ongoing_ticket_types, admin_user, jeff_user):
     """Simple test that just makes sure ticket sales statistics isn't obviously broken
     """
     # test is an admin
-    token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
-    unprivileged_token, refresh = testapp.auth_get_tokens('jeff@example.com', 'sixcharacters')
+    token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
+    unprivileged_token, refresh = testapp.auth_get_tokens(jeff_user.email, 'sixcharacters')
 
     stats = testapp.get('/statistics/ticket_sales', headers=dict({
         "Authorization": "Bearer " + token

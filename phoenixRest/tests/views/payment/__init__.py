@@ -26,9 +26,9 @@ def _create_store_session(testapp, event, token):
     assert store_session is not None
     return store_session
 
-def test_ticket_sale_start_limit(testapp, db, upcoming_event, ticket_types):
+def test_ticket_sale_start_limit(testapp, db, upcoming_event, ticket_types, jeff_user):
     # Jeff doesn't have permission to buy tickets any time
-    token, refresh = testapp.auth_get_tokens('jeff@example.com', 'sixcharacters')
+    token, refresh = testapp.auth_get_tokens(jeff_user.email, 'sixcharacters')
 
     # Make sure buying tickets is illegal
     event_instance = db.query(Event).filter(Event.uuid == upcoming_event.uuid).first()
@@ -49,8 +49,8 @@ def test_ticket_sale_start_limit(testapp, db, upcoming_event, ticket_types):
     }), status=400)
 
 # Test if we can create a payment
-def test_payment_flow_vipps(testapp, upcoming_event, ticket_types):
-    token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
+def test_payment_flow_vipps(testapp, upcoming_event, ticket_types, admin_user):
+    token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
 
     store_session = _create_store_session(testapp, upcoming_event, token)
     # Create a payment
@@ -130,8 +130,8 @@ def test_payment_flow_vipps(testapp, upcoming_event, ticket_types):
     
 
 # Test if we can create a payment
-def test_payment_flow_stripe(testapp, upcoming_event, ticket_types):
-    token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
+def test_payment_flow_stripe(testapp, upcoming_event, ticket_types, admin_user):
+    token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
 
     store_session = _create_store_session(testapp, upcoming_event, token)
     # Create a payment

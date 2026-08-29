@@ -6,10 +6,10 @@ from phoenixRest.models.crew.position import Position
 
 from datetime import datetime
 
-def test_consent_mail_dryrun(db, testapp, upcoming_event):
+def test_consent_mail_dryrun(db, testapp, upcoming_event, admin_user, greg_user, jeff_user, adam_user):
     # test is an admin
-    sender_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
-    adam_token, refresh = testapp.auth_get_tokens('adam@example.com', 'sixcharacters')
+    sender_token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
+    adam_token, refresh = testapp.auth_get_tokens(adam_user.email, 'sixcharacters')
 
     sender_user = testapp.get_user(sender_token)
     adam_user = testapp.get_user(adam_token)
@@ -110,10 +110,10 @@ def test_consent_mail_dryrun(db, testapp, upcoming_event):
     assert len(consent_withdrawal_codes_post) == len(consent_withdrawal_codes_pre) + 1
 
 
-def test_consent_mail_no_participants(db, testapp, upcoming_event, ticket_types):
+def test_consent_mail_no_participants(db, testapp, upcoming_event, ticket_types, admin_user, greg_user, jeff_user, adam_user):
     # test is an admin
-    sender_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
-    adam_token, refresh = testapp.auth_get_tokens('adam@example.com', 'sixcharacters')
+    sender_token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
+    adam_token, refresh = testapp.auth_get_tokens(adam_user.email, 'sixcharacters')
 
     sender_user = testapp.get_user(sender_token)
     adam_user = testapp.get_user(adam_token)
@@ -175,10 +175,10 @@ def test_consent_mail_no_participants(db, testapp, upcoming_event, ticket_types)
     assert consenting_user_result['count'] == 1
 
 
-def test_consent_mail_no_crew(db, testapp, upcoming_event):
+def test_consent_mail_no_crew(db, testapp, upcoming_event, admin_user, greg_user, jeff_user, adam_user):
     # test is an admin
-    sender_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
-    adam_token, refresh = testapp.auth_get_tokens('adam@example.com', 'sixcharacters')
+    sender_token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
+    adam_token, refresh = testapp.auth_get_tokens(adam_user.email, 'sixcharacters')
 
     sender_user = testapp.get_user(sender_token)
     adam_user = testapp.get_user(adam_token)
@@ -241,10 +241,10 @@ def test_consent_mail_no_crew(db, testapp, upcoming_event):
     assert consenting_user_result['count'] == 1
 
 
-def test_consent_mail_no_applicants(db, testapp, upcoming_event):
+def test_consent_mail_no_applicants(db, testapp, upcoming_event, admin_user, greg_user, jeff_user, adam_user, testcrew):
     # test is an admin
-    sender_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
-    adam_token, refresh = testapp.auth_get_tokens('adam@example.com', 'sixcharacters')
+    sender_token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
+    adam_token, refresh = testapp.auth_get_tokens(adam_user.email, 'sixcharacters')
 
     sender_user = testapp.get_user(sender_token)
     adam_user = testapp.get_user(adam_token)
@@ -285,7 +285,7 @@ def test_consent_mail_no_applicants(db, testapp, upcoming_event):
     application_crews = list(filter(lambda crew: crew["is_applyable"], testapp.get('/crew', status=200).json_body))
 
     res = testapp.put_json('/application', dict({
-        'crews': [application_crews[0]['uuid']],
+        'crews': [str(testcrew.uuid)],
         'contents': 'I want to join please',
         'event_uuid': str(upcoming_event.uuid)
     }), headers=dict({
@@ -303,4 +303,3 @@ def test_consent_mail_no_applicants(db, testapp, upcoming_event):
     }), status=200).json_body
 
     assert consenting_user_result['count'] == 1
-

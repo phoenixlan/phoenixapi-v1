@@ -5,9 +5,14 @@ import transaction
 from phoenixRest.tests.test_app import TestApp
 from phoenixRest.models import setup_dbengine, get_tm_session
 from phoenixRest.models.core.event import Event
+from phoenixRest.models.core.user import Gender, User
+from phoenixRest.models.crew.crew import Crew
+from phoenixRest.models.crew.position import Position
+from phoenixRest.models.crew.position_mapping import PositionMapping
+from phoenixRest.models.crew.team import Team
 from phoenixRest import main
 
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
 import logging
 log = logging.getLogger(__name__)
@@ -39,7 +44,6 @@ def app(dbengine):
 
 @pytest.fixture()
 def testapp(app, tm, db):
-
     return TestApp(app, extra_environ={
         'tm.active': True,
         'tm.manager': tm,
@@ -55,8 +59,64 @@ def event_brand(db):
     return brand
 
 @pytest.fixture
-def admin_token(testapp):
-    privileged_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
+def testcrew(db, event_brand):
+    crew = Crew('Test crew', 'Crew created for tests')
+    crew.event_brand = event_brand
+    db.add(crew)
+    db.flush()
+    return crew
+
+@pytest.fixture
+def testteam(db, testcrew):
+    team = Team(testcrew, 'Test team', 'Team created for tests')
+    db.add(team)
+    db.flush()
+    return team
+
+def _create_user(db, username, email, firstname, lastname, phone):
+    user = User(
+        username, email, 'sixcharacters', firstname, lastname,
+        date(1998, 3, 27), Gender.male, phone, '1. Mann. Co rd', '1395'
+    )
+    db.add(user)
+    db.flush()
+    return user
+
+def _add_crew_position(db, user, testcrew, testteam=None):
+    position = Position(None, None)
+    position.crew = testcrew
+    position.team = testteam
+    position.event_brand = testcrew.event_brand
+    db.add(PositionMapping(user, position))
+    db.flush()
+
+@pytest.fixture
+def admin_user(db, testcrew):
+    user = _create_user(db, 'test', 'test@example.com', 'Test', 'Testesen', '98643254')
+    admin_position = db.query(Position).filter(Position.name == 'Superadmin').one()
+    db.add(PositionMapping(user, admin_position))
+    _add_crew_position(db, user, testcrew)
+    return user
+
+@pytest.fixture
+def greg_user(db, testcrew, testteam):
+    user = _create_user(db, 'greg', 'greg@example.com', 'Greg', 'Gregsson', '99999999')
+    _add_crew_position(db, user, testcrew, testteam)
+    return user
+
+@pytest.fixture
+def jeff_user(db, testcrew, testteam):
+    user = _create_user(db, 'jeff', 'jeff@example.com', 'Jeff', 'Jefferson', '99999999')
+    _add_crew_position(db, user, testcrew, testteam)
+    return user
+
+@pytest.fixture
+def adam_user(db):
+    return _create_user(db, 'adam', 'adam@example.com', 'Adam', 'Adamson', '99999999')
+
+@pytest.fixture
+def admin_token(testapp, admin_user):
+    privileged_token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
     return privileged_token
 
 @pytest.fixture

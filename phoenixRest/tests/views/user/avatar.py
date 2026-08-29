@@ -16,28 +16,28 @@ def upload_avatar_test_helper(testapp:TestApp, token, path, x,y, w,h, expected_s
             "Authorization": "Bearer " + token
         }), status=200)
 
-def test_upload_avatar_jpg(testapp:TestApp):
-    test_user_token, refresh = testapp.auth_get_tokens("test@example.com", "sixcharacters")
+def test_upload_avatar_jpg(testapp:TestApp, admin_user):
+    test_user_token, refresh = testapp.auth_get_tokens(admin_user.email, "sixcharacters")
     upload_avatar_test_helper(testapp, test_user_token, NORMAL_AVATAR_JPEG, 10, 10, 600, 450, expected_status=200)
     
-def test_upload_avatar_png(testapp:TestApp):
-    test_user_token, refresh = testapp.auth_get_tokens("test@example.com", "sixcharacters")
+def test_upload_avatar_png(testapp:TestApp, admin_user):
+    test_user_token, refresh = testapp.auth_get_tokens(admin_user.email, "sixcharacters")
     upload_avatar_test_helper(testapp, test_user_token, NORMAL_AVATAR_PNG, 10, 10, 600, 450, expected_status=200)
 
-def test_upload_avatar_transparent_rgba(testapp:TestApp):
-    test_user_token, refresh = testapp.auth_get_tokens("test@example.com", "sixcharacters")
+def test_upload_avatar_transparent_rgba(testapp:TestApp, admin_user):
+    test_user_token, refresh = testapp.auth_get_tokens(admin_user.email, "sixcharacters")
     upload_avatar_test_helper(testapp, test_user_token, TRANSPARENT_AVATAR_PNG_RGBA, 10, 10, 600, 450, expected_status=200)
     
-def test_upload_avatar_transparent_p(testapp:TestApp):
-    test_user_token, refresh = testapp.auth_get_tokens("test@example.com", "sixcharacters")                                
+def test_upload_avatar_transparent_p(testapp:TestApp, admin_user):
+    test_user_token, refresh = testapp.auth_get_tokens(admin_user.email, "sixcharacters")                                
     upload_avatar_test_helper(testapp, test_user_token, TRANSPARENT_AVATAR_PNG_P, 10, 10, 600, 450, expected_status=200)
     
-def test_upload_avatar_transparent_rgba_p(testapp:TestApp):
-    test_user_token, refresh = testapp.auth_get_tokens("test@example.com", "sixcharacters")
+def test_upload_avatar_transparent_rgba_p(testapp:TestApp, admin_user):
+    test_user_token, refresh = testapp.auth_get_tokens(admin_user.email, "sixcharacters")
     upload_avatar_test_helper(testapp, test_user_token, TRANSPARENT_AVATAR_PNG_RGBA_P, 10, 10, 600, 450, expected_status=200)
 
-def test_upload_avatar_bad_bounds(testapp:TestApp):
-    test_user_token, refresh = testapp.auth_get_tokens("test@example.com", "sixcharacters")
+def test_upload_avatar_bad_bounds(testapp:TestApp, admin_user):
+    test_user_token, refresh = testapp.auth_get_tokens(admin_user.email, "sixcharacters")
     
     # Ensure the minimum requirements are held
     upload_avatar_test_helper(testapp, test_user_token, TRANSPARENT_AVATAR_PNG_RGBA, 10, 10, 10, 450, expected_status=400)
