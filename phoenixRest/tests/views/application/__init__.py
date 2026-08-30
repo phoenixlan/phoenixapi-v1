@@ -24,10 +24,9 @@ def create_application(testapp:TestApp, token, application_crews: list, event):
         "Authorization": "Bearer " + token
     }), status = 200)
 
-    res = testapp.put_json('/application', dict({
+    res = testapp.put_json('/event/%s/application' % event.uuid, dict({
         'crews': application_crews,
-        'contents': 'I want to join please',
-        'event_uuid': str(event.uuid)
+        'contents': 'I want to join please'
     }), headers=dict({
         "Authorization": "Bearer " + token
     }), status=200)
@@ -172,12 +171,32 @@ def test_cannot_create_application_noncurrent_event(testapp, db, event_brand, gr
     application_crew_candidates = list(filter(lambda crew: crew["is_applyable"], testapp.get('/crew', status=200).json_body))
 
     # Attempt to create an application for the past event - should fail
-    res = testapp.put_json('/application', dict({
+    res = testapp.put_json('/event/%s/application' % past_event.uuid, dict({
         'crews': [str(testcrew.uuid)],
-        'contents': 'I want to join please',
-        'event_uuid': str(past_event.uuid)
+        'contents': 'I want to join please'
     }), headers=dict({
         "Authorization": "Bearer " + applicant_token
     }), status=400)
 
     assert res.json_body['error'] == "Event is not current - you can't create an application for a non-current event"
+
+def test_application_rejects_crew_from_other_brand(
+        testapp, upcoming_event, greg_user, other_crew):
+    token, refresh = testapp.auth_get_tokens(greg_user.email, 'sixcharacters')
+    testapp.upload_avatar(
+        token, 'phoenixRest/tests/assets/avatar_test.png',
+        0, 0, 600, 450, expected_status=200
+    )
+
+    response = testapp.put_json(
+        '/event/%s/application' % upcoming_event.uuid,
+        {
+            'crews': [str(other_crew.uuid)],
+            'contents': 'Cross-brand application'
+        },
+        headers={'Authorization': "Bearer " + token},
+        status=400
+    )
+
+    assert response.json_body['error'] == \
+        'Crew belongs to a different event brand'

@@ -1,28 +1,17 @@
-from pyramid.view import view_config, view_defaults
-from pyramid.httpexceptions import (
-    HTTPNotFound,
-)
-from pyramid.authorization import Authenticated, Everyone, Deny, Allow
+from pyramid.view import view_config
+from pyramid.authorization import Authenticated, Allow
 
 from sqlalchemy import and_
 from sqlalchemy.orm import joinedload
 
-from phoenixRest.models.core.event import Event, get_current_events
-from phoenixRest.models.core.user import User
-from phoenixRest.models.core.avatar import Avatar
-
-from phoenixRest.models.crew.crew import Crew
 from phoenixRest.models.crew.application import Application
 from phoenixRest.models.crew.application_crew_mapping import ApplicationCrewMapping
 
-from phoenixRest.utils import validate
 from phoenixRest.resource import resource
 
 from phoenixRest.roles import ADMIN
 
 from phoenixRest.views.application.instance import ApplicationInstanceResource
-
-from datetime import datetime
 
 import logging
 log = logging.getLogger(__name__)
@@ -33,8 +22,6 @@ class ApplicationViews(object):
         (Allow, ADMIN(), 'list'),
 
         (Allow, Authenticated, 'self'),
-        (Allow, Authenticated, 'create'),
-
         # Authenticated pages
         #(Allow, Authenticated, Authenticated),
         #(Deny, Everyone, Authenticated),
@@ -74,74 +61,3 @@ def get_applications_mine(request):
         )) \
         .order_by(Application.created.asc()).all()
     return applications
-
-@view_config(context=ApplicationViews, name='', request_method='PUT', renderer='json', permission='create')
-@validate(json_body={'crews': list, 'contents': str, 'event_uuid': str})
-def create_application(context, request):
-    if request.user.avatar is None:
-        request.response.status = 400
-        return {
-            "error": "You must upload an avatar before you can apply for crew"
-        }
-
-    if len(request.json_body['crews']) > 3:
-        request.response.status = 400
-        return {
-            "error": "Too many crews"
-        }
-    elif len(request.json_body['crews']) == 0:
-        request.response.status = 400
-        return {
-            "error": "You need to apply to at least one crew"
-        }
-
-    if len(set(request.json_body['crews'])) != len(request.json_body['crews']):
-        request.response.status = 400
-        return {
-            "error": "Duplicates are not allowed"
-        }
-    
-    crew_list = list(map(lambda crew: request.db.query(Crew).filter(Crew.uuid == crew).first(), request.json_body['crews']))
-
-    if None in crew_list:
-        request.response.status = 400
-        return {
-            "error": "Crew not found"
-        }
-    
-    for crew in crew_list:
-        if not crew.is_applyable:
-            request.response.status = 400
-            return {
-                "error": "You cannot apply to %s" % crew.name
-            }
-    
-    event = request.db.query(Event).filter(Event.uuid == request.json_body['event_uuid']).first()
-    if not event:
-        request.response.status = 400
-        return {
-            "error": "Event not found"
-        }
-
-    # Fetch current event
-    active_events = list(map(lambda u: str(u), get_current_events(request.db)))
-    if str(event.uuid) not in active_events:
-        request.response.status = 400
-        return {
-            "error": "Event is not current - you can't create an application for a non-current event"
-        }
-
-    application = Application(user=request.user, 
-                        event=event,
-                        crews=list(map(lambda crew: ApplicationCrewMapping(crew), crew_list)),
-                        contents=request.json_body['contents'])
-    request.db.add(application)
-    request.db.flush()
-
-    request.service_manager.get_service('email').send_mail(request.user.email, "Mottatt søknad", "application_received.jinja2", {
-        "mail": request.registry.settings["api.contact"],
-        "name": request.registry.settings["api.name"],
-        "crew_list": crew_list
-    })
-
-    return application

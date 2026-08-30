@@ -154,10 +154,9 @@ def test_consent_mail_no_participants(db, testapp, upcoming_event, ticket_types,
     ticket_type = res.json_body[0]
 
     # Give test a free ticket. Only works because test is an admin
-    res = testapp.post_json('/ticket', dict({
+    res = testapp.post_json('/event/%s/ticket' % upcoming_event.uuid, dict({
         'ticket_type': ticket_type['uuid'],
-        'recipient': adam_user['uuid'],
-        'event_uuid': str(upcoming_event.uuid)
+        'recipient': adam_user['uuid']
     }), headers=dict({
         "Authorization": "Bearer " + sender_token
     }), status=200)
@@ -218,10 +217,9 @@ def test_consent_mail_no_crew(db, testapp, upcoming_event, admin_user, greg_user
         }), status=200).json_body)
     )
 
-    created_mapping = testapp.post_json('/position_mapping', {
+    created_mapping = testapp.post_json('/event/%s/position_mapping' % upcoming_event.uuid, {
         "position_uuid": position_candidates[0]['uuid'],
-        "user_uuid": adam_user['uuid'],
-        'event_uuid': str(upcoming_event.uuid)
+        "user_uuid": adam_user['uuid']
     }, headers=dict({
         "Authorization": "Bearer " + sender_token
     }), status=200).json_body
@@ -284,10 +282,9 @@ def test_consent_mail_no_applicants(db, testapp, upcoming_event, admin_user, gre
 
     application_crews = list(filter(lambda crew: crew["is_applyable"], testapp.get('/crew', status=200).json_body))
 
-    res = testapp.put_json('/application', dict({
+    res = testapp.put_json('/event/%s/application' % upcoming_event.uuid, dict({
         'crews': [str(testcrew.uuid)],
-        'contents': 'I want to join please',
-        'event_uuid': str(upcoming_event.uuid)
+        'contents': 'I want to join please'
     }), headers=dict({
         "Authorization": "Bearer " + adam_token
     }), status=200)

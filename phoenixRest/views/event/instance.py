@@ -19,10 +19,15 @@ from phoenixRest.models.tickets.seatmap import Seatmap
 from phoenixRest.models.tickets.ticket_type import TicketType
 
 from phoenixRest.views.event.agenda import EventAgendaResource
+from phoenixRest.views.event.application import EventApplicationResource
+from phoenixRest.views.event.card_order import EventCardOrderResource
+from phoenixRest.views.event.position_mapping import EventPositionMappingResource
+from phoenixRest.views.event.store_session import EventStoreSessionResource
+from phoenixRest.views.event.ticket import EventTicketResource
 
 from phoenixRest.mappers.user import map_user_simple_with_secret_fields
 
-from phoenixRest.roles import ADMIN, BRAND_ADMIN, CHIEF, HR_ADMIN, TICKET_ADMIN, TICKET_CHECKIN
+from phoenixRest.roles import ADMIN, BRAND_ADMIN, CHIEF, HR_ADMIN, TICKET_ADMIN
 
 from phoenixRest.utils import validate
 
@@ -46,10 +51,6 @@ class EventInstanceResource(dict):
             (Allow, BRAND_ADMIN(self.eventInstance.event_brand_uuid), 'event_ticket_type_get'),
 
             (Allow, Everyone, 'ticket_availability_get'),
-
-            (Allow, ADMIN(), 'event_tickets_get'),
-            (Allow, TICKET_ADMIN(self.eventInstance.event_brand_uuid), 'event_tickets_get'),
-            (Allow, TICKET_CHECKIN(self.eventInstance.event_brand_uuid), 'event_tickets_get'),
 
             (Allow, ADMIN(), 'event_memberships_get'),
             (Allow, TICKET_ADMIN(self.eventInstance.event_brand_uuid), 'event_memberships_get'),
@@ -79,6 +80,11 @@ class EventInstanceResource(dict):
             raise HTTPNotFound("Event not found")
 
         self["agenda"] = EventAgendaResource(request, self.eventInstance)
+        self["application"] = EventApplicationResource(request, self.eventInstance)
+        self["card_order"] = EventCardOrderResource(request, self.eventInstance)
+        self["position_mapping"] = EventPositionMappingResource(request, self.eventInstance)
+        self["store_session"] = EventStoreSessionResource(request, self.eventInstance)
+        self["ticket"] = EventTicketResource(request, self.eventInstance)
 
 @view_config(context=EventInstanceResource, name='', request_method='GET', renderer='json', permission='event_get')
 def get_event(context, request):
@@ -215,11 +221,6 @@ def get_all_applications(context, request):
         .order_by(Application.created.asc()).all()
 
     return applications
-
-@view_config(context=EventInstanceResource, name='ticket', request_method='GET', renderer='json', permission='event_tickets_get')
-def get_tickets(context, request):
-    tickets = request.db.query(Ticket).filter(Ticket.event_uuid == context.eventInstance.uuid).order_by(Ticket.ticket_id).all()
-    return tickets
 
 @view_config(context=EventInstanceResource, name='new_memberships', request_method='GET', renderer='json', permission='event_memberships_get')
 def get_new_memberships(context, request):

@@ -9,7 +9,9 @@ from phoenixRest.models.core.user import Gender, User
 from phoenixRest.models.crew.crew import Crew
 from phoenixRest.models.crew.position import Position
 from phoenixRest.models.crew.position_mapping import PositionMapping
+from phoenixRest.models.crew.permission import Permission
 from phoenixRest.models.crew.team import Team
+from phoenixRest.models.tickets.ticket_type import TicketType
 from phoenixRest import main
 
 from datetime import date, datetime, timedelta
@@ -59,6 +61,40 @@ def event_brand(db):
     return brand
 
 @pytest.fixture
+def other_event_brand(db):
+    brand = EventBrand("Other event brand")
+    db.add(brand)
+    db.flush()
+    return brand
+
+@pytest.fixture
+def other_crew(db, other_event_brand):
+    crew = Crew('Other crew', 'Crew belonging to another event brand')
+    crew.event_brand = other_event_brand
+    db.add(crew)
+    db.flush()
+    return crew
+
+@pytest.fixture
+def other_position(db, other_event_brand):
+    position = Position('Other position', 'Position belonging to another event brand')
+    position.event_brand = other_event_brand
+    db.add(position)
+    db.flush()
+    return position
+
+@pytest.fixture
+def other_ticket_type(db, other_event_brand):
+    ticket_type = TicketType(
+        'Other ticket type', 100, 'Ticket type belonging to another event brand',
+        True, True
+    )
+    ticket_type.event_brand = other_event_brand
+    db.add(ticket_type)
+    db.flush()
+    return ticket_type
+
+@pytest.fixture
 def testcrew(db, event_brand):
     crew = Crew('Test crew', 'Crew created for tests')
     crew.event_brand = event_brand
@@ -90,6 +126,15 @@ def _add_crew_position(db, user, testcrew, testteam=None):
     db.add(PositionMapping(user, position))
     db.flush()
 
+def _create_scoped_permission_user(db, event, permission, username, email):
+    user = _create_user(db, username, email, username.title(), 'User', '99999999')
+    position = Position('%s position' % permission, 'Position used by tests')
+    position.event_brand = event.event_brand
+    db.add(Permission(position, permission, None))
+    db.add(PositionMapping(user, position, event))
+    db.flush()
+    return user
+
 @pytest.fixture
 def admin_user(db, testcrew):
     user = _create_user(db, 'test', 'test@example.com', 'Test', 'Testesen', '98643254')
@@ -115,6 +160,40 @@ def adam_user(db):
     return _create_user(db, 'adam', 'adam@example.com', 'Adam', 'Adamson', '99999999')
 
 @pytest.fixture
+def ticket_admin_user(db, upcoming_event):
+    return _create_scoped_permission_user(
+        db, upcoming_event, 'ticket_admin', 'ticketadmin',
+        'ticketadmin@example.com'
+    )
+
+@pytest.fixture
+def hr_admin_user(db, upcoming_event):
+    return _create_scoped_permission_user(
+        db, upcoming_event, 'hr_admin', 'hradmin', 'hradmin@example.com'
+    )
+
+@pytest.fixture
+def chief_user(db, upcoming_event, testcrew):
+    user = _create_user(
+        db, 'chief', 'chief@example.com', 'Chief', 'User', '99999999'
+    )
+    position = Position(None, None)
+    position.event_brand = upcoming_event.event_brand
+    position.crew = testcrew
+    position.chief = True
+    db.add(PositionMapping(user, position, upcoming_event))
+    db.flush()
+    return user
+
+@pytest.fixture
+def brand_position(db, event_brand):
+    position = Position('Brand position', 'Position without a crew')
+    position.event_brand = event_brand
+    db.add(position)
+    db.flush()
+    return position
+
+@pytest.fixture
 def admin_token(testapp, admin_user):
     privileged_token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
     return privileged_token
@@ -130,6 +209,19 @@ def upcoming_event(db, event_brand):
     db.add(e)
     db.flush()
     return e
+
+@pytest.fixture
+def other_upcoming_event(db, other_event_brand):
+    event_start = datetime.now() + timedelta(days=62)
+    event_end = datetime.now() + timedelta(days=65)
+
+    event = Event(
+        "Other upcoming event", event_start, event_end, 400,
+        other_event_brand
+    )
+    db.add(event)
+    db.flush()
+    return event
 
 @pytest.fixture
 def ticketsale_ongoing_event(db, event_brand):

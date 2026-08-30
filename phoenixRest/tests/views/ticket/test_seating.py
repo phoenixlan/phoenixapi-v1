@@ -62,10 +62,9 @@ def ensure_ticket(testapp, token, event_uuid):
     current_user = testapp.get_user(token)
 
     # Give test a free ticket. Only works because test is an admin
-    res = testapp.post_json('/ticket', dict({
+    res = testapp.post_json('/event/%s/ticket' % event_uuid, dict({
         'ticket_type': ticket_type['uuid'],
-        'recipient': current_user['uuid'],
-        "event_uuid": str(event_uuid)
+        'recipient': current_user['uuid']
     }), headers=dict({
         "Authorization": "Bearer " + token
     }), status=200)

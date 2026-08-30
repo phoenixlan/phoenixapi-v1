@@ -17,10 +17,9 @@ def test_ticket_transfer_flow(testapp, upcoming_event, ticket_types, admin_user,
     ticket_type = res.json_body[0]
 
     # Give test a free ticket. Only works because test is an admin
-    res = testapp.post_json('/ticket', dict({
+    res = testapp.post_json('/event/%s/ticket' % upcoming_event.uuid, dict({
         'ticket_type': ticket_type['uuid'],
-        'recipient': sender_user['uuid'],
-        "event_uuid": str(upcoming_event.uuid)
+        'recipient': sender_user['uuid']
     }), headers=dict({
         "Authorization": "Bearer " + sender_token
     }), status=200)

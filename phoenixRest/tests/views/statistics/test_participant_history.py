@@ -47,13 +47,14 @@ def test_participant_history_smoketest(db, testapp, admin_user, jeff_user, adam_
         test_event(str(event.uuid), [], [])
 
     # Create a free ticket for current event - what happens?
+    current_event = testapp.get_current_event(db)
     ticket_types = filter(
         lambda type: type["price"] > 0, 
-        testapp.get(f'/event/{testapp.get_current_event(db).uuid}/ticketType', status=200).json_body
+        testapp.get(f'/event/{current_event.uuid}/ticketType', status=200).json_body
     )
     paid_ticket_type = next(ticket_types)
 
-    res = testapp.post_json('/ticket', dict({
+    res = testapp.post_json('/event/%s/ticket' % current_event.uuid, dict({
         'ticket_type': paid_ticket_type['uuid'],
         'recipient': unprivileged_user['uuid']
     }), headers=dict({
@@ -74,7 +75,7 @@ def test_participant_history_smoketest(db, testapp, admin_user, jeff_user, adam_
     test_event(str(all_sorted_events[5].uuid), [], [])
 
     # Give the same person another ticket, it should not change anything
-    res = testapp.post_json('/ticket', dict({
+    res = testapp.post_json('/event/%s/ticket' % current_event.uuid, dict({
         'ticket_type': paid_ticket_type['uuid'],
         'recipient': unprivileged_user['uuid']
     }), headers=dict({
@@ -114,7 +115,7 @@ def test_participant_history_smoketest(db, testapp, admin_user, jeff_user, adam_
     test_event(str(all_sorted_events[5].uuid), [], [])
 
     # Last, give a ticket to another user and see what happens
-    res = testapp.post_json('/ticket', dict({
+    res = testapp.post_json('/event/%s/ticket' % current_event.uuid, dict({
         'ticket_type': paid_ticket_type['uuid'],
         'recipient': unprivileged_user_two['uuid']
     }), headers=dict({
@@ -169,7 +170,8 @@ def test_participant_history_crew(db, testapp, admin_user, jeff_user):
         "Authorization": "Bearer " + token
     }), status=200).json_body))
 
-    created_mapping = testapp.post_json('/position_mapping', {
+    current_event = testapp.get_current_event(db)
+    created_mapping = testapp.post_json('/event/%s/position_mapping' % current_event.uuid, {
         "position_uuid": position_candidates[0]['uuid'],
         "user_uuid": unprivileged_user['uuid']
     }, headers=dict({
@@ -200,7 +202,7 @@ def test_participant_history_crew(db, testapp, admin_user, jeff_user):
     test_event(str(all_sorted_events[0].uuid), [], [0, 1])
 
     # Add them to another crew, shouldnt change the output
-    created_mapping = testapp.post_json('/position_mapping', {
+    created_mapping = testapp.post_json('/event/%s/position_mapping' % current_event.uuid, {
         "position_uuid": position_candidates[1]['uuid'],
         "user_uuid": unprivileged_user['uuid']
     }, headers=dict({

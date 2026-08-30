@@ -13,17 +13,15 @@ def test_card_order(testapp:TestApp, upcoming_event, admin_user):
     
     #? ---- __init__.py ----
     # Admin orders a card for themself
-    res = testapp.post_json("/card_order/", dict({
-        "user_uuid" : admin_uuid,
-        "event_uuid": str(upcoming_event.uuid)
+    res = testapp.post_json("/event/%s/card_order" % upcoming_event.uuid, dict({
+        "user_uuid" : admin_uuid
     }), headers=dict({
         'Authorization': "Bearer " + admin_user_token
     }), status=200)
     
     # Admin orders a card with the wrong user uuid and it fails
-    res = testapp.post_json("/card_order/", dict({
-        "user_uuid" : str(uuid.uuid4()),
-        "event_uuid": str(upcoming_event.uuid)
+    res = testapp.post_json("/event/%s/card_order" % upcoming_event.uuid, dict({
+        "user_uuid" : str(uuid.uuid4())
     }), headers=dict({
         'Authorization': "Bearer " + admin_user_token
     }), status=400)
@@ -62,9 +60,8 @@ def test_card_order(testapp:TestApp, upcoming_event, admin_user):
     assert res["state"] == OrderStates.FINISHED.value
     
     # Admin orders a new card for themself
-    res = testapp.post_json("/card_order/", dict({
-        "user_uuid" : admin_uuid,
-        "event_uuid": str(upcoming_event.uuid)
+    res = testapp.post_json("/event/%s/card_order" % upcoming_event.uuid, dict({
+        "user_uuid" : admin_uuid
     }), headers=dict({
         'Authorization': "Bearer " + admin_user_token
     }), status=200).json_body
@@ -87,4 +84,20 @@ def test_card_order(testapp:TestApp, upcoming_event, admin_user):
         'Authorization': "Bearer " + admin_user_token
     }), status=200)
     assert len(res.json_body) == 2
+
+def test_chief_can_create_card_order_only_for_own_brand(
+        testapp, upcoming_event, other_upcoming_event, chief_user):
+    token, refresh = testapp.auth_get_tokens(chief_user.email, 'sixcharacters')
+
+    testapp.post_json('/event/%s/card_order' % upcoming_event.uuid, {
+        'user_uuid': str(chief_user.uuid)
+    }, headers={
+        'Authorization': "Bearer " + token
+    }, status=200)
+
+    testapp.post_json('/event/%s/card_order' % other_upcoming_event.uuid, {
+        'user_uuid': str(chief_user.uuid)
+    }, headers={
+        'Authorization': "Bearer " + token
+    }, status=403)
     

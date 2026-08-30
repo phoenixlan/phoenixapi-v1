@@ -12,11 +12,10 @@ def _create_store_session(testapp, event, token):
     }), status=200)
 
     # Reserve a card for the first ticket for sale, i guess
-    res = testapp.put_json('/store_session', dict({
+    res = testapp.put_json('/event/%s/store_session' % event.uuid, dict({
         'cart': [
             {'qty': 1, 'uuid': res.json_body[0]['uuid']}
-        ],
-        'event_uuid': str(event.uuid)
+        ]
     }), headers=dict({
         "Authorization": "Bearer " + token
     }), status=200)
@@ -40,7 +39,7 @@ def test_ticket_sale_start_limit(testapp, db, upcoming_event, ticket_types, jeff
     }), status=200)
 
     # Reserve a card for the first ticket for sale, i guess
-    res = testapp.put_json('/store_session', dict({
+    res = testapp.put_json('/event/%s/store_session' % upcoming_event.uuid, dict({
         'cart': [
             {'qty': 1, 'uuid': res.json_body[0]['uuid']}
         ]

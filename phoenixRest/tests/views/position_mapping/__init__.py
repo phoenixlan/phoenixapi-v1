@@ -13,11 +13,14 @@ def test_create_delete_position_mapping(testapp, upcoming_event, admin_user, ada
     position_candidates = testapp.get('/position', headers=dict({
         "Authorization": "Bearer " + token
     }), status=200).json_body
+    position_candidates = list(filter(
+        lambda position: position['event_brand_uuid'] == str(upcoming_event.event_brand_uuid),
+        position_candidates
+    ))
 
-    created_mapping = testapp.post_json('/position_mapping', {
+    created_mapping = testapp.post_json('/event/%s/position_mapping' % upcoming_event.uuid, {
         "position_uuid": position_candidates[0]['uuid'],
-        "user_uuid": test_user['uuid'],
-        "event_uuid": str(upcoming_event.uuid)
+        "user_uuid": test_user['uuid']
     }, headers=dict({
         "Authorization": "Bearer " + token
     }), status=200).json_body
@@ -62,11 +65,45 @@ def test_no_permissionless_promotion(testapp, upcoming_event, admin_user, adam_u
     position_candidates = testapp.get('/position', headers=dict({
         "Authorization": "Bearer " + token
     }), status=200).json_body
+    position_candidates = list(filter(
+        lambda position: position['event_brand_uuid'] == str(upcoming_event.event_brand_uuid),
+        position_candidates
+    ))
 
-    testapp.post_json('/position_mapping', {
+    testapp.post_json('/event/%s/position_mapping' % upcoming_event.uuid, {
         "position_uuid": position_candidates[0]['uuid'],
-        "user_uuid": test_user['uuid'],
-        "event_uuid": str(upcoming_event.uuid)
+        "user_uuid": test_user['uuid']
     }, headers=dict({
         "Authorization": "Bearer " + test_user_token
     }), status=403)
+
+def test_hr_admin_mapping_permissions_and_brand_ownership(
+        testapp, upcoming_event, other_upcoming_event, hr_admin_user,
+        adam_user, brand_position, other_position):
+    token, refresh = testapp.auth_get_tokens(hr_admin_user.email, 'sixcharacters')
+
+    testapp.post_json('/event/%s/position_mapping' % upcoming_event.uuid, {
+        'position_uuid': str(brand_position.uuid),
+        'user_uuid': str(adam_user.uuid)
+    }, headers={
+        'Authorization': "Bearer " + token
+    }, status=200)
+
+    testapp.post_json('/event/%s/position_mapping' % other_upcoming_event.uuid, {
+        'position_uuid': str(other_position.uuid),
+        'user_uuid': str(adam_user.uuid)
+    }, headers={
+        'Authorization': "Bearer " + token
+    }, status=403)
+
+    response = testapp.post_json(
+        '/event/%s/position_mapping' % upcoming_event.uuid,
+        {
+            'position_uuid': str(other_position.uuid),
+            'user_uuid': str(adam_user.uuid)
+        },
+        headers={'Authorization': "Bearer " + token},
+        status=400
+    )
+    assert response.json_body['error'] == \
+        'Position belongs to a different event brand'

@@ -4,7 +4,9 @@ from phoenixRest.models.core.consent_withdrawal_code import ConsentWithdrawalCod
 from phoenixRest.models.core.user import User
 from phoenixRest.models.crew.position import Position
 
-def test_crew_mail_dryryn(db, testapp, upcoming_event, admin_user, greg_user, jeff_user, adam_user):
+def test_crew_mail_dryryn(
+        db, testapp, upcoming_event, admin_user, greg_user, jeff_user,
+        adam_user, brand_position):
     """Tests that crew members receive mail when the crew_info category is used.
     Participants should not receive these mails.
     
@@ -49,11 +51,9 @@ def test_crew_mail_dryryn(db, testapp, upcoming_event, admin_user, greg_user, je
     assert crew_mail_test['count'] == 3 # The user is a crew member already
 
     # Give adam a position with no crew attachment, and verify that the count does not increase
-    position = db.query(Position).filter(Position.crew_uuid == None).first()
-    mapping = testapp.post_json('/position_mapping', dict({
+    mapping = testapp.post_json('/event/%s/position_mapping' % upcoming_event.uuid, dict({
         "user_uuid": adam_user['uuid'],
-        "position_uuid": str(position.uuid),
-        "event_uuid": str(upcoming_event.uuid)
+        "position_uuid": str(brand_position.uuid)
     }), headers=dict({
         "Authorization": "Bearer " + sender_token
     }), status=200)
@@ -74,10 +74,9 @@ def test_crew_mail_dryryn(db, testapp, upcoming_event, admin_user, greg_user, je
     position = db.query(Position).filter(Position.crew_uuid != None).first()
 
     # Create a position mapping
-    mapping = testapp.post_json('/position_mapping', dict({
+    mapping = testapp.post_json('/event/%s/position_mapping' % upcoming_event.uuid, dict({
         "user_uuid": adam_user['uuid'],
-        "position_uuid": str(position.uuid),
-        "event_uuid": str(upcoming_event.uuid)
+        "position_uuid": str(position.uuid)
     }), headers=dict({
         "Authorization": "Bearer " + sender_token
     }), status=200)
@@ -164,10 +163,9 @@ def test_participant_mail_dryrun(testapp, upcoming_event, ticket_types, admin_us
     }), status=200)
     ticket_type = res.json_body[0]
 
-    res = testapp.post_json('/ticket', dict({
+    res = testapp.post_json('/event/%s/ticket' % upcoming_event.uuid, dict({
         'ticket_type': ticket_type['uuid'],
-        'recipient': adam_user['uuid'],
-        'event_uuid': str(upcoming_event.uuid)
+        'recipient': adam_user['uuid']
     }), headers=dict({
         "Authorization": "Bearer " + sender_token
     }), status=200)

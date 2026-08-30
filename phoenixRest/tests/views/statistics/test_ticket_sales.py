@@ -34,10 +34,9 @@ def test_smoketest_ticket_sales(db, testapp, ticketsale_ongoing_event, ongoing_t
 
     # Give test user two free tickets. Why two? To ensure no deduplication happens, etc.
     for i in range(0, 2):
-        res = testapp.post_json('/ticket', dict({
+        res = testapp.post_json('/event/%s/ticket' % ticketsale_ongoing_event.uuid, dict({
             'ticket_type': next(ticket_types)['uuid'],
-            'recipient': unprivileged_user['uuid'],
-            'event_uuid': str(ticketsale_ongoing_event.uuid)
+            'recipient': unprivileged_user['uuid']
         }), headers=dict({
             "Authorization": "Bearer " + token
         }), status=200)
