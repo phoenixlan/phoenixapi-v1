@@ -76,6 +76,13 @@ def other_crew(db, other_event_brand):
     return crew
 
 @pytest.fixture
+def other_team(db, other_crew):
+    team = Team(other_crew, 'Other team', 'Team belonging to another event brand')
+    db.add(team)
+    db.flush()
+    return team
+
+@pytest.fixture
 def other_position(db, other_event_brand):
     position = Position('Other position', 'Position belonging to another event brand')
     position.event_brand = other_event_brand
@@ -173,6 +180,12 @@ def hr_admin_user(db, upcoming_event):
     )
 
 @pytest.fixture
+def brand_admin_user(db, upcoming_event):
+    return _create_scoped_permission_user(
+        db, upcoming_event, 'admin', 'brandadmin', 'brandadmin@example.com'
+    )
+
+@pytest.fixture
 def chief_user(db, upcoming_event, testcrew):
     user = _create_user(
         db, 'chief', 'chief@example.com', 'Chief', 'User', '99999999'
@@ -244,6 +257,10 @@ def ongoing_ticket_types(db, testapp, ticketsale_ongoing_event, admin_token):
     }), status=200).json_body
 
     for ticket_type in all_ticket_types:
+        ticket_type_model = db.query(TicketType).filter(
+            TicketType.uuid == ticket_type['uuid']
+        ).one()
+        ticket_type_model.event_brand = ticketsale_ongoing_event.event_brand
         testapp.put_json('/event/%s/ticketType' % ticketsale_ongoing_event.uuid, dict({
             'ticket_type_uuid': ticket_type['uuid']
         }), headers=dict({
@@ -260,6 +277,10 @@ def ticket_types(db, testapp, upcoming_event, admin_token):
     }), status=200).json_body
 
     for ticket_type in all_ticket_types:
+        ticket_type_model = db.query(TicketType).filter(
+            TicketType.uuid == ticket_type['uuid']
+        ).one()
+        ticket_type_model.event_brand = upcoming_event.event_brand
         testapp.put_json('/event/%s/ticketType' % upcoming_event.uuid, dict({
             'ticket_type_uuid': ticket_type['uuid']
         }), headers=dict({

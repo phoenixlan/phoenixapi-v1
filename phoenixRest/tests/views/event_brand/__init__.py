@@ -35,6 +35,28 @@ def test_event_brand_create_and_list(testapp, db, admin_user):
     assert res.json_body['name'] == 'Test Brand'
 
 
+def test_create_ticket_type_for_brand(testapp, event_brand, admin_token):
+    ticket_type = testapp.post_json(
+        '/event_brand/%s/ticket_type' % event_brand.uuid,
+        {
+            'name': 'Brand ticket',
+            'price': 250,
+            'description': 'A tenant-owned ticket type',
+            'refundable': True,
+            'seatable': False
+        },
+        headers={'Authorization': "Bearer " + admin_token},
+        status=200
+    ).json_body
+
+    assert ticket_type['name'] == 'Brand ticket'
+    assert ticket_type['price'] == 250
+    assert ticket_type['description'] == 'A tenant-owned ticket type'
+    assert ticket_type['refundable'] is True
+    assert ticket_type['seatable'] is False
+    assert ticket_type['event_brand_uuid'] == str(event_brand.uuid)
+
+
 def test_get_current_event_for_brand(testapp, db):
     """Test getting the current event for a specific brand"""
     # Create a brand

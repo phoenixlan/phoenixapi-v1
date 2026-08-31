@@ -21,6 +21,15 @@ def test_get_current_events(db, upcoming_event):
     current_event_uuids = list(map(lambda u: str(u), current_events))
     assert str(upcoming_event.uuid) in current_event_uuids
 
+def test_get_current_events_returns_one_event_per_brand(
+        db, upcoming_event, other_upcoming_event):
+    current_events = set(get_current_events(db))
+
+    assert current_events == {
+        upcoming_event.uuid,
+        other_upcoming_event.uuid
+    }
+
         
 def test_get_current_events_multiple_upcoming(db, upcoming_event, event_brand):
     """Test that if i create a more recent event, it will be the current one"""

@@ -121,7 +121,7 @@ def get_current_events(db):
     We use uuid as it is more useful"""
     ranked_sub = db.query(
         Event.uuid.label("uuid"), 
-        func.row_number().over(partition_by=Event.event_brand, order_by=Event.end_time.asc()).label("rank")
+        func.row_number().over(partition_by=Event.event_brand_uuid, order_by=Event.end_time.asc()).label("rank")
     ).filter(Event.end_time > datetime.now()).subquery()
 
     current_events = list(map(lambda row: row[0], db.query(ranked_sub.c.uuid).filter(ranked_sub.c.rank == 1).all()))
@@ -139,4 +139,3 @@ def get_current_event(db, brand: "Brand"):
     else:
         # TODO we want to return ticket types some time? Maybe?
         return firstEvent
-

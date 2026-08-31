@@ -36,10 +36,10 @@ def create_application(testapp:TestApp, token, application_crews: list, event):
 
     return application_uuid
 
-def test_create_accept_appliations(testapp, upcoming_event, admin_user, greg_user, testcrew):
+def test_create_accept_appliations(testapp, upcoming_event, chief_user, adam_user, testcrew):
     # Log in as the test user
-    token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
-    applicant_token, refresh = testapp.auth_get_tokens(greg_user.email, 'sixcharacters')
+    token, refresh = testapp.auth_get_tokens(chief_user.email, 'sixcharacters')
+    applicant_token, refresh = testapp.auth_get_tokens(adam_user.email, 'sixcharacters')
 
     application_uuid = create_application(testapp, applicant_token, [str(testcrew.uuid)], upcoming_event)
 
@@ -69,6 +69,11 @@ def test_create_accept_appliations(testapp, upcoming_event, admin_user, greg_use
     correct_mappings = list(filter(lambda mapping: mapping['event_uuid'] == str(upcoming_event.uuid), applicant_user['position_mappings']))
     assert len(correct_mappings) == 1
     assert correct_mappings[0]['position']['crew_uuid'] == str(testcrew.uuid)
+    assert correct_mappings[0]['position']['event_brand_uuid'] == \
+        str(upcoming_event.event_brand_uuid)
+
+    # A newly generated token validates the event/position brand pairing.
+    testapp.auth_get_tokens(adam_user.email, 'sixcharacters')
     
 def test_create_reject_appliations(testapp, upcoming_event, admin_user, greg_user, testcrew):
     # Log in as the test user

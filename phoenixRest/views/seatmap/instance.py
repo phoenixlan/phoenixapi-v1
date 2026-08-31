@@ -108,6 +108,7 @@ def upload_background(context, request):
     extension = filename.split(".")[-1]
 
     background = SeatmapBackground(request.user, extension)
+    background.event_brand = context.seatmapInstance.event_brand
     request.db.add(background)
     request.db.flush()
 
@@ -166,4 +167,3 @@ def create_row(context, request):
     request.db.add(row)
     request.db.flush()
     return row
-

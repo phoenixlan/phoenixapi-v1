@@ -5,16 +5,12 @@ from pyramid.httpexceptions import (
 from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
 
-from phoenixRest.models.core.event import Event, get_current_event
-
-from phoenixRest.utils import validate
+from phoenixRest.models.core.event import Event
 from phoenixRest.resource import resource
 
 from phoenixRest.roles import ADMIN
 
 from phoenixRest.views.event.instance import EventInstanceResource
-
-from datetime import datetime
 
 import logging
 log = logging.getLogger(__name__)
@@ -25,7 +21,6 @@ log = logging.getLogger(__name__)
 class EventViews(object):
     __acl__ = [
         (Allow, Everyone, 'list'),
-        (Allow, ADMIN(), 'create'),
 
         # Authenticated pages
         #(Allow, Authenticated, Authenticated),
@@ -49,13 +44,3 @@ def get_events(request):
     # Find all events and sort them by start time
     events = request.db.query(Event).order_by(Event.start_time.asc()).all()
     return events
-
-@view_config(context=EventViews, request_method='PUT', renderer='json', permission='create')
-@validate(json_body={'start_time': int, 'end_time': int, 'max_participants': int})
-def create_event(request):
-    event = Event(start_time=datetime.fromtimestamp(request.json_body['start_time']), 
-                  end_time=datetime.fromtimestamp(request.json_body['end_time']), 
-                  max_participants=request.json_body['max_participants'])
-    request.db.add(event)
-    request.db.flush()
-    return event

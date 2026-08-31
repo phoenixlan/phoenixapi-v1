@@ -43,7 +43,7 @@ def get_vouchers(context, request):
     return request.db.query(TicketVoucher).all()
 
 @view_config(name='', context=TicketVoucherResource, request_method='POST', renderer='json', permission='create')
-@validate(json_body={'recipient_user_uuid': str, 'ticket_type_uuid': str, 'last_use_event_uuid': str, 'event_brand_uuid': str})
+@validate(json_body={'recipient_user_uuid': str, 'ticket_type_uuid': str, 'last_use_event_uuid': str})
 def create_voucher(context, request):
     recipient_user = request.db.query(User).filter(User.uuid == request.json_body['recipient_user_uuid']).first()
     if not recipient_user:
@@ -66,14 +66,16 @@ def create_voucher(context, request):
             "error": "last_use_event not found"
         }
         
-    brand = request.db.query(EventBrand).filter(EventBrand.uuid == request.json_body['event_brand_uuid']).first()
-    if not brand:
+    if ticket_type.event_brand_uuid != last_use_event.event_brand_uuid:
         request.response.status = 400
         return {
-            "error": "Brand not found"
+            "error": "Ticket type belongs to a different event brand"
         }
 
-    voucher = TicketVoucher(request.user, recipient_user, ticket_type, brand, last_use_event)
+    voucher = TicketVoucher(
+        request.user, recipient_user, ticket_type,
+        last_use_event.event_brand, last_use_event
+    )
     request.db.add(voucher)
     request.db.flush()
 

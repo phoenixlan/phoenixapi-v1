@@ -1,6 +1,6 @@
 from phoenixRest.models.core.event import Event
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 def test_ticket_voucher_flow(testapp, upcoming_event, ticket_types, admin_user, jeff_user, adam_user):
     # test is an admin
@@ -54,8 +54,7 @@ def test_ticket_voucher_flow(testapp, upcoming_event, ticket_types, admin_user, 
     voucher = testapp.post_json('/ticket_voucher', dict({
         'ticket_type_uuid': ticket_type['uuid'],
         'recipient_user_uuid': receiver_user['uuid'],
-        'last_use_event_uuid': str(upcoming_event.uuid),
-        'event_brand_uuid': str(upcoming_event.event_brand.uuid)
+        'last_use_event_uuid': str(upcoming_event.uuid)
     }), headers=dict({
         "Authorization": "Bearer " + sender_token
     }), status=200).json_body
@@ -115,8 +114,16 @@ def test_expired_voucher_flow(testapp, db, upcoming_event, ticket_types, admin_u
     sender_user = testapp.get_user(sender_token)
     receiver_user = testapp.get_user(receiver_token)
 
-    # Find an old event
-    old_event = db.query(Event).filter(Event.end_time < datetime.now()).first()
+    # Create an old event belonging to the same brand as the ticket type.
+    old_event = Event(
+        'Past voucher event',
+        datetime.now() - timedelta(days=10),
+        datetime.now() - timedelta(days=7),
+        400,
+        upcoming_event.event_brand
+    )
+    db.add(old_event)
+    db.flush()
 
     # Get existing ticket types
     res = testapp.get('/event/%s/ticketType' % upcoming_event.uuid, headers=dict({
@@ -133,8 +140,7 @@ def test_expired_voucher_flow(testapp, db, upcoming_event, ticket_types, admin_u
     voucher = testapp.post_json('/ticket_voucher', dict({
         'ticket_type_uuid': ticket_type['uuid'],
         'recipient_user_uuid': receiver_user['uuid'],
-        'last_use_event_uuid': str(old_event.uuid),
-        'event_brand_uuid': str(upcoming_event.event_brand.uuid)
+        'last_use_event_uuid': str(old_event.uuid)
     }), headers=dict({
         "Authorization": "Bearer " + sender_token
     }), status=200).json_body
@@ -152,3 +158,17 @@ def test_expired_voucher_flow(testapp, db, upcoming_event, ticket_types, admin_u
         "Authorization": "Bearer " + sender_token 
     }), status=200).json_body
     assert len(jeff_owned_tickets_pre) == len(jeff_owned_tickets_post)
+
+
+def test_voucher_rejects_ticket_type_from_other_brand(
+        testapp, upcoming_event, other_ticket_type, admin_token, adam_user):
+    response = testapp.post_json('/ticket_voucher', {
+        'ticket_type_uuid': str(other_ticket_type.uuid),
+        'recipient_user_uuid': str(adam_user.uuid),
+        'last_use_event_uuid': str(upcoming_event.uuid)
+    }, headers={
+        'Authorization': "Bearer " + admin_token
+    }, status=400)
+
+    assert response.json_body['error'] == \
+        'Ticket type belongs to a different event brand'

@@ -37,11 +37,3 @@ class TicketTypeResource(object):
 def get_all_ticket_types(context, request):
     return request.db.query(TicketType).order_by(TicketType.name).all()
 
-@view_config(name='', context=TicketTypeResource, request_method='POST', renderer='json', permission='create')
-@validate(json_body={'name': str, 'price': int, 'refundable': bool, 'seatable': bool, 'description': str})
-def create_ticket_type(context, request):
-    entrance = TicketType(request.json_body['name'])
-    request.db.add(entrance)
-    request.db.flush()
-    return entrance
-

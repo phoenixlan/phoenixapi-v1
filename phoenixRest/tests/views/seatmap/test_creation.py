@@ -14,6 +14,19 @@ def test_create_seatmap_with_row_and_seats(testapp, event_brand, admin_token):
     assert seatmap['event_brand_uuid'] == str(event_brand.uuid)
     assert seatmap['rows'] == []
 
+    testapp.put(
+        '/seatmap/%s/background' % seatmap['uuid'],
+        upload_files=[(
+            'file', 'phoenixRest/tests/assets/avatar_test.png'
+        )],
+        headers=headers,
+        status=200
+    )
+    seatmap = testapp.get(
+        '/seatmap/%s' % seatmap['uuid'], headers=headers, status=200
+    ).json_body
+    assert seatmap['background']['event_brand_uuid'] == str(event_brand.uuid)
+
     row = testapp.put_json('/seatmap/%s/row' % seatmap['uuid'], {
         'row_number': 1,
         'x': 10,
