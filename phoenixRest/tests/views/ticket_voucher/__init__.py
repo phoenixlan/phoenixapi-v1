@@ -1,7 +1,3 @@
-from phoenixRest.models.core.event import Event
-
-from datetime import datetime, timedelta
-
 def test_ticket_voucher_flow(testapp, upcoming_event, ticket_types, admin_user, jeff_user, adam_user):
     # test is an admin
     sender_token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
@@ -106,7 +102,7 @@ def test_ticket_voucher_flow(testapp, upcoming_event, ticket_types, admin_user, 
     assert len(jeff_owned_vouchers) == 1
     assert jeff_owned_vouchers[0]['is_used'] == True
 
-def test_expired_voucher_flow(testapp, db, upcoming_event, ticket_types, admin_user, jeff_user):
+def test_expired_voucher_flow(testapp, db, upcoming_event, previous_event, ticket_types, admin_user, jeff_user):
     # test is an admin
     sender_token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
     receiver_token, refresh = testapp.auth_get_tokens(jeff_user.email, 'sixcharacters')
@@ -114,16 +110,7 @@ def test_expired_voucher_flow(testapp, db, upcoming_event, ticket_types, admin_u
     sender_user = testapp.get_user(sender_token)
     receiver_user = testapp.get_user(receiver_token)
 
-    # Create an old event belonging to the same brand as the ticket type.
-    old_event = Event(
-        'Past voucher event',
-        datetime.now() - timedelta(days=10),
-        datetime.now() - timedelta(days=7),
-        400,
-        upcoming_event.event_brand
-    )
-    db.add(old_event)
-    db.flush()
+    # previous_event is an old event belonging to the same brand as the ticket type
 
     # Get existing ticket types
     res = testapp.get('/event/%s/ticketType' % upcoming_event.uuid, headers=dict({
@@ -140,7 +127,7 @@ def test_expired_voucher_flow(testapp, db, upcoming_event, ticket_types, admin_u
     voucher = testapp.post_json('/ticket_voucher', dict({
         'ticket_type_uuid': ticket_type['uuid'],
         'recipient_user_uuid': receiver_user['uuid'],
-        'last_use_event_uuid': str(old_event.uuid)
+        'last_use_event_uuid': str(previous_event.uuid)
     }), headers=dict({
         "Authorization": "Bearer " + sender_token
     }), status=200).json_body

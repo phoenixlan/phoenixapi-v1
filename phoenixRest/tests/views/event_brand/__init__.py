@@ -1,7 +1,3 @@
-from phoenixRest.models.core.event_brand import EventBrand
-from phoenixRest.models.core.event import Event
-from datetime import datetime, timedelta
-
 
 def test_event_brand_create_and_list(testapp, db, admin_user):
     """Test creating and listing event brands"""
@@ -43,7 +39,8 @@ def test_create_ticket_type_for_brand(testapp, event_brand, admin_token):
             'price': 250,
             'description': 'A tenant-owned ticket type',
             'refundable': True,
-            'seatable': False
+            'seatable': False,
+            'grants_admission': True
         },
         headers={'Authorization': "Bearer " + admin_token},
         status=200
@@ -54,82 +51,37 @@ def test_create_ticket_type_for_brand(testapp, event_brand, admin_token):
     assert ticket_type['description'] == 'A tenant-owned ticket type'
     assert ticket_type['refundable'] is True
     assert ticket_type['seatable'] is False
+    assert ticket_type['grants_admission'] is True
     assert ticket_type['event_brand_uuid'] == str(event_brand.uuid)
 
 
-def test_get_current_event_for_brand(testapp, db):
+def test_get_current_event_for_brand(testapp, event_brand, upcoming_event):
     """Test getting the current event for a specific brand"""
-    # Create a brand
-    brand = EventBrand("Test Brand")
-    db.add(brand)
-    db.flush()
-
-    # Create an upcoming event for this brand
-    event_start = datetime.now() + timedelta(days=10)
-    event_end = datetime.now() + timedelta(days=13)
-    event = Event("Test Event for Brand", event_start, event_end, 400, brand)
-    db.add(event)
-    db.flush()
-
-    # Get the current event for this brand
-    res = testapp.get('/event_brand/%s/current_event' % str(brand.uuid), status=200)
+    res = testapp.get('/event_brand/%s/current_event' % str(event_brand.uuid), status=200)
     assert res.json_body is not None
-    assert res.json_body['name'] == 'Test Event for Brand'
-    assert res.json_body['uuid'] == str(event.uuid)
-    assert res.json_body['event_brand_uuid'] == str(brand.uuid)
+    assert res.json_body['name'] == upcoming_event.name
+    assert res.json_body['uuid'] == str(upcoming_event.uuid)
+    assert res.json_body['event_brand_uuid'] == str(event_brand.uuid)
 
 
-def test_get_current_event_no_events(testapp, db):
+def test_get_current_event_no_events(testapp, event_brand):
     """Test getting current event when brand has no events"""
-    # Create a brand with no events
-    brand = EventBrand("Empty Brand")
-    db.add(brand)
-    db.flush()
-
     # Should return null when there are no events
-    res = testapp.get('/event_brand/%s/current_event' % str(brand.uuid), status=200)
+    res = testapp.get('/event_brand/%s/current_event' % str(event_brand.uuid), status=200)
     assert res.json_body is None
 
 
-def test_get_current_event_only_past_events(testapp, db):
+def test_get_current_event_only_past_events(testapp, event_brand, previous_event):
     """Test getting current event when brand only has past events"""
-    # Create a brand
-    brand = EventBrand("Past Events Brand")
-    db.add(brand)
-    db.flush()
-
-    # Create a past event
-    event_start = datetime.now() - timedelta(days=30)
-    event_end = datetime.now() - timedelta(days=27)
-    event = Event("Past Event", event_start, event_end, 400, brand)
-    db.add(event)
-    db.flush()
-
     # Should return null when there are only past events
-    res = testapp.get('/event_brand/%s/current_event' % str(brand.uuid), status=200)
+    res = testapp.get('/event_brand/%s/current_event' % str(event_brand.uuid), status=200)
     assert res.json_body is None
 
 
-def test_get_current_event_multiple_upcoming(testapp, db):
+def test_get_current_event_multiple_upcoming(testapp, event_brand, upcoming_event, earlier_upcoming_event):
     """Test getting current event when brand has multiple upcoming events - should return earliest"""
-    # Create a brand
-    brand = EventBrand("Multiple Events Brand")
-    db.add(brand)
-
-    # Create multiple upcoming events
-    event1_start = datetime.now() + timedelta(days=20)
-    event1_end = datetime.now() + timedelta(days=23)
-    event1 = Event("Later Event", event1_start, event1_end, 400, brand)
-    db.add(event1)
-
-    event2_start = datetime.now() + timedelta(days=10)
-    event2_end = datetime.now() + timedelta(days=13)
-    event2 = Event("Earlier Event", event2_start, event2_end, 400, brand)
-    db.add(event2)
-    db.flush()
-
     # Should return the earliest upcoming event
-    res = testapp.get('/event_brand/%s/current_event' % str(brand.uuid), status=200)
+    res = testapp.get('/event_brand/%s/current_event' % str(event_brand.uuid), status=200)
     assert res.json_body is not None
-    assert res.json_body['name'] == 'Earlier Event'
-    assert res.json_body['uuid'] == str(event2.uuid)
+    assert res.json_body['name'] == earlier_upcoming_event.name
+    assert res.json_body['uuid'] == str(earlier_upcoming_event.uuid)

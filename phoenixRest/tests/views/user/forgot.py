@@ -20,7 +20,7 @@ def test_forgot_password_creates_reset_code(testapp, db, jeff_user):
     }), status=200)
 
     # A single reset code should now exist, tied to the requested client
-    codes = reset_codes_for(db, "jeff@example.com")
+    codes = reset_codes_for(db, jeff_user.email)
     assert len(codes) == 1
     assert codes[0].client_id == "phoenix-crew-test"
     assert len(codes[0].code) > 0
@@ -29,7 +29,7 @@ def test_forgot_password_creates_reset_code(testapp, db, jeff_user):
 def test_forgot_password_normalizes_login(testapp, db, jeff_user):
     """The login is lowercased and stripped, so surrounding whitespace and casing still match a user"""
     testapp.post_json('/user/forgot', dict({
-        "login": "  JEFF@Example.com  ",
+        "login": "  %s  " % jeff_user.email.upper(),
         "client_id": "phoenix-crew-test"
     }), status=200)
 
@@ -54,7 +54,7 @@ def test_forgot_password_unknown_user_is_silent(testapp, db):
 def test_forgot_password_invalid_client_id(testapp, db, jeff_user):
     """An unknown OAuth client ID is rejected, and no reset code is created even for a real user"""
     result = testapp.post_json('/user/forgot', dict({
-        "login": "jeff@example.com",
+        "login": jeff_user.email,
         "client_id": "foo-bar-baz"
     }), status=400).json_body
     assert result["error"] == "Invalid OAuth client ID"

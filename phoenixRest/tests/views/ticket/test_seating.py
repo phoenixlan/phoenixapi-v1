@@ -171,17 +171,13 @@ def test_ticket_seating(testapp, db, upcoming_event, ticket_types, admin_user):
     assert ticket['seat'] is not None
     assert ticket['seat']['uuid'] == seat['uuid']
 
-def test_ticket_seating_non_current_event(testapp, db, event_brand, ticket_types, admin_user):
+def test_ticket_seating_non_current_event(testapp, db, earlier_upcoming_event, later_upcoming_event, ticket_types, admin_user):
     """Test that seating a ticket for a non-current event is rejected"""
     # test is an admin
     token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
-    
-    # Strategy: Create an even that is currently current. Set everything up. Then change its start and end time.
-    earlier_event = Event("Earlier event", datetime.now() + timedelta(days=20), datetime.now() + timedelta(days=22), 400, event_brand)
-    earlier_event.booking_time = datetime.now() + timedelta(days=2)
-    earlier_event.seating_time_delta = 30
-    db.add(earlier_event)
-    db.flush()
+
+    # Strategy: Take the event that is currently current. Set everything up. Then change its start and end time.
+    earlier_event = earlier_upcoming_event
 
     seatmap = ensure_seatmap(testapp, token, earlier_event.uuid)
 
@@ -231,13 +227,7 @@ def test_ticket_seating_non_current_event(testapp, db, event_brand, ticket_types
     assert 'error' in response
     assert 'not current' in response['error']
 
-    # And create a new event in the future. Should still not work
-    new_event = Event("Earlier event", datetime.now() + timedelta(days=300), datetime.now() + timedelta(days=303), 400, event_brand)
-    new_event.booking_time = datetime.now() + timedelta(days=250)
-    new_event.seating_time_delta = 30
-    db.add(new_event)
-    db.flush()
-    
+    # There is another event in the future(later_upcoming_event). Should still not work
     response = testapp.put_json('/ticket/%s/seat' % seat_ticket['ticket_id'], dict({
         'seat_uuid': seat['uuid']
     }), headers=dict({

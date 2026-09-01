@@ -1,8 +1,6 @@
 # Test creating applications, and that the user is qualified to do so
 from wsgiref.util import application_uri
 
-from datetime import datetime, timedelta
-from phoenixRest.models.core.event import Event
 from phoenixRest.models.core.user import User
 from phoenixRest.models.crew.application import Application, ApplicationState
 from phoenixRest.models.crew.application_crew_mapping import ApplicationCrewMapping
@@ -152,7 +150,7 @@ def hide_application(testapp, token, application_crews: list, upcoming_event, ad
 
     assert len(my_application_list) == 0
 
-def test_cannot_create_application_noncurrent_event(testapp, db, event_brand, greg_user, testcrew):
+def test_cannot_create_application_noncurrent_event(testapp, db, previous_event, greg_user, testcrew):
     # Log in as applicant
     applicant_token, refresh = testapp.auth_get_tokens(greg_user.email, 'sixcharacters')
 
@@ -165,18 +163,11 @@ def test_cannot_create_application_noncurrent_event(testapp, db, event_brand, gr
         "Authorization": "Bearer " + applicant_token
     }), status = 200)
 
-    # This event has expired
-    event_start = datetime.now() - timedelta(days=65)
-    event_end = datetime.now() - timedelta(days=62)
-    past_event = Event("Past Event", event_start, event_end, 400, event_brand)
-    db.add(past_event)
-    db.flush()
-
     # Get applyable crews
     application_crew_candidates = list(filter(lambda crew: crew["is_applyable"], testapp.get('/crew', status=200).json_body))
 
     # Attempt to create an application for the past event - should fail
-    res = testapp.put_json('/event/%s/application' % past_event.uuid, dict({
+    res = testapp.put_json('/event/%s/application' % previous_event.uuid, dict({
         'crews': [str(testcrew.uuid)],
         'contents': 'I want to join please'
     }), headers=dict({

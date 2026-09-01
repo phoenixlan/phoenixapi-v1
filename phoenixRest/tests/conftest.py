@@ -219,8 +219,47 @@ def upcoming_event(db, event_brand):
     event_end = datetime.now() + timedelta(days=65)
     event_booking = datetime.now() + timedelta(days=30)
 
-    e = Event("Test event", event_start, event_end, event_booking, 
-              3600, 1800, 400, None, None, None, None, None, event_brand)
+    e = Event("Test event", event_start, event_end, event_booking, 3600, 1800, 400, None, None, None, None, None, event_brand)
+    db.add(e)
+    db.flush()
+    return e
+
+@pytest.fixture
+def earlier_upcoming_event(db, event_brand):
+    """Creates an event that ends before the one upcoming_event creates, making it the
+    current event of the brand. Ticket sale has not started yet"""
+
+    event_start = datetime.now() + timedelta(days=20)
+    event_end = datetime.now() + timedelta(days=22)
+    event_booking = datetime.now() + timedelta(days=2)
+
+    e = Event("Earlier event", event_start, event_end, event_booking, 3600, 30, 400, None, None, None, None, None, event_brand)
+    db.add(e)
+    db.flush()
+    return e
+
+@pytest.fixture
+def later_upcoming_event(db, event_brand):
+    """Creates an event far into the future, well after every other event fixture"""
+
+    event_start = datetime.now() + timedelta(days=300)
+    event_end = datetime.now() + timedelta(days=303)
+    event_booking = datetime.now() + timedelta(days=250)
+
+    e = Event("Later event", event_start, event_end, event_booking, 3600, 30, 400, None, None, None, None, None, event_brand)
+    db.add(e)
+    db.flush()
+    return e
+
+@pytest.fixture
+def previous_event(db, event_brand):
+    """Creates an event that has already happened"""
+
+    event_start = datetime.now() - timedelta(days=65)
+    event_end = datetime.now() - timedelta(days=62)
+    event_booking = datetime.now() - timedelta(days=95)
+
+    e = Event("Previous event", event_start, event_end, event_booking, 3600, 1800, 400, None, None, None, None, None, event_brand)
     db.add(e)
     db.flush()
     return e
@@ -229,11 +268,9 @@ def upcoming_event(db, event_brand):
 def other_upcoming_event(db, other_event_brand):
     event_start = datetime.now() + timedelta(days=62)
     event_end = datetime.now() + timedelta(days=65)
+    event_booking = datetime.now() + timedelta(days=30)
 
-    event = Event(
-        "Other upcoming event", event_start, event_end, 400,
-              3600, 1800, 400, None, None, None, None, None, other_event_brand
-    )
+    event = Event("Other upcoming event", event_start, event_end, event_booking, 3600, 1800, 400, None, None, None, None, None, other_event_brand)
     db.add(event)
     db.flush()
     return event

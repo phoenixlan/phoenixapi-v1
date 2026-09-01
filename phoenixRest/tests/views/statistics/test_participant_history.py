@@ -10,8 +10,8 @@ import logging
 log = logging.getLogger(__name__)
 
 @pytest.mark.skip(reason="Known broken")
-def test_participant_history_smoketest(db, testapp, admin_user, jeff_user, adam_user):
-    """Test participant history using seeded data
+def test_participant_history_smoketest(db, testapp, upcoming_event, ticket_types, admin_user, jeff_user, adam_user):
+    """Test participant history using the event fixtures
     """
     # test is an admin
     token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
@@ -20,8 +20,6 @@ def test_participant_history_smoketest(db, testapp, admin_user, jeff_user, adam_
 
     unprivileged_token_two, _ = testapp.auth_get_tokens(adam_user.email, 'sixcharacters')
     unprivileged_user_two = testapp.get_user(unprivileged_token_two)
-
-    testapp.ensure_typical_event(admin_user)
 
     stats = testapp.get('/statistics/participant_history', headers=dict({
         "Authorization": "Bearer " + token
@@ -48,11 +46,11 @@ def test_participant_history_smoketest(db, testapp, admin_user, jeff_user, adam_
 
     # Create a free ticket for current event - what happens?
     current_event = testapp.get_current_event(db)
-    ticket_types = filter(
-        lambda type: type["price"] > 0, 
+    paid_ticket_types = filter(
+        lambda type: type["price"] > 0,
         testapp.get(f'/event/{current_event.uuid}/ticketType', status=200).json_body
     )
-    paid_ticket_type = next(ticket_types)
+    paid_ticket_type = next(paid_ticket_types)
 
     res = testapp.post_json('/event/%s/ticket' % current_event.uuid, dict({
         'ticket_type': paid_ticket_type['uuid'],

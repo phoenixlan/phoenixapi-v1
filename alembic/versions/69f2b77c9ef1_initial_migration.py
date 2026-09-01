@@ -9,8 +9,6 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
-from datetime import datetime
-
 import uuid
 
 # revision identifiers, used by Alembic.
@@ -246,9 +244,7 @@ def upgrade():
     sa.PrimaryKeyConstraint('store_session_uuid', 'ticket_type_uuid', name=op.f('pk_store_session_cart_entry'))
     )
 
-    first_event_uuid = uuid.uuid4()
-
-    event_table = op.create_table('event',
+    op.create_table('event',
     sa.Column('uuid', postgresql.UUID(as_uuid=True), nullable=False),
     sa.Column('booking_time', sa.DateTime(), nullable=False),
     sa.Column('priority_seating_time_delta', sa.Integer(), nullable=False),
@@ -263,82 +259,6 @@ def upgrade():
     sa.ForeignKeyConstraint(['seatmap_uuid'], ['seatmap.uuid'], name=op.f('fk_event_seatmap_uuid_seatmap')),
     sa.PrimaryKeyConstraint('uuid', name=op.f('pk_event')),
     sa.UniqueConstraint('uuid', name=op.f('uq_event_uuid'))
-    )
-
-    # Seed the event table with some data
-    op.bulk_insert(event_table,
-        [
-            {
-                'uuid':first_event_uuid,
-                'name': "event 1",
-                'booking_time': datetime.strptime('2021-09-01 18:00:00', '%Y-%m-%d %H:%M:%S'), 
-                'priority_seating_time_delta': 60*30,
-                'seating_time_delta': 60*60,
-                'start_time': datetime.strptime('2021-10-01 18:00:00', '%Y-%m-%d %H:%M:%S'),
-                'end_time': datetime.strptime('2021-10-03 12:00:00', '%Y-%m-%d %H:%M:%S'),
-                'max_participants': 400
-            },
-            {
-                'uuid':uuid.uuid4(), 
-                'name': "event 2",
-                'booking_time': datetime.strptime('2022-01-18 18:00:00', '%Y-%m-%d %H:%M:%S'), 
-                'priority_seating_time_delta': 60*30,
-                'seating_time_delta': 60*60,
-                'start_time': datetime.strptime('2022-02-18 18:00:00', '%Y-%m-%d %H:%M:%S'),
-                'end_time': datetime.strptime('2022-02-20 12:00:00', '%Y-%m-%d %H:%M:%S'),
-                'max_participants': 400
-            },
-            {
-                'uuid':uuid.uuid4(), 
-                'name': "event 3",
-                'booking_time': datetime.strptime('2022-08-30 18:00:00', '%Y-%m-%d %H:%M:%S'), 
-                'priority_seating_time_delta': 60*30,
-                'seating_time_delta': 60*60,
-                'start_time': datetime.strptime('2022-09-30 18:00:00', '%Y-%m-%d %H:%M:%S'),
-                'end_time': datetime.strptime('2022-10-02 12:00:00', '%Y-%m-%d %H:%M:%S'),
-                'max_participants': 400
-            },
-            {
-                'uuid':uuid.uuid4(), 
-                'name': "event 4",
-                'booking_time': datetime.strptime('2023-01-17 18:00:00', '%Y-%m-%d %H:%M:%S'), 
-                'priority_seating_time_delta': 60*30,
-                'seating_time_delta': 60*60,
-                'start_time': datetime.strptime('2023-02-17 18:00:00', '%Y-%m-%d %H:%M:%S'),
-                'end_time': datetime.strptime('2023-02-19 12:00:00', '%Y-%m-%d %H:%M:%S'),
-                'max_participants': 400
-            },
-            {
-                'uuid':uuid.uuid4(), 
-                'name': "event 5",
-                'booking_time': datetime.strptime('2023-08-29 18:00:00', '%Y-%m-%d %H:%M:%S'), 
-                'priority_seating_time_delta': 60*30,
-                'seating_time_delta': 60*60,
-                'start_time': datetime.strptime('2023-09-29 18:00:00', '%Y-%m-%d %H:%M:%S'),
-                'end_time': datetime.strptime('2023-10-01 12:00:00', '%Y-%m-%d %H:%M:%S'),
-                'max_participants': 400
-            },
-            {
-                'uuid':uuid.uuid4(), 
-                'name': "event 6",
-                'booking_time': datetime.strptime('2024-08-01 18:00:00', '%Y-%m-%d %H:%M:%S'), 
-                'priority_seating_time_delta': 60*30,
-                'seating_time_delta': 60*60,
-                'start_time': datetime.strptime('2024-09-27 18:00:00', '%Y-%m-%d %H:%M:%S'),
-                'end_time': datetime.strptime('2024-09-29 12:00:00', '%Y-%m-%d %H:%M:%S'),
-                'max_participants': 400
-            },
-            {
-                'uuid':uuid.uuid4(), 
-                'name': "event 7",
-                'booking_time': datetime.strptime('2026-08-01 18:00:00', '%Y-%m-%d %H:%M:%S'), 
-                'priority_seating_time_delta': 60*30,
-                'seating_time_delta': 60*60,
-                'start_time': datetime.strptime('2026-09-27 18:00:00', '%Y-%m-%d %H:%M:%S'),
-                'end_time': datetime.strptime('2026-09-29 12:00:00', '%Y-%m-%d %H:%M:%S'),
-                'max_participants': 400
-            },
-        ]
     )
 
     op.create_table('row',
