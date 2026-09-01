@@ -23,13 +23,13 @@ class PositionInstanceResource(object):
             .filter(PositionMapping.position_uuid == self.positionInstance.uuid).all()
 
         return [
-            (Allow, ADMIN, 'get_position'),
-            (Allow, HR_ADMIN, 'get_position'),
-            (Allow, ADMIN, 'create_position'),
-            (Allow, HR_ADMIN, 'create_position'),
+            (Allow, ADMIN(), 'get_position'),
+            (Allow, HR_ADMIN(self.positionInstance.event_brand_uuid), 'get_position'),
+            (Allow, ADMIN(), 'create_position'),
+            (Allow, HR_ADMIN(self.positionInstance.event_brand_uuid), 'create_position'),
 
-            (Allow, ADMIN, 'add_to_position'),
-            (Allow, HR_ADMIN, 'add_to_position')
+            (Allow, ADMIN(), 'add_to_position'),
+            (Allow, HR_ADMIN(self.positionInstance.event_brand_uuid), 'add_to_position')
         # Everyone may look at their own
         ] + [(Allow, 'user:%s' % user.uuid, 'get_position') for user in position_users]
 

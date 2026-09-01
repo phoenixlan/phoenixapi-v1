@@ -8,7 +8,7 @@ from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
 from phoenixRest.models.core.avatar import Avatar, AvatarState
 
-from phoenixRest.roles import ADMIN, HR_ADMIN, CHIEF
+from phoenixRest.roles import ADMIN
 
 from phoenixRest.utils import validate
 import os
@@ -19,19 +19,15 @@ log = logging.getLogger(__name__)
 class AvatarInstanceResource(object):
     def __acl__(self):
         return [
-        (Allow, HR_ADMIN, 'avatar_view'),
-        (Allow, ADMIN, 'avatar_view'),
+        (Allow, ADMIN(), 'avatar_view'),
         (Allow, 'role:user:%s' % self.avatarInstance.user.uuid, 'avatar_view'),
 
-        (Allow, HR_ADMIN, 'avatar_delete'),
-        (Allow, ADMIN, 'avatar_delete'),
+        (Allow, ADMIN(), 'avatar_delete'),
         (Allow, 'role:user:%s' % self.avatarInstance.user.uuid, 'avatar_delete'),
 
         # Only admins can update avatar state
         # And chiefs. Chiefs do most HR work for their crew
-        (Allow, HR_ADMIN, 'avatar_update'),
-        (Allow, CHIEF, 'avatar_update'),
-        (Allow, ADMIN, 'avatar_update')
+        (Allow, ADMIN(), 'avatar_update')
 
         # Authenticated pages
         #(Allow, Authenticated, Authenticated),

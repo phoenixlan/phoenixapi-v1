@@ -11,31 +11,36 @@ from pyramid.httpexceptions import HTTPNotFound, HTTPBadRequest
 from phoenixRest.features.crew_card import generate_badge
 from phoenixRest.models.core.event import get_current_event
 
+from sqlalchemy.orm import joinedload
+
 from datetime import datetime
 
 class CardOrderInstanceResource(object):
     def __acl__(self):
         acl = [
             # Roles with permission to view the card order
-            (Allow, CREW_CARD_PRINTER, "view"),
-            (Allow, CHIEF, "view"),
-            (Allow, ADMIN, "view"),
+            (Allow, CREW_CARD_PRINTER(self.cardOrderInstance.event.event_brand_uuid), "view"),
+            (Allow, CHIEF(self.cardOrderInstance.event.event_brand_uuid), "view"),
+            (Allow, ADMIN(), "view"),
             # Roles with permission to generate a crew card based on an order
-            (Allow, CREW_CARD_PRINTER, "print"),
-            (Allow, ADMIN, "print"),
+            (Allow, CREW_CARD_PRINTER(self.cardOrderInstance.event.event_brand_uuid), "print"),
+            (Allow, ADMIN(), "print"),
             # Roles with permission to finish a card order
-            (Allow, CREW_CARD_PRINTER, "finish"),
-            (Allow, ADMIN, "finish"),
+            (Allow, CREW_CARD_PRINTER(self.cardOrderInstance.event.event_brand_uuid), "finish"),
+            (Allow, ADMIN(), "finish"),
             # Roles with permission to cancel the card order
-            (Allow, CHIEF, "cancel"),
-            (Allow, ADMIN, "cancel"),
+            (Allow, CHIEF(self.cardOrderInstance.event.event_brand_uuid), "cancel"),
+            (Allow, ADMIN(), "cancel"),
         ]
         return acl
     
     def __init__(self, request, uuid):
         self.request = request
         
-        self.cardOrderInstance = validateUuidAndQuery(request, CardOrder, CardOrder.uuid, uuid)
+        self.cardOrderInstance = request.db.query(CardOrder) \
+            .options(joinedload(CardOrder.event)) \
+            .filter(CardOrder.uuid == uuid) \
+            .first()
         if self.cardOrderInstance == None:
             raise HTTPNotFound("card_order with specified uuid not found")
 
@@ -54,7 +59,7 @@ def generate_crew_card_from_order(context, request):
     context.cardOrderInstance.last_updated = datetime.now()
     context.cardOrderInstance.updated_by_user = request.user
     
-    return generate_badge(request, context.cardOrderInstance.subject_user, get_current_event(request))
+    return generate_badge(request, context.cardOrderInstance.subject_user, context.cardOrderInstance.event)
 
 # Marks the order as finished
 @view_config(name="finish", context=CardOrderInstanceResource, request_method="PATCH", renderer="json", permission="finish")

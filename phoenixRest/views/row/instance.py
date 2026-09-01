@@ -14,6 +14,8 @@ from phoenixRest.roles import ADMIN, TICKET_ADMIN
 from phoenixRest.utils import validate, validateUuidAndQuery
 from phoenixRest.resource import resource
 
+from sqlalchemy.orm import joinedload
+
 from datetime import datetime
 
 import logging
@@ -23,10 +25,10 @@ log = logging.getLogger(__name__)
 class RowInstanceResource(object):
     def __acl__(self):
         return [
-        (Allow, ADMIN, 'create_seat'),
-        (Allow, TICKET_ADMIN, 'create_seat'),
-        (Allow, ADMIN, 'update_row'),
-        (Allow, TICKET_ADMIN, 'update_row'),
+        (Allow, ADMIN(), 'create_seat'),
+        (Allow, TICKET_ADMIN(self.rowInstance.seatmap.event_brand_uuid), 'create_seat'),
+        (Allow, ADMIN(), 'update_row'),
+        (Allow, TICKET_ADMIN(self.rowInstance.seatmap.event_brand_uuid), 'update_row'),
         # Authenticated pages
         #(Allow, Authenticated, Authenticated),
         #(Deny, Everyone, Authenticated),
@@ -35,7 +37,10 @@ class RowInstanceResource(object):
     def __init__(self, request, uuid):
         self.request = request
 
-        self.rowInstance = validateUuidAndQuery(request, Row, Row.uuid, uuid)
+        self.rowInstance = request.db.query(Row) \
+            .options(joinedload(Row.seatmap)) \
+            .filter(Row.uuid == uuid) \
+            .first()
 
         if self.rowInstance is None:
             raise HTTPNotFound("Row not found")
@@ -66,5 +71,4 @@ def create_seat(context, request):
     request.db.add(seat)
     request.db.flush()
     return seat
-
 

@@ -6,6 +6,7 @@ from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
 from phoenixRest.models.core.user import User
 from phoenixRest.models.core.event import Event
+from phoenixRest.models.core.event import EventBrand
 from phoenixRest.models.tickets.ticket_voucher import TicketVoucher
 from phoenixRest.models.tickets.ticket_type import TicketType
 
@@ -14,7 +15,7 @@ from phoenixRest.views.ticket_voucher.instance import TicketVoucherInstanceResou
 from phoenixRest.utils import validate
 from phoenixRest.resource import resource
 
-from phoenixRest.roles import ADMIN, TICKET_ADMIN
+from phoenixRest.roles import ADMIN
 
 from sqlalchemy import and_, or_, extract
 
@@ -24,11 +25,9 @@ log = logging.getLogger(__name__)
 @resource(name='ticket_voucher')
 class TicketVoucherResource(object):
     __acl__ = [
-        (Allow, ADMIN, 'create'),
-        (Allow, TICKET_ADMIN, 'create'),
+        (Allow, ADMIN(), 'create'),
 
-        (Allow, ADMIN, 'get'),
-        (Allow, TICKET_ADMIN, 'get'),
+        (Allow, ADMIN(), 'get'),
     ]
     def __init__(self, request):
         self.request = request
@@ -48,26 +47,35 @@ def get_vouchers(context, request):
 def create_voucher(context, request):
     recipient_user = request.db.query(User).filter(User.uuid == request.json_body['recipient_user_uuid']).first()
     if not recipient_user:
-        request.response.status = 404
+        request.response.status = 400
         return {
             "error": "recipient_user not found"
         }
     
     ticket_type = request.db.query(TicketType).filter(TicketType.uuid == request.json_body['ticket_type_uuid']).first()
     if not ticket_type:
-        request.response.status = 404
+        request.response.status = 400
         return {
             "error": "ticket_type not found"
         }
 
     last_use_event = request.db.query(Event).filter(Event.uuid == request.json_body['last_use_event_uuid']).first()
     if not last_use_event:
-        request.response.status = 404
+        request.response.status = 400
         return {
             "error": "last_use_event not found"
         }
+        
+    if ticket_type.event_brand_uuid != last_use_event.event_brand_uuid:
+        request.response.status = 400
+        return {
+            "error": "Ticket type belongs to a different event brand"
+        }
 
-    voucher = TicketVoucher(request.user, recipient_user, ticket_type, last_use_event)
+    voucher = TicketVoucher(
+        request.user, recipient_user, ticket_type,
+        last_use_event.event_brand, last_use_event
+    )
     request.db.add(voucher)
     request.db.flush()
 
@@ -80,5 +88,3 @@ def create_voucher(context, request):
     })
 
     return voucher
-
-

@@ -8,7 +8,7 @@ from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
 from phoenixRest.models.core.user import Gender, User
 from phoenixRest.models.core.friendship import Friendship
-from phoenixRest.models.core.event import Event, get_current_event
+from phoenixRest.models.core.event import Event
 from phoenixRest.models.core.avatar import Avatar
 from phoenixRest.models.crew.application import Application
 from phoenixRest.models.tickets.ticket import Ticket
@@ -25,14 +25,12 @@ from phoenixRest.models.utils.discord_mapping import DiscordMapping
 from phoenixRest.mappers.user import map_user_with_secret_fields, map_user_public_with_positions
 from phoenixRest.mappers.ticket import map_ticket_simple
 
-from phoenixRest.features.crew_card import generate_badge
-
 from phoenixRest.utils import validate, validateUuidAndQuery
 from phoenixRest.resource import resource
 
 from phoenixRest.features.discord import DISCORD_OAUTH_REDIRECT_URI, DISCORD_CLIENT_ID, DISCORD_ENABLED, DISCORD_SCOPES
 
-from phoenixRest.roles import HR_ADMIN, ADMIN, TICKET_ADMIN, TICKET_CHECKIN, CREW_CARD_PRINTER, CHIEF
+from phoenixRest.roles import ADMIN
 
 import re
 
@@ -53,64 +51,43 @@ class UserInstanceResource(object):
     def __acl__(self):
         acl = [
             # Who has access to view a user?
-            (Allow, HR_ADMIN, 'user_view'),
-            (Allow, ADMIN, 'user_view'),
-            (Allow, TICKET_ADMIN, 'user_view'),
-            (Allow, TICKET_CHECKIN, 'user_view'),
+            (Allow, ADMIN(), 'user_view'),
             # Who has access to modify a user?
-            (Allow, HR_ADMIN, 'user_modify'),
-            (Allow, ADMIN, 'user_modify'),
+            (Allow, ADMIN(), 'user_modify'),
             # Who has acces to user friendship status?
-            (Allow, HR_ADMIN, 'get_friendship_states'),
-            (Allow, ADMIN, 'get_friendship_states'),
+            (Allow, ADMIN(), 'get_friendship_states'),
             # Who can see if an user is a member or not?
-            (Allow, HR_ADMIN, 'get_membership_state'),
-            (Allow, ADMIN, 'get_membership_state'),
+            (Allow, ADMIN(), 'get_membership_state'),
             # Who can view an users store session
-            (Allow, ADMIN, 'user_get_store_session'),
-            (Allow, TICKET_ADMIN, 'user_get_store_session'),
+            (Allow, ADMIN(), 'user_get_store_session'),
             # Who can list an users tickets
-            (Allow, ADMIN, 'user_list_owned_tickets'),
-            (Allow, TICKET_ADMIN, 'user_list_owned_tickets'),
+            (Allow, ADMIN(), 'user_list_owned_tickets'),
             # Purchased tickets may contain tickets sent to others, so users cannot list them
-            (Allow, ADMIN, 'user_list_purchased_tickets'),
-            (Allow, TICKET_ADMIN, 'user_list_purchased_tickets'),
+            (Allow, ADMIN(), 'user_list_purchased_tickets'),
             # Seatable tickets are either owned by the user or "lended" to them by another for the sake of seating
-            (Allow, ADMIN, 'user_list_seatable_tickets'),
-            (Allow, TICKET_ADMIN, 'user_list_seatable_tickets'),
+            (Allow, ADMIN(), 'user_list_seatable_tickets'),
             # Who can list ticket vouchers
-            (Allow, ADMIN, 'user_list_ticket_vouchers'),
-            (Allow, TICKET_ADMIN, 'user_list_ticket_vouchers'),
+            (Allow, ADMIN(), 'user_list_ticket_vouchers'),
             # Ticket transfers
-            (Allow, ADMIN, 'user_list_ticket_transfers'),
-            (Allow, TICKET_ADMIN, 'user_list_ticket_transfers'),
+            (Allow, ADMIN(), 'user_list_ticket_transfers'),
             # Who can view payments?
-            (Allow, ADMIN, 'list_payments'),
-            (Allow, TICKET_ADMIN, 'list_payments'),
+            (Allow, ADMIN(), 'list_payments'),
 
             # Applications?
-            (Allow, ADMIN, 'get_applications'),
-            (Allow, CHIEF, 'get_applications'),
+            (Allow, ADMIN(), 'get_applications'),
 
             # Who can see discord user mappings?
-            (Allow, HR_ADMIN, 'get_discord_mapping'),
-            (Allow, ADMIN, 'get_discord_mapping'),
+            (Allow, ADMIN(), 'get_discord_mapping'),
 
             # Who can remove a Discord mapping?
-            (Allow, HR_ADMIN, 'delete_discord_mapping'),
-            (Allow, ADMIN, 'delete_discord_mapping'),
+            (Allow, ADMIN(), 'delete_discord_mapping'),
 
             # Who can activate users on others behalf
-            (Allow, HR_ADMIN, 'activate_user'),
-            (Allow, ADMIN, 'activate_user'),
+            (Allow, ADMIN(), 'activate_user'),
             
             # Who can view if an user is activated and activate their user?
-            (Allow, ADMIN, 'get_activation_state'),
+            (Allow, ADMIN(), 'get_activation_state'),
 
-            # Who can view someone's crew card?
-            (Allow, ADMIN, 'get_crew_card'),
-            (Allow, HR_ADMIN, 'get_crew_card'),
-            (Allow, CREW_CARD_PRINTER, 'get_crew_card')
         ]
         if self.request.user is not None:
             acl = acl + [
@@ -153,9 +130,7 @@ class UserInstanceResource(object):
 
 @view_config(context=UserInstanceResource, name='', request_method='GET', renderer='json', permission='user_view')
 def get_user(context, request):
-    if TICKET_CHECKIN in request.effective_principals or \
-        ADMIN in request.effective_principals or \
-        HR_ADMIN in request.effective_principals or \
+    if ADMIN() in request.effective_principals or \
         request.user.uuid == context.userInstance.uuid:
 
         log.warning("Sending more details about a user because the query person is an admin or owns the account")
@@ -338,19 +313,15 @@ def get_owned_tickets(context, request):
 def get_ticket_vouchers(context, request):
     return request.db.query(TicketVoucher).filter(TicketVoucher.recipient_user == context.userInstance).all()
 
-# We only care about transfers from this event
 @view_config(context=UserInstanceResource, name='ticket_transfers', request_method='GET', renderer='json', permission='user_list_ticket_transfers')
+@validate(get={"event_uuid": str})
 def get_ticket_transfers(context, request):
-    event = None
-    if 'event_uuid' in request.GET:
-        event = request.db.query(Event).filter(Event.uuid == request.GET['event_uuid']).first()
-        if event is None:
-            request.response.status = 404
-            return {
-                'error': "Event not found"
-            }
-    else:
-        event = get_current_event(request)
+    event = request.db.query(Event).filter(Event.uuid == request.GET['event_uuid']).first()
+    if event is None:
+        request.response.status = 404
+        return {
+            'error': "Event not found"
+        }
 
     transfers = request.db.query(TicketTransfer).filter(and_(TicketTransfer.ticket.has(Ticket.event_uuid == event.uuid), or_(
         or_(TicketTransfer.from_user == context.userInstance),
@@ -631,11 +602,6 @@ def create_discord_mapping_oauth_url(context, request):
             redirect_uri
         )
     }
-
-# Generates a crew card
-@view_config(context=UserInstanceResource, name='crew_card', request_method='GET', renderer='pillow', permission='get_crew_card')
-def create_crew_card(context, request):
-    return generate_badge(request, context.userInstance, get_current_event(request))
 
 @view_config(context=UserInstanceResource, name='applications', request_method='GET', renderer='json', permission='get_applications')
 def get_applications(context, request):

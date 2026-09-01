@@ -8,10 +8,13 @@ from pyramid.httpexceptions import (
 from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
 from phoenixRest.models.tickets.ticket_transfer import TicketTransfer
+from phoenixRest.models.tickets.ticket import Ticket
 
 from phoenixRest.roles import ADMIN, TICKET_ADMIN
 
 from phoenixRest.utils import validateUuidAndQuery
+
+from sqlalchemy.orm import joinedload
 
 import logging
 log = logging.getLogger(__name__)
@@ -19,8 +22,8 @@ log = logging.getLogger(__name__)
 class TicketTransferInstanceResource(object):
     def __acl__(self):
         acl = [
-            (Allow, ADMIN, 'revert'),
-            (Allow, TICKET_ADMIN, 'revert'),
+            (Allow, ADMIN(), 'revert'),
+            (Allow, TICKET_ADMIN(self.ticketTransferInstance.ticket.event.event_brand_uuid), 'revert'),
             # Authenticated pages
             #(Allow, Authenticated, Authenticated),
             #(Deny, Everyone, Authenticated),
@@ -36,7 +39,10 @@ class TicketTransferInstanceResource(object):
     def __init__(self, request, uuid):
         self.request = request
 
-        self.ticketTransferInstance = validateUuidAndQuery(request, TicketTransfer, TicketTransfer.uuid, uuid)
+        self.ticketTransferInstance = request.db.query(TicketTransfer) \
+            .options(joinedload(TicketTransfer.ticket).joinedload(Ticket.event)) \
+            .filter(TicketTransfer.uuid == uuid) \
+            .first()
 
         if self.ticketTransferInstance is None:
             raise HTTPNotFound("Ticket transfer not found")

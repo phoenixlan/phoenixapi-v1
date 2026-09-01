@@ -4,16 +4,17 @@ from phoenixRest.models.core.consent_withdrawal_code import ConsentWithdrawalCod
 from phoenixRest.models.core.user import User
 from phoenixRest.models.crew.position import Position
 
-def test_crew_mail_dryryn(db, testapp, upcoming_event):
+def test_crew_mail_dryryn(
+        db, testapp, upcoming_event, admin_user, greg_user, jeff_user,
+        adam_user, brand_position):
     """Tests that crew members receive mail when the crew_info category is used.
     Participants should not receive these mails.
     
     Assumes nobody has consented to marketing mail"""
-    testapp.ensure_typical_event()
 
     # test is an admin
-    sender_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
-    adam_token, refresh = testapp.auth_get_tokens('adam@example.com', 'sixcharacters')
+    sender_token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
+    adam_token, refresh = testapp.auth_get_tokens(adam_user.email, 'sixcharacters')
 
     sender_user = testapp.get_user(sender_token)
     adam_user = testapp.get_user(adam_token)
@@ -22,7 +23,8 @@ def test_crew_mail_dryryn(db, testapp, upcoming_event):
     participant_mail_count_pre = testapp.post_json('/email/dryrun', dict({
         'recipient_category': "participant_info",
         'subject': "hello",
-        'body': "# Foo bar\nHello"
+        'body': "# Foo bar\nHello",
+        'brand_uuid': str(upcoming_event.event_brand.uuid)
     }), headers=dict({
         "Authorization": "Bearer " + sender_token
     }), status=200).json_body['count']
@@ -30,7 +32,8 @@ def test_crew_mail_dryryn(db, testapp, upcoming_event):
     consenting_user_pre = testapp.post_json('/email/dryrun', dict({
         'recipient_category': "event_notification",
         'subject': "hello",
-        'body': "# Foo bar\nHello"
+        'body': "# Foo bar\nHello",
+        'brand_uuid': str(upcoming_event.event_brand.uuid)
     }), headers=dict({
         "Authorization": "Bearer " + sender_token
     }), status=200).json_body['count']
@@ -39,7 +42,8 @@ def test_crew_mail_dryryn(db, testapp, upcoming_event):
     crew_mail_test = testapp.post_json('/email/dryrun', dict({
         'recipient_category': "crew_info",
         'subject': "hello",
-        'body': "# Foo bar\nHello"
+        'body': "# Foo bar\nHello",
+        'brand_uuid': str(upcoming_event.event_brand.uuid)
     }), headers=dict({
         "Authorization": "Bearer " + sender_token
     }), status=200).json_body
@@ -47,10 +51,9 @@ def test_crew_mail_dryryn(db, testapp, upcoming_event):
     assert crew_mail_test['count'] == 3 # The user is a crew member already
 
     # Give adam a position with no crew attachment, and verify that the count does not increase
-    position = db.query(Position).filter(Position.crew_uuid == None).first()
-    mapping = testapp.post_json('/position_mapping', dict({
+    mapping = testapp.post_json('/event/%s/position_mapping' % upcoming_event.uuid, dict({
         "user_uuid": adam_user['uuid'],
-        "position_uuid": str(position.uuid)
+        "position_uuid": str(brand_position.uuid)
     }), headers=dict({
         "Authorization": "Bearer " + sender_token
     }), status=200)
@@ -58,7 +61,8 @@ def test_crew_mail_dryryn(db, testapp, upcoming_event):
     crew_mail_test = testapp.post_json('/email/dryrun', dict({
         'recipient_category': "crew_info",
         'subject': "hello",
-        'body': "# Foo bar\nHello"
+        'body': "# Foo bar\nHello",
+        'brand_uuid': str(upcoming_event.event_brand.uuid)
     }), headers=dict({
         "Authorization": "Bearer " + sender_token
     }), status=200).json_body
@@ -70,7 +74,7 @@ def test_crew_mail_dryryn(db, testapp, upcoming_event):
     position = db.query(Position).filter(Position.crew_uuid != None).first()
 
     # Create a position mapping
-    mapping = testapp.post_json('/position_mapping', dict({
+    mapping = testapp.post_json('/event/%s/position_mapping' % upcoming_event.uuid, dict({
         "user_uuid": adam_user['uuid'],
         "position_uuid": str(position.uuid)
     }), headers=dict({
@@ -80,7 +84,8 @@ def test_crew_mail_dryryn(db, testapp, upcoming_event):
     crew_mail_test = testapp.post_json('/email/dryrun', dict({
         'recipient_category': "crew_info",
         'subject': "hello",
-        'body': "# Foo bar\nHello"
+        'body': "# Foo bar\nHello",
+        'brand_uuid': str(upcoming_event.event_brand.uuid)
     }), headers=dict({
         "Authorization": "Bearer " + sender_token
     }), status=200).json_body
@@ -91,14 +96,16 @@ def test_crew_mail_dryryn(db, testapp, upcoming_event):
     participant_mail_count_post = testapp.post_json('/email/dryrun', dict({
         'recipient_category': "participant_info",
         'subject': "hello",
-        'body': "# Foo bar\nHello"
+        'body': "# Foo bar\nHello",
+        'brand_uuid': str(upcoming_event.event_brand.uuid)
     }), headers=dict({
         "Authorization": "Bearer " + sender_token
     }), status=200).json_body['count']
     consenting_user_post = testapp.post_json('/email/dryrun', dict({
         'recipient_category': "event_notification",
         'subject': "hello",
-        'body': "# Foo bar\nHello"
+        'body': "# Foo bar\nHello",
+        'brand_uuid': str(upcoming_event.event_brand.uuid)
     }), headers=dict({
         "Authorization": "Bearer " + sender_token
     }), status=200).json_body['count']
@@ -107,16 +114,15 @@ def test_crew_mail_dryryn(db, testapp, upcoming_event):
     assert consenting_user_pre == consenting_user_post
 
 
-def test_participant_mail_dryrun(testapp, upcoming_event):
+def test_participant_mail_dryrun(testapp, upcoming_event, ticket_types, admin_user, greg_user, jeff_user, adam_user):
     """Tests that all participants get e-mails when the participant_info category is used.
     Crew members should not receive these mails if they don't have a ticket
     
     Assumes nobody has consented to marketing mail"""
-    testapp.ensure_typical_event()
 
     # test is an admin
-    sender_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
-    adam_token, refresh = testapp.auth_get_tokens('adam@example.com', 'sixcharacters')
+    sender_token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
+    adam_token, refresh = testapp.auth_get_tokens(adam_user.email, 'sixcharacters')
 
     sender_user = testapp.get_user(sender_token)
     adam_user = testapp.get_user(adam_token)
@@ -124,7 +130,8 @@ def test_participant_mail_dryrun(testapp, upcoming_event):
     participant_mail_test_results = testapp.post_json('/email/dryrun', dict({
         'recipient_category': "participant_info",
         'subject': "hello",
-        'body': "# Foo bar\nHello"
+        'body': "# Foo bar\nHello",
+        'brand_uuid': str(upcoming_event.event_brand.uuid)
     }), headers=dict({
         "Authorization": "Bearer " + sender_token
     }), status=200).json_body
@@ -135,28 +142,28 @@ def test_participant_mail_dryrun(testapp, upcoming_event):
     crew_mail_test_pre = testapp.post_json('/email/dryrun', dict({
         'recipient_category': "crew_info",
         'subject': "hello",
-        'body': "# Foo bar\nHello"
+        'body': "# Foo bar\nHello",
+        'brand_uuid': str(upcoming_event.event_brand.uuid)
     }), headers=dict({
         "Authorization": "Bearer " + sender_token
     }), status=200).json_body['count']
     consenting_user_pre = testapp.post_json('/email/dryrun', dict({
         'recipient_category': "event_notification",
         'subject': "hello",
-        'body': "# Foo bar\nHello"
+        'body': "# Foo bar\nHello",
+        'brand_uuid': str(upcoming_event.event_brand.uuid)
     }), headers=dict({
         "Authorization": "Bearer " + sender_token
     }), status=200).json_body['count']
 
 
-    # Now give adam a free ticket
-    current_event = testapp.get('/event/current', status=200)
     # Get existing ticket types
-    res = testapp.get('/event/%s/ticketType' % current_event.json_body['uuid'], headers=dict({
+    res = testapp.get('/event/%s/ticketType' % upcoming_event.uuid, headers=dict({
         "Authorization": "Bearer " + sender_token 
     }), status=200)
     ticket_type = res.json_body[0]
 
-    res = testapp.post_json('/ticket', dict({
+    res = testapp.post_json('/event/%s/ticket' % upcoming_event.uuid, dict({
         'ticket_type': ticket_type['uuid'],
         'recipient': adam_user['uuid']
     }), headers=dict({
@@ -167,7 +174,8 @@ def test_participant_mail_dryrun(testapp, upcoming_event):
     participant_mail_test_results = testapp.post_json('/email/dryrun', dict({
         'recipient_category': "participant_info",
         'subject': "hello",
-        'body': "# Foo bar\nHello"
+        'body': "# Foo bar\nHello",
+        'brand_uuid': str(upcoming_event.event_brand.uuid)
     }), headers=dict({
         "Authorization": "Bearer " + sender_token
     }), status=200).json_body
@@ -178,14 +186,16 @@ def test_participant_mail_dryrun(testapp, upcoming_event):
     crew_mail_test_post = testapp.post_json('/email/dryrun', dict({
         'recipient_category': "crew_info",
         'subject': "hello",
-        'body': "# Foo bar\nHello"
+        'body': "# Foo bar\nHello",
+        'brand_uuid': str(upcoming_event.event_brand.uuid)
     }), headers=dict({
         "Authorization": "Bearer " + sender_token
     }), status=200).json_body['count']
     consenting_user_post = testapp.post_json('/email/dryrun', dict({
         'recipient_category': "event_notification",
         'subject': "hello",
-        'body': "# Foo bar\nHello"
+        'body': "# Foo bar\nHello",
+        'brand_uuid': str(upcoming_event.event_brand.uuid)
     }), headers=dict({
         "Authorization": "Bearer " + sender_token
     }), status=200).json_body['count']
@@ -193,34 +203,29 @@ def test_participant_mail_dryrun(testapp, upcoming_event):
     assert crew_mail_test_pre == crew_mail_test_post
     assert consenting_user_pre == consenting_user_post
 
-def test_invalid_mail_category_dryrun(testapp, upcoming_event):
-    testapp.ensure_typical_event()
-
+def test_invalid_mail_category_dryrun(testapp, upcoming_event, admin_user):
     # test is an admin
-    sender_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
+    sender_token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
 
     target_users = testapp.post_json('/email/dryrun', dict({
         'recipient_category': "swag",
         'subject': "hello",
-        'body': "# Foo bar\nHello"
+        'body': "# Foo bar\nHello",
+        'brand_uuid': str(upcoming_event.event_brand.uuid)
     }), headers=dict({
         "Authorization": "Bearer " + sender_token
     }), status=400)
 
-def test_consent_mail_age_limit(db, testapp, upcoming_event):
-    testapp.ensure_typical_event()
-
+def test_consent_mail_age_limit(db, testapp, upcoming_event, admin_user, greg_user, jeff_user, adam_user):
     # test is an admin
-    sender_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
-    adam_token, refresh = testapp.auth_get_tokens('adam@example.com', 'sixcharacters')
+    sender_token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
+    adam_token, refresh = testapp.auth_get_tokens(adam_user.email, 'sixcharacters')
 
     sender_user = testapp.get_user(sender_token)
     adam_user = testapp.get_user(adam_token)
 
     # Get current event, set an age limit
-    current_event = testapp.get_current_event(db)
-    current_event.participant_age_limit_inclusive = 300
-    db.add(current_event)
+    upcoming_event.participant_age_limit_inclusive = 300
     db.flush()
 
     # Add record reflecting that adam consented to marketing mail
@@ -233,10 +238,10 @@ def test_consent_mail_age_limit(db, testapp, upcoming_event):
     consenting_user_result = testapp.post_json('/email/dryrun', dict({
         'recipient_category': "event_notification",
         'subject': "hello",
-        'body': "# Foo bar\nHello"
+        'body': "# Foo bar\nHello",
+        'brand_uuid': str(upcoming_event.event_brand.uuid)
     }), headers=dict({
         "Authorization": "Bearer " + sender_token
     }), status=200).json_body
 
     assert consenting_user_result['count'] == 2 # Only the current user
-

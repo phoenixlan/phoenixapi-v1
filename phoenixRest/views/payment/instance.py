@@ -13,6 +13,8 @@ from phoenixRest.roles import ADMIN, TICKET_ADMIN
 from phoenixRest.features.payment.vipps import initialize_vipps_payment
 from phoenixRest.features.payment.stripe import initialize_stripe_payment
 
+from sqlalchemy.orm import joinedload
+
 import logging
 log = logging.getLogger(__name__)
 
@@ -20,8 +22,8 @@ log = logging.getLogger(__name__)
 class PaymentInstanceResource(object):
     def __acl__(self):
         return [
-            (Allow, ADMIN, 'get_payment'),
-            (Allow, TICKET_ADMIN, 'get_payment'),
+            (Allow, ADMIN(), 'get_payment'),
+            (Allow, TICKET_ADMIN(self.paymentInstance.event.event_brand_uuid), 'get_payment'),
             # Everyone may fetch their own payment
             (Allow, 'role:user:%s' % self.paymentInstance.user.uuid, 'get_payment'),
             # Everyone may initiate their own payment(but admins can't initiate others payments)
@@ -30,7 +32,10 @@ class PaymentInstanceResource(object):
 
     def __init__(self, request, uuid):
         self.request = request
-        self.paymentInstance = request.db.query(Payment).filter(Payment.uuid == uuid).first()
+        self.paymentInstance = request.db.query(Payment) \
+            .options(joinedload(Payment.event)) \
+            .filter(Payment.uuid == uuid) \
+            .first()
 
         if self.paymentInstance is None:
             raise HTTPNotFound("Payment not found")

@@ -8,9 +8,9 @@ from phoenixRest.models.tickets.payment import Payment, PaymentState, PaymentPro
 
 from phoenixRest.models.core.user import User
 
-def test_normal_payment_singular_str(db, testapp):
+def test_normal_payment_singular_str(db, testapp, upcoming_event):
     user = db.query(User).filter(User.firstname == "Jeff").first()
-    store_session = StoreSession(user, 1000)
+    store_session = StoreSession(user, 1000, upcoming_event)
 
     # Get some ticket types
     vestibyle = db.query(TicketType).filter(TicketType.name == "Vestibyle").first()
@@ -19,7 +19,7 @@ def test_normal_payment_singular_str(db, testapp):
     store_session.cart_entries.append(StoreSessionCartEntry(vestibyle, 1))
 
     # Create payment
-    payment = Payment(user, PaymentProvider.vipps, store_session.get_total(), testapp.get_current_event(db))
+    payment = Payment(user, PaymentProvider.vipps, store_session.get_total(), upcoming_event)
     # A payment is added later and need not be bound to store session apparently.
     # TODO: Maybe store session should be in the constructor?
     payment.store_session = store_session
@@ -29,9 +29,9 @@ def test_normal_payment_singular_str(db, testapp):
 
     assert payment_str == "1 Vestibyle-billett"
 
-def test_normal_payment_plural_str(db, testapp):
+def test_normal_payment_plural_str(db, testapp, upcoming_event):
     user = db.query(User).filter(User.firstname == "Jeff").first()
-    store_session = StoreSession(user, 1000)
+    store_session = StoreSession(user, 1000, upcoming_event)
 
     # Get some ticket types
     vestibyle = db.query(TicketType).filter(TicketType.name == "Vestibyle").first()
@@ -40,7 +40,7 @@ def test_normal_payment_plural_str(db, testapp):
     store_session.cart_entries.append(StoreSessionCartEntry(vestibyle, 2))
 
     # Create payment
-    payment = Payment(user, PaymentProvider.vipps, store_session.get_total(), testapp.get_current_event(db))
+    payment = Payment(user, PaymentProvider.vipps, store_session.get_total(), upcoming_event)
     # A payment is added later and need not be bound to store session apparently.
     # TODO: Maybe store session should be in the constructor?
     payment.store_session = store_session
@@ -50,9 +50,9 @@ def test_normal_payment_plural_str(db, testapp):
 
     assert payment_str == "2 Vestibyle-billetter"
 
-def test_long_payment_str(db, testapp):
+def test_long_payment_str(db, testapp, upcoming_event):
     user = db.query(User).filter(User.firstname == "Jeff").first()
-    store_session = StoreSession(user, 1000)
+    store_session = StoreSession(user, 1000, upcoming_event)
 
     # Get some ticket types
     vestibyle = db.query(TicketType).filter(TicketType.name == "Vestibyle").first()
@@ -68,7 +68,7 @@ def test_long_payment_str(db, testapp):
     store_session.cart_entries.append(StoreSessionCartEntry(weirdType, 7))
 
     # Create payment
-    payment = Payment(user, PaymentProvider.vipps, store_session.get_total(), testapp.get_current_event(db))
+    payment = Payment(user, PaymentProvider.vipps, store_session.get_total(), upcoming_event)
     # A payment is added later and need not be bound to store session apparently.
     # TODO: Maybe store session should be in the constructor?
     payment.store_session = store_session

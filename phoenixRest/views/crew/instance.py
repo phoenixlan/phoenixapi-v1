@@ -25,10 +25,10 @@ class CrewInstanceViews(object):
     def __acl__(self):
         return [
         (Allow, Authenticated, 'team_view'),
-        (Allow, MEMBER, 'crew_view'),
-        (Allow, ADMIN, 'crew_view'),
-        (Allow, HR_ADMIN, 'crew_view'),
-        (Allow, ADMIN, 'team_edit'),
+        (Allow, MEMBER(self.crewInstance.event_brand), 'crew_view'),
+        (Allow, ADMIN(), 'crew_view'),
+        (Allow, HR_ADMIN(self.crewInstance.event_brand), 'crew_view'),
+        (Allow, ADMIN(), 'team_edit'),
         (Allow, 'chief:%s' % self.crewInstance.uuid, 'team_edit'),
 
         # Authenticated pages
@@ -60,4 +60,3 @@ def create_team(context, request):
 def get_crew(context, request):
     return map_crew(context.crewInstance, request)
     
-

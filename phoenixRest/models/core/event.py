@@ -8,7 +8,8 @@ from sqlalchemy import (
     Integer,
     Boolean,
     Enum,
-    Table
+    Table,
+    func
 )
 from sqlalchemy.dialects.postgresql import UUID
 
@@ -17,6 +18,7 @@ from sqlalchemy import and_
 
 from phoenixRest.models import Base
 
+from phoenixRest.models.core.event_brand import EventBrand
 from phoenixRest.models.core.user import User
 from phoenixRest.models.tickets.ticket import Ticket
 from phoenixRest.models.tickets.ticket_type import TicketType
@@ -45,9 +47,13 @@ class Event(Base):
     name = Column(Text, nullable=False)
     uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
 
+    event_brand_uuid = Column(UUID(as_uuid=True), ForeignKey("event_brand.uuid"), nullable=False)
+    event_brand = relationship("EventBrand", back_populates="events")
+
     # Start and end time of event
     start_time = Column(DateTime, nullable=False)
     end_time = Column(DateTime, nullable=False)
+
     booking_time = Column(DateTime, nullable=False)
     
     # Delta in seconds from booking time
@@ -72,7 +78,7 @@ class Event(Base):
 
     def __init__(self, name: str, start_time: DateTime, end_time: DateTime, booking_time: DateTime, priority_seating_time_delta: int, seating_time_delta: int, 
                  max_participants: int, participant_age_limit_inclusive: int, crew_age_limit_inclusive: int, theme: Optional[str], location_uuid: Optional[str], 
-                 seatmap_uuid: Optional[str]):
+                 seatmap_uuid: Optional[str], event_brand):
         self.name = name
         self.start_time = start_time
         self.end_time = end_time
@@ -80,17 +86,22 @@ class Event(Base):
         self.priority_seating_time_delta = priority_seating_time_delta
         self.seating_time_delta = seating_time_delta
         self.max_participants = max_participants
+
+        self.event_brand = event_brand
+        
         self.participant_age_limit_inclusive = participant_age_limit_inclusive
         self.crew_age_limit_inclusive = crew_age_limit_inclusive
         self.theme = theme
         self.location_uuid = location_uuid
         self.seatmap_uuid = seatmap_uuid
 
-
     def __json__(self, request):
         return {
             'name': str(self.name),
             'uuid': str(self.uuid),
+            'event_brand_uuid': str(self.event_brand_uuid),
+            'participant_age_limit_inclusive': self.participant_age_limit_inclusive,
+            'crew_age_limit_inclusive': self.crew_age_limit_inclusive,
             'start_time': int(self.start_time.timestamp()),
             'end_time': int(self.end_time.timestamp()),
             'booking_time': int(self.booking_time.timestamp()),
@@ -117,12 +128,26 @@ class Event(Base):
             )) \
             .count()
 
-def get_current_event(request):
-    firstEvent = request.db.query(Event).filter(Event.end_time > datetime.now()).order_by(Event.start_time.asc()).first()
+def get_current_events(db):
+    """Returns the uuid of all active events, one per brand.
+    We use uuid as it is more useful"""
+    ranked_sub = db.query(
+        Event.uuid.label("uuid"), 
+        func.row_number().over(partition_by=Event.event_brand_uuid, order_by=Event.end_time.asc()).label("rank")
+    ).filter(Event.end_time > datetime.now()).subquery()
+
+    current_events = list(map(lambda row: row[0], db.query(ranked_sub.c.uuid).filter(ranked_sub.c.rank == 1).all()))
+    log.info(f"Current events: {current_events}")
+
+    return current_events
+
+
+def get_current_event(db, brand: "Brand"):
+    """Returns the current event for a given brand"""
+    firstEvent = db.query(Event).filter(Event.end_time > datetime.now(), Event.event_brand_uuid == brand.uuid).order_by(Event.start_time.asc()).first()
     if firstEvent is None:
-        logging.warning("There are no new events")
+        logging.warning(f"There are no new events for brand {brand.uuid}")
         return None
     else:
         # TODO we want to return ticket types some time? Maybe?
         return firstEvent
-

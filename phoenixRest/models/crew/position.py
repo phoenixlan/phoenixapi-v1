@@ -25,6 +25,9 @@ class Position(Base):
     __tablename__ = "position"
     uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
 
+    event_brand_uuid = Column(UUID(as_uuid=True), ForeignKey("event_brand.uuid"), nullable=True)
+    event_brand = relationship("EventBrand")
+
     crew_uuid = Column(UUID(as_uuid=True), ForeignKey("crew.uuid"), nullable=True)
     crew = relationship("Crew")
 
@@ -49,6 +52,7 @@ class Position(Base):
     def __json__(self, request):
         return {
             'uuid': str(self.uuid),
+            'event_brand_uuid': str(self.event_brand_uuid),
             'name': self.name,
             'description': self.description,
             'is_vanity': self.is_vanity,
@@ -71,6 +75,9 @@ class Position(Base):
         return "%s av %s" % (("Lagleder" if self.chief else "Medlem"), self.crew.name)
 
 def create_or_fetch_crew_position(request, crew, team=None, chief=False):
+    if team is not None and team.crew != crew:
+        raise ValueError("Team belongs to a different crew")
+
     existing = request.db.query(Position).filter(Position.chief == chief)
 
     existing = existing.filter(Position.crew == crew)
@@ -85,6 +92,7 @@ def create_or_fetch_crew_position(request, crew, team=None, chief=False):
         new_position = Position(None, None)
         new_position.chief = chief
         new_position.crew = crew
+        new_position.event_brand = crew.event_brand
         new_position.team = team
         request.db.add(new_position)
         request.db.flush()

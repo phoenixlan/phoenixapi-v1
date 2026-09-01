@@ -3,7 +3,7 @@ from phoenixRest.models.core.activation_code import ActivationCode
 
 from datetime import date
 
-def test_activate_user_by_code(testapp, db):
+def test_activate_user_by_code(testapp, db, admin_user):
     """Tests that users can self-service activate themselves by e-mail link"""
     # Test that the site handles an invalid request
     fetchedUser = testapp.get('/user/activate', headers=dict({
@@ -14,7 +14,7 @@ def test_activate_user_by_code(testapp, db):
     }), status=404)
 
     # Give an user a registration code
-    user = db.query(User).filter(User.email == "test@example.com").first()
+    user = admin_user
     assert user is not None
     # The client ID must exist in paste_pytest.ini
     user.activation_code = ActivationCode(user, "phoenix-crew-test")
@@ -70,7 +70,7 @@ def test_registration_uppercase_email(testapp, db):
     user = db.query(User).filter(User.username == "testfoo_123").first()
     assert user.email == "testfoo@example.com"
 
-def test_register_validation(testapp):
+def test_register_validation(testapp, admin_user):
     # Ensure we validate the registration form
     user_register_obj = dict({
         "username": "testfoo_123",
@@ -120,7 +120,7 @@ def test_register_validation(testapp):
     # What if the user already exists?
     existing_user = testapp.post_json('/user/register', dict({
         **user_register_obj,
-        "username": "test"
+        "username": admin_user.username
     }), status=400).json_body
     assert existing_user["error"] == "A user by this username, phone number, or e-mail already exists"
 

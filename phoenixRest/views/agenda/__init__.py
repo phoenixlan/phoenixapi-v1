@@ -7,7 +7,7 @@ from phoenixRest.models.core.event import Event, get_current_event
 from phoenixRest.utils import validate
 from phoenixRest.resource import resource
 
-from phoenixRest.roles import ADMIN, EVENT_ADMIN, COMPO_ADMIN, INFO_ADMIN
+from phoenixRest.roles import ADMIN, BRAND_ADMIN, COMPO_ADMIN, INFO_ADMIN
 
 from phoenixRest.views.agenda.instance import AgendaInstanceResource
 
@@ -21,11 +21,7 @@ log = logging.getLogger(__name__)
 @resource(name='agenda')
 class AgendaViews(object):
     __acl__ = [
-        (Allow, Everyone, 'get'),
-        (Allow, ADMIN, 'create'),
-        (Allow, EVENT_ADMIN, 'create'),
-        (Allow, INFO_ADMIN, 'create'),
-        (Allow, COMPO_ADMIN, 'create')
+        (Allow, ADMIN(), 'create')
     ]
     def __init__(self, request):
         self.request = request
@@ -35,40 +31,3 @@ class AgendaViews(object):
         node.__parent__ = self
         node.__name__ = key
         return node
-
-
-
-@view_config(context=AgendaViews, request_method='GET', renderer='json', permission='get')
-def get_agenda_entries(request):
-    # Find all events and sort them by start time
-    entries = request.db.query(AgendaEntry).filter(AgendaEntry.event == get_current_event(request)).order_by(AgendaEntry.time.asc()).all()
-    return entries 
-
-
-
-@view_config(context=AgendaViews, request_method='PUT', renderer='json', permission='create')
-@validate(json_body={'event_uuid': str, 'title': str, 'description': str, 'location': str, 'time': int, 'duration': int, 'pinned': bool})
-def create_agenda_entry(context, request):
-    # Attempt to find current Event uuid
-    event = request.db.query(Event).filter(Event.uuid == request.json_body['event_uuid']).first()
-
-    if not event:
-        request.response.status = 404
-        return {
-            "error": "Event not found"
-        }
-
-    entry = AgendaEntry(
-        event=event,
-        title=request.json_body['title'],
-        description=request.json_body['description'],
-        location=request.json_body['location'],
-        time=datetime.fromtimestamp(int(request.json_body['time'])),
-        duration=request.json_body['duration'],
-        pinned=request.json_body['pinned'],
-        created_by_user=request.user
-    )
-
-    request.db.add(entry)
-    request.db.flush()
-    return entry

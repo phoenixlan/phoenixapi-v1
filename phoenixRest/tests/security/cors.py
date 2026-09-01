@@ -4,4 +4,4 @@ def test_login_doesnt_support_cors(testapp):
     testapp.options('/oauth/auth', status=404)
 
     # Support cors for other views
-    testapp.options('/event/current', status=200)
+    testapp.options('/event', status=200)

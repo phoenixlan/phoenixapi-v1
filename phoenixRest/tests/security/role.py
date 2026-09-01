@@ -8,15 +8,17 @@ import json
 import base64
 
 # Tests that roles are correctly given out depending on current event
-def test_role_event_assignment(testapp, db, upcoming_event):
-    last_event = testapp.get_last_event(db)
-    current_event = testapp.get_current_event(db)
+def test_role_event_assignment(testapp, db, upcoming_event, previous_event, jeff_user):
+    last_event = previous_event
+    current_event = upcoming_event
 
-    current_user_dbobject = db.query(User).filter(User.username == 'jeff').first()
+    current_user_dbobject = jeff_user
 
     # Create two unique positions
     position_1 = Position("Test position 1", 'hehehe')
     position_2 = Position("Test position 2", 'hehehe')
+    position_1.event_brand = current_event.event_brand
+    position_2.event_brand = last_event.event_brand
 
     # Create two unique permissions
     permission_1 = Permission(position_1, 'test1', None)
@@ -33,7 +35,7 @@ def test_role_event_assignment(testapp, db, upcoming_event):
     db.add(position_mapping_past)
 
     # Now log in and check what permissions we have
-    token, refresh = testapp.auth_get_tokens('jeff@example.com', 'sixcharacters')
+    token, refresh = testapp.auth_get_tokens(jeff_user.email, 'sixcharacters')
     current_user = testapp.get('/user/current', headers=dict({
         'Authorization': "Bearer " + token
         }), status=200).json_body
@@ -48,6 +50,11 @@ def test_role_event_assignment(testapp, db, upcoming_event):
     token_payload = json.loads(base64.b64decode(token.split(".")[1]+"=="))
 
     # Did we have the expected roles?
-    expected_roles = ['user:%s' % current_user['uuid'], 'test1', 'member']
+    expected_roles = [
+        'user:%s' % current_user['uuid'],
+        'brand:%s:test1' % current_event.event_brand_uuid,
+        'brand:%s:member' % current_event.event_brand_uuid,
+        'member'
+    ]
 
     assert sorted(token_payload['roles']) == sorted(expected_roles)
