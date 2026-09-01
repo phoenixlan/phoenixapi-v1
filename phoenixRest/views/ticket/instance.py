@@ -40,6 +40,8 @@ class TicketInstanceResource(object):
             (Allow, ADMIN, 'check_in'),
             (Allow, TICKET_ADMIN, 'check_in'),
             (Allow, TICKET_CHECKIN, 'check_in'),
+            (Allow, ADMIN, 'view_ticket_transfer_log'),
+            (Allow, TICKET_ADMIN, 'view_ticket_transfer_log'),
         ]
         if self.ticketInstance is not None:
             acl = acl + [
