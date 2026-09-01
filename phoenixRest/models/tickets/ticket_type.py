@@ -22,7 +22,7 @@ class TicketType(Base):
     __tablename__ = "ticket_type"
     uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
 
-    event_brand_uuid = Column(UUID(as_uuid=True), ForeignKey("event_brand.uuid"), nullable=True)
+    event_brand_uuid = Column(UUID(as_uuid=True), ForeignKey("event_brand.uuid"), nullable=False)
     event_brand = relationship("EventBrand")
 
     name = Column(Text, nullable=False)
