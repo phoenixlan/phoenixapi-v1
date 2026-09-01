@@ -216,7 +216,40 @@ def test_modify_user(testapp, admin_user, jeff_user, adam_user):
         "Authorization": "Bearer " + privileged_token
     }), status=400)
 
+def test_forgot_password_case_insensitive(testapp):
+    # Forgot password should work regardless of email case
+    # Lowercase (normal)
+    testapp.post_json('/user/forgot', dict({
+        'login': 'test@example.com',
+        'client_id': 'phoenix-crew-test'
+    }), status=200)
+
+    # Uppercase
+    testapp.post_json('/user/forgot', dict({
+        'login': 'TEST@EXAMPLE.COM',
+        'client_id': 'phoenix-crew-test'
+    }), status=200)
+
+    # Mixed case
+    testapp.post_json('/user/forgot', dict({
+        'login': 'Test@Example.Com',
+        'client_id': 'phoenix-crew-test'
+    }), status=200)
+
+def test_forgot_password_trims_whitespace(testapp):
+    # Forgot password should trim leading/trailing whitespace from email
+    testapp.post_json('/user/forgot', dict({
+        'login': '  test@example.com  ',
+        'client_id': 'phoenix-crew-test'
+    }), status=200)
+
+    testapp.post_json('/user/forgot', dict({
+        'login': ' TEST@EXAMPLE.COM ',
+        'client_id': 'phoenix-crew-test'
+    }), status=200)
+    
 def test_activate_user(testapp, admin_user, jeff_user, adam_user):
+
     # Test coverage:
     #    Title                  Active  Description
     #  * Functionality check:   [X]     Test functionality. Test that a user are able to activate a user

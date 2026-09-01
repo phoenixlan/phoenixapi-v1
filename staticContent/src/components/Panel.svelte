@@ -13,8 +13,8 @@
     }
     @media (min-width: 640px) {
 		div {
-            border-radius: 0.3em;
-            box-shadow: 0.2em 0.2em 1em #333;
+            border-radius: 1em;
+            box-shadow: 0 0 0.7em #50505070;
 
             padding: 2em;
 		}

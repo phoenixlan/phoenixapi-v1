@@ -28,7 +28,6 @@ class EventViews(object):
     ]
     def __init__(self, request):
         self.request = request
-        log.info("event class init")
 
     def __getitem__(self, key):
         """Traverse to a specific crew item"""

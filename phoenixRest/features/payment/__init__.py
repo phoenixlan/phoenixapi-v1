@@ -1,3 +1,4 @@
+import transaction
 from phoenixRest.models.tickets.payment import Payment, PaymentState
 from phoenixRest.models.tickets.ticket import Ticket
 
@@ -19,12 +20,6 @@ def mint_tickets(request, payment: Payment):
             #payment.tickets.append(ticket)
         log.info("Minted %s tickets of type %s for user %s" % (entry.amount, entry.ticket_type.name, payment.user_uuid))
 
-    # Send a mail
-    request.service_manager.get_service('email').send_mail(payment.user.email, "Kvittering for kjøp av billetter", "tickets_minted.jinja2", {
-        "mail": request.registry.settings["api.contact"],
-        "name": request.registry.settings["api.name"],
-        "payment": payment,
-    })
 
     # Free up store session
     for entry in payment.store_session.cart_entries:
@@ -32,5 +27,15 @@ def mint_tickets(request, payment: Payment):
     request.db.delete(payment.store_session)
     # Mark the payment as completed - tickets are minted
     payment.state = PaymentState.tickets_minted
+
+    # Make sure the db knows before we send e-mail
+    transaction.commit()
+
+    # Send a mail
+    request.service_manager.get_service('email').send_mail(payment.user.email, "Kvittering for kjøp av billetter", "tickets_minted.jinja2", {
+        "mail": request.registry.settings["api.contact"],
+        "name": request.registry.settings["api.name"],
+        "payment": payment,
+    })
 
     

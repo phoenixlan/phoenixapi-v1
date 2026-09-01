@@ -82,6 +82,9 @@ def get_root(request):
 def uuid_adapter(obj, request):
     return str(obj)
 
+def feature_flags(request):
+    return request.registry.settings.get("feature_flags", "").split(",")
+
 def service_manager(manager: ServiceManager):
     def inner(request):
         return manager
@@ -110,6 +113,7 @@ def main(global_config, **settings):
 
     # Add the user property to the request object
     config.add_request_method(user, reify=True)
+    config.add_request_method(feature_flags, reify=True)
 
     initiated_service_manager = setup_service_manager(settings)
 

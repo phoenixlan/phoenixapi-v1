@@ -28,6 +28,8 @@ from phoenixRest.models.tickets.seatmap import Seatmap
 
 from datetime import datetime, timedelta
 
+from typing import Optional
+
 import logging
 log = logging.getLogger(__name__)
 
@@ -41,10 +43,16 @@ EventTicketTypeAssociation = Table('event_ticket_type_static_assoc', Base.metada
 )
 class Event(Base):
     __tablename__ = "event"
+
+    name = Column(Text, nullable=False)
     uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
 
     event_brand_uuid = Column(UUID(as_uuid=True), ForeignKey("event_brand.uuid"), nullable=False)
     event_brand = relationship("EventBrand", back_populates="events")
+
+    # Start and end time of event
+    start_time = Column(DateTime, nullable=False)
+    end_time = Column(DateTime, nullable=False)
 
     booking_time = Column(DateTime, nullable=False)
     
@@ -52,17 +60,11 @@ class Event(Base):
     priority_seating_time_delta = Column(Integer, nullable=False)
     seating_time_delta = Column(Integer, nullable=False)
 
-    # Start and end time of event
-    start_time = Column(DateTime, nullable=False)
-    end_time = Column(DateTime, nullable=False)
-
-    name = Column(Text, nullable=False)
-
-    theme = Column(Text)
     max_participants = Column(Integer, nullable=False)
-
     participant_age_limit_inclusive = Column(Integer, nullable=False, server_default="-1")
     crew_age_limit_inclusive = Column(Integer, nullable=False, server_default="-1")
+
+    theme = Column(Text)
 
     location_uuid = Column(UUID(as_uuid=True), ForeignKey("location.uuid"), nullable=True)
     location = relationship("Location")
@@ -74,16 +76,24 @@ class Event(Base):
 
     cancellation_reason = Column(Text)
 
-    def __init__(self, name: str, start_time: DateTime, end_time: DateTime, max_participants: int, event_brand):
+    def __init__(self, name: str, start_time: DateTime, end_time: DateTime, booking_time: DateTime, priority_seating_time_delta: int, seating_time_delta: int, 
+                 max_participants: int, participant_age_limit_inclusive: int, crew_age_limit_inclusive: int, theme: Optional[str], location_uuid: Optional[str], 
+                 seatmap_uuid: Optional[str]: event_brand):
         self.name = name
         self.start_time = start_time
         self.end_time = end_time
-        self.booking_time = start_time - timedelta(days=31)
-        self.priority_seating_time_delta = 60*30
-        self.seating_time_delta = 60*60
+        self.booking_time = booking_time
+        self.priority_seating_time_delta = priority_seating_time_delta
+        self.seating_time_delta = seating_time_delta
         self.max_participants = max_participants
-        self.event_brand = event_brand
 
+        self.event_brand = event_brand
+        
+        self.participant_age_limit_inclusive = participant_age_limit_inclusive
+        self.crew_age_limit_inclusive = crew_age_limit_inclusive
+        self.theme = theme
+        self.location_uuid = location_uuid
+        self.seatmap_uuid = seatmap_uuid
 
     def __json__(self, request):
         return {
@@ -92,26 +102,28 @@ class Event(Base):
             'event_brand_uuid': str(self.event_brand_uuid),
             'participant_age_limit_inclusive': self.participant_age_limit_inclusive,
             'crew_age_limit_inclusive': self.crew_age_limit_inclusive,
+            'start_time': int(self.start_time.timestamp()),
+            'end_time': int(self.end_time.timestamp()),
             'booking_time': int(self.booking_time.timestamp()),
             'priority_seating_time_delta': self.priority_seating_time_delta,
             'seating_time_delta': self.seating_time_delta,
-            'start_time': int(self.start_time.timestamp()),
-            'end_time': int(self.end_time.timestamp()),
-            'theme': self.theme,
             'max_participants': self.max_participants,
-            'cancellation_reason': self.cancellation_reason,
+            'participant_age_limit_inclusive': self.participant_age_limit_inclusive,
+            'crew_age_limit_inclusive': self.crew_age_limit_inclusive,
+            'theme': self.theme,
+            'location_uuid': self.location_uuid,
             'seatmap_uuid': self.seatmap_uuid,
-            'location': self.location
+            'cancellation_reason': self.cancellation_reason
         }
     
-    """
-    Returns a numer prepresenting the total number of tickets left for the event
-    """
     def get_total_ticket_availability(self, request):
+        """
+        Returns a numer prepresenting the total number of tickets left for the event
+        """
         return self.max_participants - request.db.query(Ticket) \
             .join(TicketType, Ticket.ticket_type_uuid == TicketType.uuid) \
             .filter(and_(
-                TicketType.seatable == True,
+                TicketType.grants_admission == True,
                 Ticket.event_uuid == self.uuid
             )) \
             .count()

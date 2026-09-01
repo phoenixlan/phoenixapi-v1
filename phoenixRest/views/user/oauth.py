@@ -21,7 +21,7 @@ import logging
 log = logging.getLogger(__name__)
 
 def generate_token(user: User, request):
-    log.warning("Generating token")
+    log.debug("Generating token")
     # We now need to fetch the users permissions
     # https://stackoverflow.com/questions/952914/how-to-make-a-flat-list-out-of-list-of-lists
     # Extract positions that are for current event, or that are lifetime
@@ -100,6 +100,7 @@ def login(request):
             # Create a code that can be exchanged for an oauth token
             code = OauthCode(user)
             request.db.add(code)
+
             return {
                 'code': code.code
             }
@@ -121,14 +122,14 @@ def token(request):
         # Exchange access code for token
         code = request.db.query(OauthCode).filter(OauthCode.code == request.POST['code']).first()
         if code is None:
-            log.info("Not seen before code")
+            log.debug("Not seen before code")
 
             request.response.status = 403
             return {
                 "error": "Invalid code"
             }
         if datetime.now() > code.expires:
-            log.warning("Expired code")
+            log.warning("Expired oauth code")
 
             request.response.status = 403
             return {
@@ -137,7 +138,7 @@ def token(request):
         user = code.user
 
         if user is None:
-            log.info('User is none when generating token!')
+            log.warning('User is none when generating token!')
             request.response.status = 500
             return {
                 "error": "Failed to get token"
@@ -145,7 +146,7 @@ def token(request):
 
         # The code can only be used once
         request.db.delete(code)
-        log.info("Deleted code from database")
+        log.debug("Deleted code from database")
 
         refresh_token = OauthRefreshToken(user, request.headers.get('User-Agent', ""))
         request.db.add(refresh_token)

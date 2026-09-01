@@ -244,6 +244,12 @@ def activate_account(context, request):
 @view_config(context=UserViews, name='connect_discord', request_method='GET', renderer='templates/connect_discord.jinja2', permission='connect_discord')
 @validate(get={"state": str, "code": str})
 def connect_discord(context, request):
+    if 'discord' not in request.feature_flags:
+        request.response.status = 400
+        return {
+            "error": "Discord functionality is not enabled"
+        }
+
     code = request.GET["code"]
     state = request.GET["state"]
     oauth_state = request.db.query(DiscordMappingOauthState) \
@@ -293,7 +299,9 @@ def connect_discord(context, request):
 @view_config(context=UserViews, name='forgot', request_method="POST", renderer='json', permission="register")
 @validate(json_body={'login': str, 'client_id': str})
 def forgot_password(context, request):
-    log.info("Processing forgot password request for %s" % request.json_body['login'])
+    forgot_key = request.json_body['login'].strip()
+    log.info("Processing forgot password request for %s, or \"%s\"" % (forgot_key, forgot_key.lower()))
+
     client_id = request.json_body.get("client_id")
     if client_id not in request.registry.settings["oauth.valid_client_ids"].split(","):
         request.response.status = 400
@@ -302,7 +310,7 @@ def forgot_password(context, request):
         }
     url = request.registry.settings["oauth.%s.redirect_url" % client_id]
 
-    user = request.db.query(User).filter(or_(User.username == request.json_body['login'], User.email == request.json_body['login'])).first()
+    user = request.db.query(User).filter(User.email == forgot_key.lower()).first()
     if not user:
         log.warn("Got a forgot password request for an account that doesn't exist")
     else:

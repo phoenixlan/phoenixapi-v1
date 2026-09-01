@@ -36,4 +36,3 @@ class TicketTypeResource(object):
 @view_config(name='', context=TicketTypeResource, request_method='GET', renderer='json', permission='getAll')
 def get_all_ticket_types(context, request):
     return request.db.query(TicketType).order_by(TicketType.name).all()
-

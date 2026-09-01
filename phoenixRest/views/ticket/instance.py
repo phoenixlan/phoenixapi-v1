@@ -1,3 +1,4 @@
+from phoenixRest.models.tickets.ticket_totp import TicketTotp
 from operator import and_
 from pyramid.view import view_config, view_defaults
 from pyramid.httpexceptions import (
@@ -22,6 +23,7 @@ from sqlalchemy.orm import joinedload
 
 from datetime import datetime, timedelta
 
+import secrets
 import logging
 log = logging.getLogger(__name__)
 
@@ -51,6 +53,8 @@ class TicketInstanceResource(object):
 
                 # Ticket owner can seat their own ticket
                 (Allow, "%s" % self.ticketInstance.owner.uuid, 'seat_ticket'),
+                # Ticket owner can get totp
+                (Allow, "%s" % self.ticketInstance.owner.uuid, 'get_totp'),
             ]
             if self.ticketInstance.seater is not None:
                 # Seaters can also seat the ticket
@@ -73,6 +77,20 @@ class TicketInstanceResource(object):
 
 @view_config(context=TicketInstanceResource, name='', request_method='GET', renderer='json', permission='view_ticket')
 def get_ticket(context, request):
+    if "totp" in request.GET:
+        totp = context.ticketInstance.totp
+        if totp is None:
+            request.response.status = 403
+            return {
+                'error': "Ticket doesn't have a totp code"
+            }
+            
+        if not totp.verify(request.GET["totp"]):
+            request.response.status = 403
+            return {
+                'error': "Invalid totp - counterfeit ticket"
+            }
+            
     return context.ticketInstance
 
 
@@ -127,6 +145,21 @@ def seat_ticket(context, request):
 
 @view_config(context=TicketInstanceResource, name='check_in', request_method='POST', renderer='json', permission='check_in')
 def check_in_ticket(context, request):
+    # If the totp parameter is set, we verify
+    if "totp" in request.GET:
+        totp = context.ticketInstance.totp
+        if totp is None:
+            request.response.status = 403
+            return {
+                'error': "Ticket doesn't have a totp code"
+            }
+
+        if not totp.verify(request.GET["totp"]):
+            request.response.status = 403
+            return {
+                'error': "Invalid totp - counterfeit ticket"
+            }
+            
     if context.ticketInstance.checked_in is not None:
         request.response.status = 400;
         return {
@@ -152,6 +185,22 @@ def set_seater(context, request):
 
     return context.ticketInstance
 
+@view_config(context=TicketInstanceResource, name='totp', request_method='GET', renderer='json', permission='get_totp')
+def get_totp(context, request):
+    """Gets (or generates) the totp for the ticket, allowing for secure checkin if wanted""" 
+
+    if context.ticketInstance.totp is None:
+        totp = TicketTotp(context.ticketInstance)
+        request.db.add(totp)
+        request.db.flush()
+        log.debug("No totp, creating new")
+    else:
+        log.debug("totp already exists")
+        
+    # Not providing a serializer on the model here is intentional to force a crash if for some reason another endpoint wants to include the totp
+    return {
+        "totp": context.ticketInstance.totp.totp
+    }
 
 @view_config(context=TicketInstanceResource, name='transfer', request_method='POST', renderer='json', permission='transfer_ticket')
 @validate(json_body={'user_email': str})
@@ -174,6 +223,15 @@ def transfer_ticket(context, request):
         return {
             'error': "The ticket can still be returned to the original owner, so you cannot transfer it further"
         }
+
+    # Reset the totp token so the previous owner can't check it in any more
+    if context.ticketInstance.totp is not None:
+        log.info(f"There is a totp, so deleting it: {context.ticketInstance.totp}")
+        request.db.delete(context.ticketInstance.totp)
+        context.ticketInstance.totp = None
+    else:
+        log.info("No totp, no deletion necessary")
+
     
     transfer = TicketTransfer(request.user, transfer_target, context.ticketInstance)
     request.db.add(transfer)

@@ -47,9 +47,10 @@ def setup_dbengine():
     username = os.environ['POSTGRES_USER']
     password = os.environ['POSTGRES_PASSWORD']
     host = os.environ['DB_HOST']
+    database = os.environ.get('DATABASE', 'phoenix')
     log.info("Setting up database connections")
 
-    engine = create_engine(get_postgresql_url(username, password, host, "phoenix"))
+    engine = create_engine(get_postgresql_url(username, password, host, database))
 
     Base.metadata.bind = engine
     return engine
