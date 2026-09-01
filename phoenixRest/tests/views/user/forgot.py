@@ -9,13 +9,13 @@ def reset_codes_for(db, email):
     return db.query(PasswordResetCode).filter(PasswordResetCode.user_uuid == user.uuid).all()
 
 
-def test_forgot_password_creates_reset_code(testapp, db):
+def test_forgot_password_creates_reset_code(testapp, db, jeff_user):
     """A forgot password request for an existing user creates a reset code for that user"""
     # The user shouldn't have any reset codes to begin with
-    assert len(reset_codes_for(db, "jeff@example.com")) == 0
+    assert len(reset_codes_for(db, jeff_user.email)) == 0
 
     testapp.post_json('/user/forgot', dict({
-        "login": "jeff@example.com",
+        "login": jeff_user.email,
         "client_id": "phoenix-crew-test"
     }), status=200)
 
@@ -26,14 +26,14 @@ def test_forgot_password_creates_reset_code(testapp, db):
     assert len(codes[0].code) > 0
 
 
-def test_forgot_password_normalizes_login(testapp, db):
+def test_forgot_password_normalizes_login(testapp, db, jeff_user):
     """The login is lowercased and stripped, so surrounding whitespace and casing still match a user"""
     testapp.post_json('/user/forgot', dict({
         "login": "  JEFF@Example.com  ",
         "client_id": "phoenix-crew-test"
     }), status=200)
 
-    codes = reset_codes_for(db, "jeff@example.com")
+    codes = reset_codes_for(db, jeff_user.email)
     assert len(codes) == 1
 
 
@@ -51,7 +51,7 @@ def test_forgot_password_unknown_user_is_silent(testapp, db):
     assert db.query(PasswordResetCode).count() == before
 
 
-def test_forgot_password_invalid_client_id(testapp, db):
+def test_forgot_password_invalid_client_id(testapp, db, jeff_user):
     """An unknown OAuth client ID is rejected, and no reset code is created even for a real user"""
     result = testapp.post_json('/user/forgot', dict({
         "login": "jeff@example.com",
@@ -59,14 +59,14 @@ def test_forgot_password_invalid_client_id(testapp, db):
     }), status=400).json_body
     assert result["error"] == "Invalid OAuth client ID"
 
-    assert len(reset_codes_for(db, "jeff@example.com")) == 0
+    assert len(reset_codes_for(db, jeff_user.email)) == 0
 
 
-def test_forgot_password_validation(testapp):
+def test_forgot_password_validation(testapp, jeff_user):
     """Both login and client_id are required fields"""
     for key in ["login", "client_id"]:
         request_obj = dict({
-            "login": "jeff@example.com",
+            "login": jeff_user.email,
             "client_id": "phoenix-crew-test"
         })
         del request_obj[key]

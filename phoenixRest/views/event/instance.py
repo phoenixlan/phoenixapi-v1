@@ -70,11 +70,11 @@ class EventInstanceResource(dict):
 
             (Allow, ADMIN(), 'event_update'),
 
-            (Allow, CHIEF, 'applications_get'),
-            (Allow, ADMIN, 'applications_get'),
+            (Allow, CHIEF(self.eventInstance.event_brand_uuid), 'applications_get'),
+            (Allow, ADMIN(), 'applications_get'),
 
-            (Allow, ADMIN, 'event_edit'),
-            (Allow, EVENT_ADMIN, 'event_edit'),
+            (Allow, ADMIN(), 'event_edit'),
+            (Allow, BRAND_ADMIN(self.eventInstance.event_brand_uuid), 'event_edit'),
 
         ]
         return acl

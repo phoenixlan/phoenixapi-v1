@@ -94,7 +94,7 @@ def other_position(db, other_event_brand):
 def other_ticket_type(db, other_event_brand):
     ticket_type = TicketType(
         'Other ticket type', 100, 'Ticket type belonging to another event brand',
-        True, True
+        True, True, True
     )
     ticket_type.event_brand = other_event_brand
     db.add(ticket_type)
@@ -219,7 +219,8 @@ def upcoming_event(db, event_brand):
     event_end = datetime.now() + timedelta(days=65)
     event_booking = datetime.now() + timedelta(days=30)
 
-    e = Event("Test event", event_start, event_end, event_booking, 3600, 1800, 400, None, None, None, None, None, event_brand)
+    e = Event("Test event", event_start, event_end, event_booking, 
+              3600, 1800, 400, None, None, None, None, None, event_brand)
     db.add(e)
     db.flush()
     return e
@@ -231,7 +232,7 @@ def other_upcoming_event(db, other_event_brand):
 
     event = Event(
         "Other upcoming event", event_start, event_end, 400,
-        other_event_brand
+              3600, 1800, 400, None, None, None, None, None, other_event_brand
     )
     db.add(event)
     db.flush()
