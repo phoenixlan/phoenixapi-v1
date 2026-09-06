@@ -1,28 +1,23 @@
 
-def test_ticket_transfer_flow(testapp, upcoming_event):
-    testapp.ensure_typical_event()
+def test_ticket_transfer_flow(testapp, upcoming_event, ticket_types, admin_user, jeff_user, adam_user):
     # test is an admin
-    sender_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
-    receiver_token, refresh = testapp.auth_get_tokens('jeff@example.com', 'sixcharacters')
-    receiver_2_token , refresh = testapp.auth_get_tokens('adam@example.com', 'sixcharacters')
+    sender_token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
+    receiver_token, refresh = testapp.auth_get_tokens(jeff_user.email, 'sixcharacters')
+    receiver_2_token , refresh = testapp.auth_get_tokens(adam_user.email, 'sixcharacters')
 
     # Get user UUID
     sender_user = testapp.get_user(sender_token)
     receiver_user = testapp.get_user(receiver_token)
     receiver_2_user = testapp.get_user(receiver_2_token)
 
-    # Current event
-    current_event = testapp.get('/event/current', status=200)
-    assert current_event.json_body['uuid'] is not None
-
     # Get existing ticket types
-    res = testapp.get('/event/%s/ticketType' % current_event.json_body['uuid'], headers=dict({
+    res = testapp.get('/event/%s/ticketType' % upcoming_event.uuid, headers=dict({
         "Authorization": "Bearer " + sender_token
     }), status=200)
     ticket_type = res.json_body[0]
 
     # Give test a free ticket. Only works because test is an admin
-    res = testapp.post_json('/ticket', dict({
+    res = testapp.post_json('/event/%s/ticket' % upcoming_event.uuid, dict({
         'ticket_type': ticket_type['uuid'],
         'recipient': sender_user['uuid']
     }), headers=dict({
@@ -76,14 +71,14 @@ def test_ticket_transfer_flow(testapp, upcoming_event):
     assert len(owned_tickets_recipient_post_transfer) > len(owned_tickets_recipient)
 
     # Check that both people can see the ticket transfer, and assert it is not reversed and not expired
-    sender_transfers = testapp.get('/user/%s/ticket_transfers' % sender_user['uuid'], headers=dict({
-        "Authorization": "Bearer " + sender_token
+    sender_transfers = testapp.get('/user/%s/ticket_transfers?event_uuid=%s' % (sender_user['uuid'], upcoming_event.uuid), headers=dict({
+        "Authorization": "Bearer " + sender_token,
     }), status=200).json_body
 
     assert len(sender_transfers) == 1
 
-    receiver_transfers = testapp.get('/user/%s/ticket_transfers' % receiver_user['uuid'], headers=dict({
-        "Authorization": "Bearer " + receiver_token
+    receiver_transfers = testapp.get('/user/%s/ticket_transfers?event_uuid=%s' % (receiver_user['uuid'], upcoming_event.uuid), headers=dict({
+        "Authorization": "Bearer " + receiver_token,
     }), status=200).json_body
 
     assert len(receiver_transfers) == 1
@@ -113,14 +108,14 @@ def test_ticket_transfer_flow(testapp, upcoming_event):
     }), status=200)
 
     # Check that the transfer isn't gone
-    sender_transfers = testapp.get('/user/%s/ticket_transfers' % sender_user['uuid'], headers=dict({
-        "Authorization": "Bearer " + sender_token
+    sender_transfers = testapp.get('/user/%s/ticket_transfers?event_uuid=%s' % (sender_user['uuid'], upcoming_event.uuid), headers=dict({
+        "Authorization": "Bearer " + sender_token,
     }), status=200).json_body
 
     assert len(sender_transfers) == 1
 
-    receiver_transfers = testapp.get('/user/%s/ticket_transfers' % receiver_user['uuid'], headers=dict({
-        "Authorization": "Bearer " + receiver_token
+    receiver_transfers = testapp.get('/user/%s/ticket_transfers?event_uuid=%s' % (receiver_user['uuid'], upcoming_event.uuid), headers=dict({
+        "Authorization": "Bearer " + receiver_token,
     }), status=200).json_body
 
     assert len(receiver_transfers) == 1
@@ -139,4 +134,3 @@ def test_ticket_transfer_flow(testapp, upcoming_event):
     }), headers=dict({
         "Authorization": "Bearer " + sender_token
     }), status=400)
-

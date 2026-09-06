@@ -33,6 +33,9 @@ class TicketVoucher(Base):
 
     ticket_type_uuid = Column(UUID(as_uuid=True), ForeignKey("ticket_type.uuid"), nullable=False)
     ticket_type = relationship("TicketType")
+    
+    event_brand_uuid= Column(UUID(as_uuid=True), ForeignKey("event_brand.uuid"), nullable=False)
+    event_brand = relationship("EventBrand")
 
     # The ticket once the ticket voucher is generated
     ticket_id = Column(Integer, ForeignKey("ticket.ticket_id"), nullable=True)
@@ -46,11 +49,13 @@ class TicketVoucher(Base):
 
     created = Column(DateTime, nullable=False)
 
-    def __init__(self, source_user, recipient_user, ticket_type, last_use_event):
+    def __init__(self, source_user, recipient_user, ticket_type, brand, last_use_event):
         self.source_user = source_user
         self.recipient_user = recipient_user
 
         self.ticket_type = ticket_type
+
+        self.event_brand = brand
 
         self.last_use_event = last_use_event
 

@@ -24,7 +24,7 @@ log = logging.getLogger(__name__)
 class CrewViews(object):
     __acl__ = [
         (Allow, Everyone, 'getAll'),
-        (Allow, ADMIN, 'create'),
+        (Allow, ADMIN(), 'create'),
 
         # Authenticated pages
         #(Allow, Authenticated, Authenticated),
@@ -46,7 +46,7 @@ def get_all_crew(context, request):
     query = request.db.query(Crew)
 
     log.debug("Principals: %s" % request.effective_principals)
-    if "role:admin" not in request.effective_principals:
+    if ADMIN() not in request.effective_principals:
         log.info("Reducing crew list as the requester is not admin")
         query = query.filter(Crew.active == True)
     
@@ -59,4 +59,3 @@ def create_crew(request):
                   description=request.json_body['description'])
     request.db.add(crew)
     return crew
-

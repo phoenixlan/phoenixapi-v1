@@ -29,6 +29,9 @@ class StoreSession(Base):
     user_uuid = Column(UUID(as_uuid=True), ForeignKey("user.uuid"), nullable=False)
     user = relationship("User")
 
+    event_uuid = Column(UUID(as_uuid=True), ForeignKey("event.uuid"), nullable=False)
+    event = relationship("Event")
+
     payment = relationship("Payment", back_populates="store_session")
 
     cart_entries = relationship("StoreSessionCartEntry", back_populates="store_session")
@@ -36,8 +39,9 @@ class StoreSession(Base):
     created = Column(DateTime, nullable=False)
     expires = Column(DateTime, nullable=False)
 
-    def __init__(self, user: User, expiry: int):
+    def __init__(self, user: User, expiry: int, event):
         self.user = user
+        self.event = event
         self.created = datetime.now()
         self.expires = self.created + timedelta(seconds=expiry)
 
@@ -51,6 +55,7 @@ class StoreSession(Base):
         return {
             'uuid': str(self.uuid),
             'user_uuid': self.user_uuid,
+            'event_uuid': self.event_uuid,
             'entries': self.cart_entries,
             'total': self.get_total(),
             'created': int(self.created.timestamp()),

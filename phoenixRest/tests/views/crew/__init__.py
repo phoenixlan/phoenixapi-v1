@@ -1,5 +1,5 @@
 # Test listing crews, and make sure it works as intended both logged in as admin and not logged in
-def test_get_crews(testapp):
+def test_get_crews(testapp, db, testcrew, admin_user):
     res = testapp.get('/crew', status=200)
     assert len(res.json_body) > 0
 
@@ -8,8 +8,11 @@ def test_get_crews(testapp):
 
     assert len(hidden_crews) == 0
 
+    testcrew.active = False
+    db.flush()
+
     # Log in as the test user
-    token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
+    token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
     res = testapp.get('/crew', headers=dict({
         "Authorization": "Bearer " + token
         }), status=200)

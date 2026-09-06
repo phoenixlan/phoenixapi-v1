@@ -23,8 +23,8 @@ log = logging.getLogger(__name__)
 class TicketVoucherInstanceResource(object):
     def __acl__(self):
         acl = [
-            (Allow, ADMIN, 'burn'),
-            (Allow, TICKET_ADMIN, 'burn'),
+            (Allow, ADMIN(), 'burn'),
+            (Allow, TICKET_ADMIN(self.ticketVoucherInstance.event_brand_uuid), 'burn'),
             # Authenticated pages
             #(Allow, Authenticated, Authenticated),
             #(Deny, Everyone, Authenticated),
@@ -60,7 +60,7 @@ def burn_voucher(context, request):
 
     # Mint the ticket!
     context.ticketVoucherInstance.used = datetime.now()
-    ticket = Ticket(context.ticketVoucherInstance.recipient_user, None, context.ticketVoucherInstance.ticket_type, get_current_event(request))
+    ticket = Ticket(context.ticketVoucherInstance.recipient_user, None, context.ticketVoucherInstance.ticket_type, get_current_event(request.db, context.ticketVoucherInstance.event_brand))
     context.ticketVoucherInstance.ticket = ticket
 
     # Save it

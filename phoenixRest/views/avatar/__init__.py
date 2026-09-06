@@ -8,7 +8,7 @@ from phoenixRest.models.core.avatar import Avatar, AvatarState
 
 from phoenixRest.resource import resource
 
-from phoenixRest.roles import ADMIN, CHIEF, HR_ADMIN
+from phoenixRest.roles import ADMIN
 
 from phoenixRest.views.avatar.instance import AvatarInstanceResource
 
@@ -18,12 +18,9 @@ log = logging.getLogger(__name__)
 @resource(name='avatar')
 class AvatarResource(object):
     __acl__ = [
-        (Allow, ADMIN, 'getAll'),
-        (Allow, HR_ADMIN, 'getAll'),
+        (Allow, ADMIN(), 'getAll'),
 
-        (Allow, ADMIN, 'getPending'),
-        (Allow, HR_ADMIN, 'getPending'),
-        (Allow, CHIEF, 'getPending'),
+        (Allow, ADMIN(), 'getPending'),
 
         # Authenticated pages
         #(Allow, Authenticated, Authenticated),

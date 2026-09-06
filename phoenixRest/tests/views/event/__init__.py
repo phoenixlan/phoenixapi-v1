@@ -1,27 +1,72 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
-# Test getting the current event
-def test_get_event(testapp, upcoming_event):
-    res = testapp.get('/event/current', status=200)
-    assert res.json_body['uuid'] is not None
+def _event_payload(name):
+    start_time = datetime.now() + timedelta(days=100)
+    return {
+        'name': name,
+        'start_time': int(start_time.timestamp()),
+        'end_time': int((start_time + timedelta(days=3)).timestamp()),
+        'booking_time': int((start_time - timedelta(days=30)).timestamp()),
+        'priority_seating_time_delta': 1800,
+        'seating_time_delta': 3600,
+        'max_participants': 500
+    }
 
-    token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
 
-    res = testapp.get('/event/%s' % res.json_body['uuid'], headers=dict({
-        "Authorization": "Bearer " + token
-    }), status=200)
-    assert res is not None
+def test_create_event_for_brand_as_admin(testapp, event_brand, admin_token):
+    payload = _event_payload('Admin-created event')
+    event = testapp.put_json(
+        '/event_brand/%s/event' % event_brand.uuid,
+        payload,
+        headers={'Authorization': "Bearer " + admin_token},
+        status=200
+    ).json_body
+
+    assert event['name'] == 'Admin-created event'
+    assert event['event_brand_uuid'] == str(event_brand.uuid)
+    assert event['max_participants'] == 500
+    assert event['start_time'] == payload['start_time']
+    assert event['end_time'] == payload['end_time']
+    assert event['booking_time'] == payload['booking_time']
+    assert event['priority_seating_time_delta'] == 1800
+    assert event['seating_time_delta'] == 3600
+
+
+def test_create_event_brand_admin_is_scoped(
+        testapp, event_brand, other_event_brand, brand_admin_user):
+    token, refresh = testapp.auth_get_tokens(
+        brand_admin_user.email, 'sixcharacters'
+    )
+    headers = {'Authorization': "Bearer " + token}
+
+    event = testapp.put_json(
+        '/event_brand/%s/event' % event_brand.uuid,
+        _event_payload('Brand-admin event'), headers=headers, status=200
+    ).json_body
+    assert event['event_brand_uuid'] == str(event_brand.uuid)
+
+    testapp.put_json(
+        '/event_brand/%s/event' % other_event_brand.uuid,
+        _event_payload('Wrong-brand event'), headers=headers, status=403
+    )
+
+
+def test_create_event_rejects_permissionless_user(
+        testapp, event_brand, adam_user):
+    token, refresh = testapp.auth_get_tokens(adam_user.email, 'sixcharacters')
+    testapp.put_json(
+        '/event_brand/%s/event' % event_brand.uuid,
+        _event_payload('Forbidden event'),
+        headers={'Authorization': "Bearer " + token}, status=403
+    )
 
 
 # Get ticket types for an event(we will use the current one)
-def test_get_ticket_types(testapp, upcoming_event):
-    current_event = testapp.get('/event/current', status=200)
-    assert current_event.json_body['uuid'] is not None
-
-    token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
+def test_get_ticket_types(testapp, upcoming_event, admin_user):
+    token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
 
     # Ensure there are ticket types. By default there aren't
-    res = testapp.get('/event/%s/ticketType' % current_event.json_body['uuid'], headers=dict({
+    res = testapp.get('/event/%s/ticketType' % upcoming_event.uuid, headers=dict({
         "Authorization": "Bearer " + token
     }), status=200)
 
@@ -33,63 +78,20 @@ def test_get_ticket_types(testapp, upcoming_event):
     }), status=200).json_body
 
     # Add a ticket type
-    testapp.put_json('/event/%s/ticketType' % current_event.json_body['uuid'], dict({
+    testapp.put_json('/event/%s/ticketType' % upcoming_event.uuid, dict({
         'ticket_type_uuid': ticket_types[0]['uuid']
     }), headers=dict({
         "Authorization": "Bearer " + token
     }), status=200)
 
     # The ticket type should now be added
-    res = testapp.get('/event/%s/ticketType' % current_event.json_body['uuid'], headers=dict({
+    res = testapp.get('/event/%s/ticketType' % upcoming_event.uuid, headers=dict({
         "Authorization": "Bearer " + token
     }), status=200)
 
     assert len(res.json_body) == 1
 
-def test_create_event(testapp):
-
-    # Test coverage:
-    #    Title                  Active  Description
-    #  * Functionality check:   [X]     Test functionality. Test that a user are able to create an event.
-    #  * Security check:        [X]     Test permissions. Test that admins can create and regular users cannot.
-    #  * Dependency check:      [ ]     Test dependencies programmed in views/. (Not in use)
-
-
-    # Login with test accounts with admin privileges and no rights
-    privileged_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
-    unprivileged_token, refresh = testapp.auth_get_tokens('jeff@example.com', 'sixcharacters')
-
-    ### Test to create a new event entry as an admin (privileged) and as a regular user (unprivileged)
-    # Attempt to create an event entry as an admin (Expects 200)
-    privileged_entry = testapp.put_json('/event', dict({ 
-        'name': "Privileged test event",
-        'start_time': int(datetime.now().timestamp() + 172800),
-        'end_time': int(datetime.now().timestamp() + 86400),
-        'booking_time': int(datetime.now().timestamp()),
-        'priority_seating_time_delta': 1800,
-        'seating_time_delta': 3600,
-        'max_participants': 200
-    }), headers=dict({
-        "Authorization": "Bearer " + privileged_token
-    }), status=200)
-
-    # Attempt to create an event entry as a regular user (Expects 403)
-    unprivileged_entry = testapp.put_json('/event', dict({ 
-        'name': "Unrivileged test event",
-        'start_time': int(datetime.now().timestamp() + 172800),
-        'end_time': int(datetime.now().timestamp() + 86400),
-        'booking_time': int(datetime.now().timestamp()),
-        'priority_seating_time_delta': 1800,
-        'seating_time_delta': 3600,
-        'max_participants': 403
-    }), headers=dict({
-        "Authorization": "Bearer " + unprivileged_token
-    }), status=403)
-
-    # Attempt to get the event entry uuid (Expects True)
-    assert privileged_entry.json_body['uuid'] != None
-
-def test_edit_event(testapp, upcoming_event):
+def test_edit_event(testapp, upcoming_event, admin_user, jeff_user):
 
     # Test coverage:
     #    Title                  Active  Description
@@ -97,18 +99,15 @@ def test_edit_event(testapp, upcoming_event):
     #  * Security check:        [X]     Test permissions. Test that admins can edit and regular users cannot.
     #  * Dependency check:      [ ]     Test dependencies programmed in views/. (Not in use)
 
-    # Get current event
-    current_event = testapp.get('/event/current', status=200)
-    assert current_event.json_body['uuid'] is not None
-
     # Login with test accounts with admin privileges and no rights
-    privileged_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
-    unprivileged_token, refresh = testapp.auth_get_tokens('jeff@example.com', 'sixcharacters')
+    privileged_token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
+    unprivileged_token, refresh = testapp.auth_get_tokens(jeff_user.email, 'sixcharacters')
 
     # Get a seatmap
     seatmap = testapp.put_json('/seatmap', dict({
         'name': 'Test seatmap',
-        'description': 'seatmap'
+        'description': 'seatmap',
+        'event_brand_uuid': str(upcoming_event.event_brand_uuid)
     }), headers=dict({
         "Authorization": "Bearer " + privileged_token
     }), status=200).json_body
@@ -116,7 +115,7 @@ def test_edit_event(testapp, upcoming_event):
 
     ### Test to edit an event as an admin (privileged) and as a regular user (unprivileged)
     # Attempt to edit an event as an admin (Expects 200)
-    privileged_entry = testapp.patch_json('/event/%s/edit' % current_event.json_body['uuid'], dict({
+    privileged_entry = testapp.patch_json('/event/%s/edit' % upcoming_event.uuid, dict({
         'name': "Edit name as admin",
         'start_time': 1896130800,
         'end_time': 1896303600,
@@ -135,7 +134,7 @@ def test_edit_event(testapp, upcoming_event):
     }), status=200)
 
     # Attempt to create an event entry as a regular user (Expects 403)
-    unprivileged_entry = testapp.patch_json('/event/%s/edit' % current_event.json_body['uuid'], dict({
+    unprivileged_entry = testapp.patch_json('/event/%s/edit' % upcoming_event.uuid, dict({
         'name': "Edit event name as user",
         'start_time': 1896130403,
         'end_time': 1896303403,

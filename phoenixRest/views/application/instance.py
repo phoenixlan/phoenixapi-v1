@@ -10,7 +10,7 @@ from phoenixRest.models.crew.crew import Crew
 from phoenixRest.models.crew.application import Application, ApplicationState
 from phoenixRest.models.crew.position import create_or_fetch_crew_position
 from phoenixRest.models.crew.position_mapping import PositionMapping
-from phoenixRest.models.core.event import get_current_event
+from phoenixRest.models.core.event import get_current_events
 
 from phoenixRest.mappers.application import map_application_with_hidden_fields
 
@@ -26,25 +26,29 @@ import logging
 log = logging.getLogger(__name__)
 
 from PIL import Image
+from sqlalchemy.orm import joinedload
 
 class ApplicationInstanceResource(object):
     def __acl__(self):
         acl = [
             (Allow, "%s" % self.applicationInstance.user.uuid, 'application_get'),
-            (Allow, ADMIN, 'application_get'),
-            (Allow, CHIEF, 'application_get'),
+            (Allow, ADMIN(), 'application_get'),
+            (Allow, CHIEF(self.applicationInstance.event.event_brand_uuid), 'application_get'),
 
-            (Allow, ADMIN, 'application_edit'),
-            (Allow, CHIEF, 'application_edit'),
+            (Allow, ADMIN(), 'application_edit'),
+            (Allow, CHIEF(self.applicationInstance.event.event_brand_uuid), 'application_edit'),
 
-            (Allow, ADMIN, 'application_hide'),
-            (Allow, CHIEF, 'application_hide'),
+            (Allow, ADMIN(), 'application_hide'),
+            (Allow, CHIEF(self.applicationInstance.event.event_brand_uuid), 'application_hide'),
         ]
         return acl
 
     def __init__(self, request, uuid):
         self.request = request
-        self.applicationInstance = request.db.query(Application).filter(Application.uuid == uuid).first()
+        self.applicationInstance = request.db.query(Application) \
+            .options(joinedload(Application.event)) \
+            .filter(Application.uuid == uuid) \
+            .first()
 
         if self.applicationInstance is None:
             raise HTTPNotFound("Application not found")
@@ -84,6 +88,15 @@ def edit_application(context, request):
     context.applicationInstance.last_processed_by = request.user
 
     request.db.add(context.applicationInstance)
+
+    # If the application is not for a current event, it is considered expired and cannot be accepted
+    active_events = list(map(lambda u: str(u), get_current_events(request.db)))
+    if str(context.applicationInstance.event.uuid) not in active_events:
+        request.response.status = 400
+        return {
+            "error": "The application is for an event that is not current, so you cannot approve it"
+        }
+    
     
     accepted_crew = None
     if context.applicationInstance.state == ApplicationState.accepted:
@@ -111,7 +124,7 @@ def edit_application(context, request):
                 'error': "Unable to get position"
             }
 
-        mapping = PositionMapping(context.applicationInstance.user, position, get_current_event(request))
+        mapping = PositionMapping(context.applicationInstance.user, position, context.applicationInstance.event)
         position.position_mappings.append(mapping)
 
     # Send mail

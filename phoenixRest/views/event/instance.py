@@ -1,3 +1,4 @@
+from phoenixRest.roles import CREW_CARD_PRINTER
 from pyramid.view import view_config, view_defaults
 from pyramid.httpexceptions import (
     HTTPForbidden,
@@ -7,21 +8,34 @@ from pyramid.httpexceptions import (
 from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
 from phoenixRest.models.core.event import Event
+from phoenixRest.models.core.agenda_entry import AgendaEntry
 from phoenixRest.models.core.user import User
 from phoenixRest.models.crew.application import Application
+from phoenixRest.models.crew.card_order import CardOrder
 from phoenixRest.models.crew.application_crew_mapping import ApplicationCrewMapping
+from phoenixRest.models.crew.position import Position
+from phoenixRest.models.crew.position_mapping import PositionMapping
 from phoenixRest.models.tickets.ticket import Ticket
 from phoenixRest.models.tickets.row import Row
 from phoenixRest.models.tickets.seatmap import Seatmap
 from phoenixRest.models.tickets.ticket_type import TicketType
 
+from phoenixRest.views.event.agenda import EventAgendaResource
+from phoenixRest.views.event.application import EventApplicationResource
+from phoenixRest.views.event.card_order import EventCardOrderResource
+from phoenixRest.views.event.position_mapping import EventPositionMappingResource
+from phoenixRest.views.event.store_session import EventStoreSessionResource
+from phoenixRest.views.event.ticket import EventTicketResource
+
 from phoenixRest.mappers.user import map_user_simple_with_secret_fields
 
-from phoenixRest.roles import ADMIN, EVENT_ADMIN, CHIEF, HR_ADMIN, TICKET_ADMIN, TICKET_CHECKIN
+from phoenixRest.features.crew_card import generate_badge
 
-from phoenixRest.utils import validate
+from phoenixRest.roles import ADMIN, BRAND_ADMIN, CHIEF, HR_ADMIN, TICKET_ADMIN
 
-from sqlalchemy import and_
+from phoenixRest.utils import validate, validateUuidAndQuery
+
+from sqlalchemy import and_, or_
 from sqlalchemy.orm import joinedload
 
 from datetime import datetime
@@ -29,35 +43,48 @@ from datetime import datetime
 import logging
 log = logging.getLogger(__name__)
 
-class EventInstanceResource(object):
+class EventInstanceResource(dict):
     def __acl__(self):
         acl = [
             (Allow, Everyone, 'event_get'),
-            (Allow, ADMIN, 'event_get'),
-            (Allow, EVENT_ADMIN, 'event_get'),
+            (Allow, ADMIN(), 'event_get'),
+            (Allow, BRAND_ADMIN(self.eventInstance.event_brand_uuid), 'event_get'),
 
             (Allow, Everyone, 'event_ticket_type_get'),
-            (Allow, ADMIN, 'event_ticket_type_get'),
-            (Allow, EVENT_ADMIN, 'event_ticket_type_get'),
+            (Allow, ADMIN(), 'event_ticket_type_get'),
+            (Allow, BRAND_ADMIN(self.eventInstance.event_brand_uuid), 'event_ticket_type_get'),
 
             (Allow, Everyone, 'ticket_availability_get'),
 
-            (Allow, ADMIN, 'event_tickets_get'),
-            (Allow, TICKET_ADMIN, 'event_tickets_get'),
-            (Allow, TICKET_CHECKIN, 'event_tickets_get'),
+            (Allow, ADMIN(), 'event_memberships_get'),
+            (Allow, TICKET_ADMIN(self.eventInstance.event_brand_uuid), 'event_memberships_get'),
+            (Allow, HR_ADMIN(self.eventInstance.event_brand_uuid), 'event_memberships_get'),
 
-            (Allow, ADMIN, 'event_memberships_get'),
-            (Allow, TICKET_ADMIN, 'event_memberships_get'),
-            (Allow, HR_ADMIN, 'event_memberships_get'),
+            (Allow, ADMIN(), 'add_ticket_type'),
+            (Allow, TICKET_ADMIN(self.eventInstance.event_brand_uuid), 'add_ticket_type'),
 
-            (Allow, ADMIN, 'add_ticket_type'),
-            (Allow, TICKET_ADMIN, 'add_ticket_type'),
+            (Allow, CHIEF(self.eventInstance.event_brand_uuid), 'applications_get'),
+            (Allow, ADMIN(), 'applications_get'),
 
-            (Allow, CHIEF, 'applications_get'),
-            (Allow, ADMIN, 'applications_get'),
+            (Allow, CHIEF(self.eventInstance.event_brand_uuid), 'list_card_orders'),
+            (Allow, ADMIN(), 'list_card_orders'),
+            (Allow, CREW_CARD_PRINTER(self.eventInstance.event_brand_uuid), 'list_card_orders'),
 
-            (Allow, ADMIN, 'event_edit'),
-            (Allow, EVENT_ADMIN, 'event_edit'),
+            # Who can view the crew card of someone attending this event?
+            (Allow, ADMIN(), 'get_crew_card'),
+            (Allow, CHIEF(self.eventInstance.event_brand_uuid), 'get_crew_card'),
+            (Allow, CREW_CARD_PRINTER(self.eventInstance.event_brand_uuid), 'get_crew_card'),
+
+            (Allow, Everyone, 'list_agenda_entries'),
+
+            (Allow, ADMIN(), 'event_update'),
+
+            (Allow, CHIEF(self.eventInstance.event_brand_uuid), 'applications_get'),
+            (Allow, ADMIN(), 'applications_get'),
+
+            (Allow, ADMIN(), 'event_edit'),
+            (Allow, BRAND_ADMIN(self.eventInstance.event_brand_uuid), 'event_edit'),
+
         ]
         return acl
 
@@ -68,9 +95,133 @@ class EventInstanceResource(object):
         if self.eventInstance is None:
             raise HTTPNotFound("Event not found")
 
+        self["agenda"] = EventAgendaResource(request, self.eventInstance)
+        self["application"] = EventApplicationResource(request, self.eventInstance)
+        self["card_order"] = EventCardOrderResource(request, self.eventInstance)
+        self["position_mapping"] = EventPositionMappingResource(request, self.eventInstance)
+        self["store_session"] = EventStoreSessionResource(request, self.eventInstance)
+        self["ticket"] = EventTicketResource(request, self.eventInstance)
+
 @view_config(context=EventInstanceResource, name='', request_method='GET', renderer='json', permission='event_get')
 def get_event(context, request):
     return context.eventInstance
+
+@view_config(context=EventInstanceResource, name='', request_method='PATCH', renderer='json', permission='event_update')
+def update_event(context, request):
+    # Validate and update fields that are present in the request body
+    if not hasattr(request, 'json_body') or not request.json_body:
+        request.response.status = 400
+        return {
+            'error': 'Request body must be JSON'
+        }
+
+    event = context.eventInstance
+    body = request.json_body
+
+    # Collect timestamp values for cross-field validation
+    new_booking_time = None
+    new_start_time = None
+    new_end_time = None
+
+    # Non-relation fields with validation
+    if 'name' in body:
+        if not isinstance(body['name'], str) or not body['name'].strip():
+            request.response.status = 400
+            return {'error': 'name must be a non-empty string'}
+        event.name = body['name']
+
+    if 'booking_time' in body:
+        if not isinstance(body['booking_time'], int) or body['booking_time'] < 0:
+            request.response.status = 400
+            return {'error': 'booking_time must be a non-negative Unix timestamp (integer)'}
+        new_booking_time = datetime.fromtimestamp(body['booking_time'])
+        event.booking_time = new_booking_time
+
+    if 'priority_seating_time_delta' in body:
+        if not isinstance(body['priority_seating_time_delta'], int) or body['priority_seating_time_delta'] < 0:
+            request.response.status = 400
+            return {'error': 'priority_seating_time_delta must be a non-negative integer (seconds)'}
+        event.priority_seating_time_delta = body['priority_seating_time_delta']
+
+    if 'seating_time_delta' in body:
+        if not isinstance(body['seating_time_delta'], int) or body['seating_time_delta'] < 0:
+            request.response.status = 400
+            return {'error': 'seating_time_delta must be a non-negative integer (seconds)'}
+        event.seating_time_delta = body['seating_time_delta']
+
+    if 'start_time' in body:
+        if not isinstance(body['start_time'], int) or body['start_time'] < 0:
+            request.response.status = 400
+            return {'error': 'start_time must be a non-negative Unix timestamp (integer)'}
+        new_start_time = datetime.fromtimestamp(body['start_time'])
+        event.start_time = new_start_time
+
+    if 'end_time' in body:
+        if not isinstance(body['end_time'], int) or body['end_time'] < 0:
+            request.response.status = 400
+            return {'error': 'end_time must be a non-negative Unix timestamp (integer)'}
+        new_end_time = datetime.fromtimestamp(body['end_time'])
+        event.end_time = new_end_time
+
+    if 'theme' in body:
+        if body['theme'] is not None and not isinstance(body['theme'], str):
+            request.response.status = 400
+            return {'error': 'theme must be a string or null'}
+        event.theme = body['theme']
+
+    if 'max_participants' in body:
+        if not isinstance(body['max_participants'], int) or body['max_participants'] <= 0:
+            request.response.status = 400
+            return {'error': 'max_participants must be a positive integer'}
+        event.max_participants = body['max_participants']
+
+    if 'participant_age_limit_inclusive' in body:
+        if not isinstance(body['participant_age_limit_inclusive'], int) or body['participant_age_limit_inclusive'] < -1:
+            request.response.status = 400
+            return {'error': 'participant_age_limit_inclusive must be an integer >= -1 (-1 means not applicable)'}
+        event.participant_age_limit_inclusive = body['participant_age_limit_inclusive']
+
+    if 'crew_age_limit_inclusive' in body:
+        if not isinstance(body['crew_age_limit_inclusive'], int) or body['crew_age_limit_inclusive'] < -1:
+            request.response.status = 400
+            return {'error': 'crew_age_limit_inclusive must be an integer >= -1 (-1 means not applicable)'}
+        event.crew_age_limit_inclusive = body['crew_age_limit_inclusive']
+
+    if 'cancellation_reason' in body:
+        if body['cancellation_reason'] is not None and not isinstance(body['cancellation_reason'], str):
+            request.response.status = 400
+            return {'error': 'cancellation_reason must be a string or null'}
+        event.cancellation_reason = body['cancellation_reason']
+
+    # Seatmap relation - verify it exists
+    if 'seatmap_uuid' in body:
+        if body['seatmap_uuid'] is not None:
+            seatmap = request.db.query(Seatmap).filter(Seatmap.uuid == body['seatmap_uuid']).first()
+            if not seatmap:
+                request.response.status = 400
+                return {'error': 'Seatmap not found'}
+            if seatmap.event_brand_uuid != event.event_brand_uuid:
+                request.response.status = 400
+                return {'error': 'Seatmap belongs to a different event brand'}
+            event.seatmap = seatmap
+        else:
+            event.seatmap = None
+
+    # Cross-field validation for timestamps
+    booking_time = new_booking_time if new_booking_time else event.booking_time
+    start_time = new_start_time if new_start_time else event.start_time
+    end_time = new_end_time if new_end_time else event.end_time
+
+    if booking_time >= start_time:
+        request.response.status = 400
+        return {'error': 'booking_time must be before start_time'}
+
+    if start_time >= end_time:
+        request.response.status = 400
+        return {'error': 'start_time must be before end_time'}
+
+    request.db.flush()
+    return event
 
 # Objects relating to the specific event
 @view_config(context=EventInstanceResource, name='applications', request_method='GET', renderer='json', permission='applications_get')
@@ -129,6 +280,45 @@ def get_ticket_types(context, request):
     # Ticket types assigned to the event
     static_types = context.eventInstance.static_ticket_types
     return list(set(row_types+static_types))
+
+# Get all card orders for specified or current event
+@view_config(name="card_orders", context=EventInstanceResource, request_method="GET", renderer="json", permission="list_card_orders")
+def get_card_orders(context, request):
+    # We either get the specified event or the current event
+    return request.db.query(CardOrder).filter(CardOrder.event == context.eventInstance).all()
+
+# Generates the crew card a given user gets for this event
+@view_config(name='crew_card', context=EventInstanceResource, request_method='GET', renderer='pillow', permission='get_crew_card')
+@validate(get=['user_uuid'])
+def create_crew_card(context, request):
+    # The pillow renderer can only render images, so errors have to be raised
+    user = validateUuidAndQuery(request, User, User.uuid, request.GET['user_uuid'])
+    if user is None:
+        raise HTTPBadRequest("User not found")
+
+    # A crew card only makes sense for someone holding a position at the event.
+    # Lifetime positions count, the same way generate_badge treats them, but only
+    # when they are global or belong to the brand putting on the event
+    mapping = request.db.query(PositionMapping) \
+        .join(Position) \
+        .filter(and_(
+            PositionMapping.user == user,
+            or_(
+                PositionMapping.event == context.eventInstance,
+                and_(
+                    PositionMapping.event == None,
+                    or_(
+                        Position.event_brand_uuid == None,
+                        Position.event_brand_uuid == context.eventInstance.event_brand_uuid
+                    )
+                )
+            )
+        )) \
+        .first()
+    if mapping is None:
+        raise HTTPBadRequest("User does not belong to this event")
+
+    return generate_badge(request, user, context.eventInstance)
 
 @view_config(name='edit', context=EventInstanceResource, request_method='PATCH', renderer='json', permission='event_edit')
 def edit_event(context, request):
@@ -273,5 +463,3 @@ def edit_event(context, request):
         'info': 'Event information updated successfully',
         'data': context.eventInstance
     }
-    
-

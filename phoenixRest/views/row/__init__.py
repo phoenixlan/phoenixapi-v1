@@ -10,7 +10,7 @@ from phoenixRest.models.tickets.row import Row
 
 from phoenixRest.resource import resource
 
-from phoenixRest.roles import ADMIN, TICKET_ADMIN
+from phoenixRest.roles import ADMIN
 
 from phoenixRest.views.row.instance import RowInstanceResource
 
@@ -20,8 +20,7 @@ log = logging.getLogger(__name__)
 @resource(name='row')
 class RowResource(object):
     __acl__ = [
-        (Allow, ADMIN, 'getAll'),
-        (Allow, TICKET_ADMIN, 'getAll'),
+        (Allow, ADMIN(), 'getAll'),
 
         # Authenticated pages
         #(Allow, Authenticated, Authenticated),
@@ -40,8 +39,6 @@ class RowResource(object):
 @view_config(name='', context=RowResource, request_method='GET', renderer='json', permission='getAll')
 def get_all_rows(context, request):
     return request.db.query(Row).order_by(Row.name).all()
-
-
 
 
 

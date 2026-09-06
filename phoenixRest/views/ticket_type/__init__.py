@@ -9,7 +9,7 @@ from phoenixRest.models.tickets.ticket_type import TicketType
 from phoenixRest.utils import validate
 from phoenixRest.resource import resource
 
-from phoenixRest.roles import ADMIN, TICKET_ADMIN
+from phoenixRest.roles import ADMIN
 
 from phoenixRest.views.seatmap.instance import SeatmapInstanceViews
 
@@ -23,10 +23,8 @@ class TicketTypeResource(object):
     __acl__ = [
         # Don't allow anyone to fetch ticket types from here
         # Anyone could use the event-specific endpoint instead.
-        (Allow, ADMIN, 'getAll'),
-        (Allow, TICKET_ADMIN, 'getAll'),
-        (Allow, ADMIN, 'create'),
-        (Allow, TICKET_ADMIN, 'create'),
+        (Allow, ADMIN(), 'getAll'),
+        (Allow, ADMIN(), 'create'),
 
         # Authenticated pages
         #(Allow, Authenticated, Authenticated),
@@ -38,15 +36,3 @@ class TicketTypeResource(object):
 @view_config(name='', context=TicketTypeResource, request_method='GET', renderer='json', permission='getAll')
 def get_all_ticket_types(context, request):
     return request.db.query(TicketType).order_by(TicketType.name).all()
-
-@view_config(name='', context=TicketTypeResource, request_method='POST', renderer='json', permission='create')
-@validate(json_body={'name': str, 'price': int, 'refundable': bool, 'seatable': bool, 'description': str, 'grants_admission': bool})
-def create_ticket_type(context, request):
-    # TODO: broken
-    entrance = TicketType(request.json_body['name'])
-    request.db.add(entrance)
-    request.db.flush()
-    return entrance
-
-
-

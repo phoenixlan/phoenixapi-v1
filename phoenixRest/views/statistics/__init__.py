@@ -15,7 +15,7 @@ from phoenixRest.models.tickets.ticket_type import TicketType
 from phoenixRest.utils import validate
 from phoenixRest.resource import resource
 
-from phoenixRest.roles import ADMIN, CHIEF
+from phoenixRest.roles import ADMIN
 
 from phoenixRest.views.seatmap.instance import SeatmapInstanceViews
 
@@ -27,14 +27,11 @@ from datetime import date
 @resource(name='statistics')
 class StatisticsViews(object):
     __acl__ = [
-        (Allow, ADMIN, 'get_ticket_sales_stats'),
-        (Allow, CHIEF, 'get_ticket_sales_stats'),
+        (Allow, ADMIN(), 'get_ticket_sales_stats'),
 
-        (Allow, ADMIN, 'get_participant_history_stats'),
-        (Allow, CHIEF, 'get_participant_history_stats'),
+        (Allow, ADMIN(), 'get_participant_history_stats'),
 
-        (Allow, ADMIN, 'get_age_distribution_stats'),
-        (Allow, CHIEF, 'get_age_distribution_stats'),
+        (Allow, ADMIN(), 'get_age_distribution_stats'),
     ]
     def __init__(self, request):
         self.request = request
@@ -215,7 +212,5 @@ def get_ticket_sales_stats(context, request):
     results = [ generate_stats(event) for event in events]
 
     return results
-
-
 
 
