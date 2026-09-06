@@ -144,7 +144,10 @@ def _create_scoped_permission_user(db, event, permission, username, email):
 
 @pytest.fixture
 def admin_user(db, testcrew):
-    user = _create_user(db, 'test', 'test@example.com', 'Test', 'Testesen', '98643254')
+    user = _create_user(
+        db, 'fixture_admin', 'fixture-admin@example.com',
+        'Fixture', 'Admin', '98643254'
+    )
     admin_position = db.query(Position).filter(Position.name == 'Superadmin').one()
     db.add(PositionMapping(user, admin_position))
     _add_crew_position(db, user, testcrew)

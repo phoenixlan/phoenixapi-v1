@@ -9,6 +9,8 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
+from datetime import datetime, date
+
 import uuid
 
 # revision identifiers, used by Alembic.
@@ -96,7 +98,7 @@ def upgrade():
         ]
     )
 
-    op.create_table('user',
+    user_table = op.create_table('user',
     sa.Column('uuid', postgresql.UUID(as_uuid=True), nullable=False),
     sa.Column('email', sa.Text(), nullable=False),
     sa.Column('username', sa.Text(), nullable=False),
@@ -117,6 +119,30 @@ def upgrade():
     sa.UniqueConstraint('email', name=op.f('uq_user_email')),
     sa.UniqueConstraint('username', name=op.f('uq_user_username')),
     sa.UniqueConstraint('uuid', name=op.f('uq_user_uuid'))
+    )
+
+    test_account_uuid = uuid.uuid4()
+
+    op.bulk_insert(user_table,
+        [
+            {
+                'uuid': test_account_uuid,
+                'email': 'test@example.com',
+                'username': 'test',
+                'password': 'Not-used',
+                'password_type': 2,
+                'created': datetime.now(),
+                'address': '1. Mann. Co rd',
+                'birthdate': date(1998, 3, 27),
+                'country_code': 'no',
+                'firstname': 'Test',
+                'lastname': 'Testesen',
+                'gender': 'male',
+                'phone': '98643254', # Vipps test number
+                'postal_code': '1395',
+                'tos_level': 0
+            },
+        ]
     )
 
     op.create_table('activation_code',
@@ -288,6 +314,15 @@ def upgrade():
     sa.Column('position_uuid', postgresql.UUID(as_uuid=True), nullable=True),
     sa.ForeignKeyConstraint(['position_uuid'], ['position.uuid'], name=op.f('fk_user_positions_position_uuid_position')),
     sa.ForeignKeyConstraint(['user_uuid'], ['user.uuid'], name=op.f('fk_user_positions_user_uuid_user'))
+    )
+
+    op.bulk_insert(position_binding_table,
+        [
+            {
+                'user_uuid': test_account_uuid,
+                'position_uuid': admin_position_uuid,
+            },
+        ]
     )
 
     op.create_table('vipps_payment',
