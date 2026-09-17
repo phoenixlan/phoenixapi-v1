@@ -46,9 +46,11 @@ class Crew(Base):
 
     positions = relationship("Position", back_populates="crew")
 
-    def __init__(self, name: str, description: str):
+    def __init__(self, name: str, description: str, hex_color: str, brand):
         self.name = name
         self.description = description
+        self.hex_color = hex_color
+        self.event_brand = brand
 
     def __json__(self, request):
         return {

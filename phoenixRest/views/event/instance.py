@@ -245,7 +245,9 @@ def get_tickets(context, request):
 
 @view_config(context=EventInstanceResource, name='new_memberships', request_method='GET', renderer='json', permission='event_memberships_get')
 def get_new_memberships(context, request):
-    users = request.db.query(User).join(Ticket, Ticket.owner_uuid == User.uuid).join(TicketType, Ticket.ticket_type_uuid==TicketType.uuid).filter(and_(Ticket.event_uuid == context.eventInstance.uuid, TicketType.grants_membership == True)).all()
+    users = request.db.query(User).join(Ticket, Ticket.owner_uuid == User.uuid) \
+        .join(TicketType, Ticket.ticket_type_uuid==TicketType.uuid) \
+        .filter(and_(Ticket.event_uuid == context.eventInstance.uuid, TicketType.grants_membership == True)).all()
     return [ map_user_simple_with_secret_fields(user, request) for user in users ]
 
 @view_config(context=EventInstanceResource, name='ticket_availability', request_method='GET', renderer='json', permission='ticket_availability_get')

@@ -24,7 +24,6 @@ log = logging.getLogger(__name__)
 class CrewViews(object):
     __acl__ = [
         (Allow, Everyone, 'getAll'),
-        (Allow, ADMIN(), 'create'),
 
         # Authenticated pages
         #(Allow, Authenticated, Authenticated),
@@ -52,10 +51,3 @@ def get_all_crew(context, request):
     
     return [ map_crew_simple(crew, request) for crew in query.order_by(Crew.name).all() ]
 
-@view_config(context=CrewViews, request_method='PUT', renderer='json', permission='create')
-@validate(json_body={'name': str, 'description': str})
-def create_crew(request):
-    crew = Crew(name=request.json_body['name'], 
-                  description=request.json_body['description'])
-    request.db.add(crew)
-    return crew

@@ -69,8 +69,10 @@ def other_event_brand(db):
 
 @pytest.fixture
 def other_crew(db, other_event_brand):
-    crew = Crew('Other crew', 'Crew belonging to another event brand')
-    crew.event_brand = other_event_brand
+    crew = Crew(
+        'Other crew', 'Crew belonging to another event brand', '#DEBABE',
+        other_event_brand
+    )
     db.add(crew)
     db.flush()
     return crew
@@ -103,8 +105,9 @@ def other_ticket_type(db, other_event_brand):
 
 @pytest.fixture
 def testcrew(db, event_brand):
-    crew = Crew('Test crew', 'Crew created for tests')
-    crew.event_brand = event_brand
+    crew = Crew(
+        'Test crew', 'Crew created for tests', '#DEBABE', event_brand
+    )
     db.add(crew)
     db.flush()
     return crew

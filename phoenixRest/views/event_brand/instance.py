@@ -8,32 +8,55 @@ from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
 from phoenixRest.models.core.event_brand import EventBrand
 from phoenixRest.models.core.event import Event, get_current_event
+from phoenixRest.models.crew.position import Position
+from phoenixRest.models.crew.crew import Crew
 from phoenixRest.models.tickets.seatmap import Seatmap
 from phoenixRest.models.tickets.ticket_type import TicketType
+from phoenixRest.mappers.crew import map_crew_simple
 
-from phoenixRest.roles import ADMIN, BRAND_ADMIN, TICKET_ADMIN
+from phoenixRest.roles import ADMIN, BRAND_ADMIN, TICKET_ADMIN, HR_ADMIN
 from phoenixRest.utils import validate
+
+from phoenixRest.views.event_brand.statistics import EventBrandStatisticsResource
 
 from datetime import datetime
 
-class EventBrandInstanceResource(object):
+import logging
+log = logging.getLogger(__name__)
+
+class EventBrandInstanceResource(dict):
     def __acl__(self):
         acl = [
             (Allow, Everyone, 'get'),
             (Allow, Everyone, 'get_current_event'),
             (Allow, ADMIN(), 'create_event'),
             (Allow, BRAND_ADMIN(self.eventBrandInstance.uuid), 'create_event'),
+            (Allow, ADMIN(), 'get_all_positions'),
+            (Allow, BRAND_ADMIN(self.eventBrandInstance.uuid), 'get_all_positions'),
+            (Allow, HR_ADMIN(self.eventBrandInstance.uuid), 'get_all_positions'),
+
+            (Allow, ADMIN(), 'get_all_crew'),
+            (Allow, BRAND_ADMIN(self.eventBrandInstance.uuid), 'get_all_crew'),
+            (Allow, HR_ADMIN(self.eventBrandInstance.uuid), 'get_all_crew'),
+
             (Allow, ADMIN(), 'create_ticket_type'),
             (Allow, BRAND_ADMIN(self.eventBrandInstance.uuid), 'create_ticket_type'),
             (Allow, TICKET_ADMIN(self.eventBrandInstance.uuid), 'create_ticket_type'),
             (Allow, ADMIN(), 'get_all_seatmaps'),
             (Allow, TICKET_ADMIN(self.eventBrandInstance.uuid), 'get_all_seatmaps'),
+
+
+            (Allow, ADMIN(), 'create_crew'),
+            (Allow, BRAND_ADMIN(self.eventBrandInstance.uuid), 'create_crew'),
+            (Allow, HR_ADMIN(self.eventBrandInstance.uuid), 'create_crew'),
         ]
         return acl
 
     def __init__(self, request, uuid):
         self.request = request
         self.eventBrandInstance = request.db.query(EventBrand).filter(EventBrand.uuid == uuid).first()
+
+        self["statistics"] = EventBrandStatisticsResource(self.request, self.eventBrandInstance)
 
         if self.eventBrandInstance is None:
             raise HTTPNotFound("Event brand not found")
@@ -176,3 +199,40 @@ def get_all_seatmaps(context, request):
         .filter(Seatmap.event_brand_uuid == context.eventBrandInstance.uuid) \
         .order_by(Seatmap.name) \
         .all()
+
+
+@view_config(context=EventBrandInstanceResource, name='positions', request_method='GET', renderer='json', permission='get_all_positions')
+def get_all_positions(context, request):
+    """Returns all positions involved with the current brand"""
+    return request.db.query(Position) \
+        .filter(Position.event_brand_uuid == context.eventBrandInstance.uuid) \
+        .order_by(Position.name) \
+        .all()
+
+
+@view_config(context=EventBrandInstanceResource, name='crews', request_method='GET', renderer='json', permission='get_all_crew')
+def get_all_crew(context, request):
+    # Returns all crews for the event brand
+    query = request.db.query(Crew).filter(
+        Crew.event_brand_uuid == context.eventBrandInstance.uuid
+    )
+
+    log.debug("Principals: %s" % request.effective_principals)
+    if ADMIN() not in request.effective_principals:
+        log.info("Reducing crew list as the requester is not admin")
+        query = query.filter(Crew.active == True)
+
+    return [
+        map_crew_simple(crew, request)
+        for crew in query.order_by(Crew.name).all()
+    ]
+
+@view_config(context=EventBrandInstanceResource, name='crew', request_method='POST', renderer='json', permission='create_crew')
+@validate(json_body={'name': str, 'description': str, 'hex_color': str})
+def create_crew(context, request):
+    crew = Crew(name=request.json_body['name'], 
+                  description=request.json_body['description'],
+                    hex_color=request.json_body['hex_color'],
+                brand=context.eventBrandInstance)
+    request.db.add(crew)
+    return crew

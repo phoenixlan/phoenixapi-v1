@@ -1,15 +1,55 @@
 from datetime import datetime, timedelta, date
 import time
 
-def test_list_users(testapp, admin_user):
-    token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
+def test_search_users_returns_matching_user(
+        testapp, admin_user, jeff_user):
+    token, refresh = testapp.auth_get_tokens(
+        admin_user.email, 'sixcharacters'
+    )
 
-    # Get some info about the current user
-    users = testapp.get('/user', headers=dict({
-        "Authorization": "Bearer " + token
-        }), status=200).json_body
+    users = testapp.get(
+        '/user/search',
+        params={'query': jeff_user.email},
+        headers={'Authorization': "Bearer " + token},
+        status=200
+    ).json_body
 
-    assert len(users) > 0
+    assert [user['uuid'] for user in users] == [str(jeff_user.uuid)]
+    assert users[0]['email'] == jeff_user.email
+
+
+def test_search_users_validates_query(testapp, admin_user):
+    token, refresh = testapp.auth_get_tokens(
+        admin_user.email, 'sixcharacters'
+    )
+    headers = {'Authorization': "Bearer " + token}
+
+    response = testapp.get(
+        '/user/search', headers=headers, status=400
+    )
+    assert response.json_body['error'] == 'Missing query'
+
+    response = testapp.get(
+        '/user/search',
+        params={'query': admin_user.username[:3]},
+        headers=headers,
+        status=400
+    )
+    assert response.json_body['error'] == 'Query must be at least 4 characters'
+
+
+def test_search_users_rejects_permissionless_user(
+        testapp, admin_user, jeff_user):
+    token, refresh = testapp.auth_get_tokens(
+        jeff_user.email, 'sixcharacters'
+    )
+
+    testapp.get(
+        '/user/search',
+        params={'query': admin_user.email},
+        headers={'Authorization': "Bearer " + token},
+        status=403
+    )
 
 def test_get_user(testapp, admin_user, jeff_user):
     token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')

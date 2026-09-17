@@ -24,12 +24,12 @@ class PositionInstanceResource(object):
 
         return [
             (Allow, ADMIN(), 'get_position'),
-            (Allow, HR_ADMIN(self.positionInstance.event_brand_uuid), 'get_position'),
+            (Allow, HR_ADMIN(self.positionInstance.event_brand_uuid), 'get_position') if self.positionInstance.event_brand_uuid else None,
             (Allow, ADMIN(), 'create_position'),
-            (Allow, HR_ADMIN(self.positionInstance.event_brand_uuid), 'create_position'),
+            (Allow, HR_ADMIN(self.positionInstance.event_brand_uuid), 'create_position') if self.positionInstance.event_brand_uuid else None,
 
             (Allow, ADMIN(), 'add_to_position'),
-            (Allow, HR_ADMIN(self.positionInstance.event_brand_uuid), 'add_to_position')
+            (Allow, HR_ADMIN(self.positionInstance.event_brand_uuid), 'add_to_position') if self.positionInstance.event_brand_uuid else None
         # Everyone may look at their own
         ] + [(Allow, 'user:%s' % user.uuid, 'get_position') for user in position_users]
 

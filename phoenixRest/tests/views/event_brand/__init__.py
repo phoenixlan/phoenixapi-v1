@@ -55,6 +55,64 @@ def test_create_ticket_type_for_brand(testapp, event_brand, admin_token):
     assert ticket_type['event_brand_uuid'] == str(event_brand.uuid)
 
 
+def test_positions_are_listed_only_for_their_event_brand(
+        testapp, event_brand, other_event_brand, brand_position,
+        other_position, admin_token):
+    headers = {'Authorization': "Bearer " + admin_token}
+
+    brand_positions = testapp.get(
+        '/event_brand/%s/positions' % event_brand.uuid,
+        headers=headers,
+        status=200
+    ).json_body
+    other_brand_positions = testapp.get(
+        '/event_brand/%s/positions' % other_event_brand.uuid,
+        headers=headers,
+        status=200
+    ).json_body
+
+    brand_position_uuids = {
+        position['uuid'] for position in brand_positions
+    }
+    other_brand_position_uuids = {
+        position['uuid'] for position in other_brand_positions
+    }
+
+    assert str(brand_position.uuid) in brand_position_uuids
+    assert str(other_position.uuid) not in brand_position_uuids
+    assert {
+        position['event_brand_uuid'] for position in brand_positions
+    } == {str(event_brand.uuid)}
+
+    assert str(other_position.uuid) in other_brand_position_uuids
+    assert str(brand_position.uuid) not in other_brand_position_uuids
+    assert {
+        position['event_brand_uuid'] for position in other_brand_positions
+    } == {str(other_event_brand.uuid)}
+
+
+def test_crews_are_listed_only_for_their_event_brand(
+        testapp, event_brand, other_event_brand, testcrew, other_crew,
+        admin_token):
+    headers = {'Authorization': "Bearer " + admin_token}
+
+    brand_crews = testapp.get(
+        '/event_brand/%s/crews' % event_brand.uuid,
+        headers=headers,
+        status=200
+    ).json_body
+    other_brand_crews = testapp.get(
+        '/event_brand/%s/crews' % other_event_brand.uuid,
+        headers=headers,
+        status=200
+    ).json_body
+
+    assert {crew['uuid'] for crew in brand_crews} == {str(testcrew.uuid)}
+    assert {crew['uuid'] for crew in other_brand_crews} == {
+        str(other_crew.uuid)
+    }
+
+
 def test_get_current_event_for_brand(testapp, event_brand, upcoming_event):
     """Test getting the current event for a specific brand"""
     res = testapp.get('/event_brand/%s/current_event' % str(event_brand.uuid), status=200)

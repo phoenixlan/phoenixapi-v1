@@ -25,9 +25,9 @@ class CrewInstanceViews(object):
     def __acl__(self):
         return [
         (Allow, Authenticated, 'team_view'),
-        (Allow, MEMBER(self.crewInstance.event_brand), 'crew_view'),
+        (Allow, MEMBER(self.crewInstance.event_brand_uuid), 'crew_view'),
         (Allow, ADMIN(), 'crew_view'),
-        (Allow, HR_ADMIN(self.crewInstance.event_brand), 'crew_view'),
+        (Allow, HR_ADMIN(self.crewInstance.event_brand_uuid), 'crew_view'),
         (Allow, ADMIN(), 'team_edit'),
         (Allow, 'chief:%s' % self.crewInstance.uuid, 'team_edit'),
 

@@ -1,3 +1,4 @@
+
 from pyramid.view import view_config, view_defaults
 from pyramid.httpexceptions import (
     HTTPForbidden,
@@ -25,7 +26,7 @@ log = logging.getLogger(__name__)
 from datetime import date
 
 @resource(name='statistics')
-class StatisticsViews(object):
+class EventBrandStatisticsResource(object):
     __acl__ = [
         (Allow, ADMIN(), 'get_ticket_sales_stats'),
 
@@ -33,12 +34,13 @@ class StatisticsViews(object):
 
         (Allow, ADMIN(), 'get_age_distribution_stats'),
     ]
-    def __init__(self, request):
+    def __init__(self, request, eventBrandInstance):
         self.request = request
+        self.eventBrandInstance = eventBrandInstance
 
-@view_config(name='age_distribution', context=StatisticsViews, request_method='GET', renderer='json', permission='get_age_distribution_stats')
+@view_config(name='age_distribution', context=EventBrandStatisticsResource, request_method='GET', renderer='json', permission='get_age_distribution_stats')
 def get_age_distribution(context, request):
-    events = request.db.query(Event).all()
+    events = request.db.query(Event).filter(Event.event_brand_uuid == context.eventBrandInstance.uuid).all()
 
     def generate_stats(event):
         age_distribution = []
@@ -89,9 +91,9 @@ def get_age_distribution(context, request):
 
     return [ generate_stats(event) for event in events]
 
-@view_config(name='participant_history', context=StatisticsViews, request_method='GET', renderer='json', permission='get_participant_history_stats')
+@view_config(name='participant_history', context=EventBrandStatisticsResource, request_method='GET', renderer='json', permission='get_participant_history_stats')
 def get_participant_history(context, request):
-    events = request.db.query(Event).all()
+    events = request.db.query(Event).filter(Event.event_brand_uuid == context.eventBrandInstance.uuid).all()
 
     def generate_stats(event):
         crew_counts = []
@@ -155,9 +157,9 @@ def get_participant_history(context, request):
 
     return [ generate_stats(event) for event in events]
 
-@view_config(name='ticket_sales', context=StatisticsViews, request_method='GET', renderer='json', permission='get_ticket_sales_stats')
+@view_config(name='ticket_sales', context=EventBrandStatisticsResource, request_method='GET', renderer='json', permission='get_ticket_sales_stats')
 def get_ticket_sales_stats(context, request):
-    events = request.db.query(Event).all()
+    events = request.db.query(Event).filter(Event.event_brand_uuid == context.eventBrandInstance.uuid).all()
 
     include_free = False
     if "include_free" in request.GET:
