@@ -20,7 +20,7 @@ log = logging.getLogger(__name__)
 @resource(name='event')
 class EventViews(object):
     __acl__ = [
-        (Allow, Everyone, 'list'),
+        (Allow, ADMIN(), 'list'),
 
         # Authenticated pages
         #(Allow, Authenticated, Authenticated),
@@ -33,6 +33,7 @@ class EventViews(object):
         """Traverse to a specific crew item"""
         if key in ['current']:
             raise KeyError('')
+
         node = EventInstanceResource(self.request, key)
         node.__parent__ = self
         node.__name__ = key

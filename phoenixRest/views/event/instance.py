@@ -77,11 +77,6 @@ class EventInstanceResource(dict):
 
             (Allow, Everyone, 'list_agenda_entries'),
 
-            (Allow, ADMIN(), 'event_update'),
-
-            (Allow, CHIEF(self.eventInstance.event_brand_uuid), 'applications_get'),
-            (Allow, ADMIN(), 'applications_get'),
-
             (Allow, ADMIN(), 'event_edit'),
             (Allow, BRAND_ADMIN(self.eventInstance.event_brand_uuid), 'event_edit'),
 
@@ -105,123 +100,6 @@ class EventInstanceResource(dict):
 @view_config(context=EventInstanceResource, name='', request_method='GET', renderer='json', permission='event_get')
 def get_event(context, request):
     return context.eventInstance
-
-@view_config(context=EventInstanceResource, name='', request_method='PATCH', renderer='json', permission='event_update')
-def update_event(context, request):
-    # Validate and update fields that are present in the request body
-    if not hasattr(request, 'json_body') or not request.json_body:
-        request.response.status = 400
-        return {
-            'error': 'Request body must be JSON'
-        }
-
-    event = context.eventInstance
-    body = request.json_body
-
-    # Collect timestamp values for cross-field validation
-    new_booking_time = None
-    new_start_time = None
-    new_end_time = None
-
-    # Non-relation fields with validation
-    if 'name' in body:
-        if not isinstance(body['name'], str) or not body['name'].strip():
-            request.response.status = 400
-            return {'error': 'name must be a non-empty string'}
-        event.name = body['name']
-
-    if 'booking_time' in body:
-        if not isinstance(body['booking_time'], int) or body['booking_time'] < 0:
-            request.response.status = 400
-            return {'error': 'booking_time must be a non-negative Unix timestamp (integer)'}
-        new_booking_time = datetime.fromtimestamp(body['booking_time'])
-        event.booking_time = new_booking_time
-
-    if 'priority_seating_time_delta' in body:
-        if not isinstance(body['priority_seating_time_delta'], int) or body['priority_seating_time_delta'] < 0:
-            request.response.status = 400
-            return {'error': 'priority_seating_time_delta must be a non-negative integer (seconds)'}
-        event.priority_seating_time_delta = body['priority_seating_time_delta']
-
-    if 'seating_time_delta' in body:
-        if not isinstance(body['seating_time_delta'], int) or body['seating_time_delta'] < 0:
-            request.response.status = 400
-            return {'error': 'seating_time_delta must be a non-negative integer (seconds)'}
-        event.seating_time_delta = body['seating_time_delta']
-
-    if 'start_time' in body:
-        if not isinstance(body['start_time'], int) or body['start_time'] < 0:
-            request.response.status = 400
-            return {'error': 'start_time must be a non-negative Unix timestamp (integer)'}
-        new_start_time = datetime.fromtimestamp(body['start_time'])
-        event.start_time = new_start_time
-
-    if 'end_time' in body:
-        if not isinstance(body['end_time'], int) or body['end_time'] < 0:
-            request.response.status = 400
-            return {'error': 'end_time must be a non-negative Unix timestamp (integer)'}
-        new_end_time = datetime.fromtimestamp(body['end_time'])
-        event.end_time = new_end_time
-
-    if 'theme' in body:
-        if body['theme'] is not None and not isinstance(body['theme'], str):
-            request.response.status = 400
-            return {'error': 'theme must be a string or null'}
-        event.theme = body['theme']
-
-    if 'max_participants' in body:
-        if not isinstance(body['max_participants'], int) or body['max_participants'] <= 0:
-            request.response.status = 400
-            return {'error': 'max_participants must be a positive integer'}
-        event.max_participants = body['max_participants']
-
-    if 'participant_age_limit_inclusive' in body:
-        if not isinstance(body['participant_age_limit_inclusive'], int) or body['participant_age_limit_inclusive'] < -1:
-            request.response.status = 400
-            return {'error': 'participant_age_limit_inclusive must be an integer >= -1 (-1 means not applicable)'}
-        event.participant_age_limit_inclusive = body['participant_age_limit_inclusive']
-
-    if 'crew_age_limit_inclusive' in body:
-        if not isinstance(body['crew_age_limit_inclusive'], int) or body['crew_age_limit_inclusive'] < -1:
-            request.response.status = 400
-            return {'error': 'crew_age_limit_inclusive must be an integer >= -1 (-1 means not applicable)'}
-        event.crew_age_limit_inclusive = body['crew_age_limit_inclusive']
-
-    if 'cancellation_reason' in body:
-        if body['cancellation_reason'] is not None and not isinstance(body['cancellation_reason'], str):
-            request.response.status = 400
-            return {'error': 'cancellation_reason must be a string or null'}
-        event.cancellation_reason = body['cancellation_reason']
-
-    # Seatmap relation - verify it exists
-    if 'seatmap_uuid' in body:
-        if body['seatmap_uuid'] is not None:
-            seatmap = request.db.query(Seatmap).filter(Seatmap.uuid == body['seatmap_uuid']).first()
-            if not seatmap:
-                request.response.status = 400
-                return {'error': 'Seatmap not found'}
-            if seatmap.event_brand_uuid != event.event_brand_uuid:
-                request.response.status = 400
-                return {'error': 'Seatmap belongs to a different event brand'}
-            event.seatmap = seatmap
-        else:
-            event.seatmap = None
-
-    # Cross-field validation for timestamps
-    booking_time = new_booking_time if new_booking_time else event.booking_time
-    start_time = new_start_time if new_start_time else event.start_time
-    end_time = new_end_time if new_end_time else event.end_time
-
-    if booking_time >= start_time:
-        request.response.status = 400
-        return {'error': 'booking_time must be before start_time'}
-
-    if start_time >= end_time:
-        request.response.status = 400
-        return {'error': 'start_time must be before end_time'}
-
-    request.db.flush()
-    return event
 
 # Objects relating to the specific event
 @view_config(context=EventInstanceResource, name='applications', request_method='GET', renderer='json', permission='applications_get')
