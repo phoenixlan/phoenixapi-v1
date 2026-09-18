@@ -1,3 +1,4 @@
+from phoenixRest.roles import CREW_CARD_PRINTER
 from pyramid.view import view_config, view_defaults
 from pyramid.httpexceptions import (
     HTTPForbidden,
@@ -7,21 +8,34 @@ from pyramid.httpexceptions import (
 from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
 from phoenixRest.models.core.event import Event
+from phoenixRest.models.core.agenda_entry import AgendaEntry
 from phoenixRest.models.core.user import User
 from phoenixRest.models.crew.application import Application
+from phoenixRest.models.crew.card_order import CardOrder
 from phoenixRest.models.crew.application_crew_mapping import ApplicationCrewMapping
+from phoenixRest.models.crew.position import Position
+from phoenixRest.models.crew.position_mapping import PositionMapping
 from phoenixRest.models.tickets.ticket import Ticket
 from phoenixRest.models.tickets.row import Row
 from phoenixRest.models.tickets.seatmap import Seatmap
 from phoenixRest.models.tickets.ticket_type import TicketType
 
+from phoenixRest.views.event.agenda import EventAgendaResource
+from phoenixRest.views.event.application import EventApplicationResource
+from phoenixRest.views.event.card_order import EventCardOrderResource
+from phoenixRest.views.event.position_mapping import EventPositionMappingResource
+from phoenixRest.views.event.store_session import EventStoreSessionResource
+from phoenixRest.views.event.ticket import EventTicketResource
+
 from phoenixRest.mappers.user import map_user_simple_with_secret_fields
 
-from phoenixRest.roles import ADMIN, EVENT_ADMIN, CHIEF, HR_ADMIN, TICKET_ADMIN, TICKET_CHECKIN
+from phoenixRest.features.crew_card import generate_badge
 
-from phoenixRest.utils import validate
+from phoenixRest.roles import ADMIN, BRAND_ADMIN, CHIEF, HR_ADMIN, TICKET_ADMIN
 
-from sqlalchemy import and_
+from phoenixRest.utils import validate, validateUuidAndQuery
+
+from sqlalchemy import and_, or_
 from sqlalchemy.orm import joinedload
 
 from datetime import datetime
@@ -29,35 +43,43 @@ from datetime import datetime
 import logging
 log = logging.getLogger(__name__)
 
-class EventInstanceResource(object):
+class EventInstanceResource(dict):
     def __acl__(self):
         acl = [
             (Allow, Everyone, 'event_get'),
-            (Allow, ADMIN, 'event_get'),
-            (Allow, EVENT_ADMIN, 'event_get'),
+            (Allow, ADMIN(), 'event_get'),
+            (Allow, BRAND_ADMIN(self.eventInstance.event_brand_uuid), 'event_get'),
 
             (Allow, Everyone, 'event_ticket_type_get'),
-            (Allow, ADMIN, 'event_ticket_type_get'),
-            (Allow, EVENT_ADMIN, 'event_ticket_type_get'),
+            (Allow, ADMIN(), 'event_ticket_type_get'),
+            (Allow, BRAND_ADMIN(self.eventInstance.event_brand_uuid), 'event_ticket_type_get'),
 
             (Allow, Everyone, 'ticket_availability_get'),
 
-            (Allow, ADMIN, 'event_tickets_get'),
-            (Allow, TICKET_ADMIN, 'event_tickets_get'),
-            (Allow, TICKET_CHECKIN, 'event_tickets_get'),
+            (Allow, ADMIN(), 'event_memberships_get'),
+            (Allow, TICKET_ADMIN(self.eventInstance.event_brand_uuid), 'event_memberships_get'),
+            (Allow, HR_ADMIN(self.eventInstance.event_brand_uuid), 'event_memberships_get'),
 
-            (Allow, ADMIN, 'event_memberships_get'),
-            (Allow, TICKET_ADMIN, 'event_memberships_get'),
-            (Allow, HR_ADMIN, 'event_memberships_get'),
+            (Allow, ADMIN(), 'add_ticket_type'),
+            (Allow, TICKET_ADMIN(self.eventInstance.event_brand_uuid), 'add_ticket_type'),
 
-            (Allow, ADMIN, 'add_ticket_type'),
-            (Allow, TICKET_ADMIN, 'add_ticket_type'),
+            (Allow, CHIEF(self.eventInstance.event_brand_uuid), 'applications_get'),
+            (Allow, ADMIN(), 'applications_get'),
 
-            (Allow, CHIEF, 'applications_get'),
-            (Allow, ADMIN, 'applications_get'),
+            (Allow, CHIEF(self.eventInstance.event_brand_uuid), 'list_card_orders'),
+            (Allow, ADMIN(), 'list_card_orders'),
+            (Allow, CREW_CARD_PRINTER(self.eventInstance.event_brand_uuid), 'list_card_orders'),
 
-            (Allow, ADMIN, 'event_edit'),
-            (Allow, EVENT_ADMIN, 'event_edit'),
+            # Who can view the crew card of someone attending this event?
+            (Allow, ADMIN(), 'get_crew_card'),
+            (Allow, CHIEF(self.eventInstance.event_brand_uuid), 'get_crew_card'),
+            (Allow, CREW_CARD_PRINTER(self.eventInstance.event_brand_uuid), 'get_crew_card'),
+
+            (Allow, Everyone, 'list_agenda_entries'),
+
+            (Allow, ADMIN(), 'event_edit'),
+            (Allow, BRAND_ADMIN(self.eventInstance.event_brand_uuid), 'event_edit'),
+
         ]
         return acl
 
@@ -67,6 +89,13 @@ class EventInstanceResource(object):
 
         if self.eventInstance is None:
             raise HTTPNotFound("Event not found")
+
+        self["agenda"] = EventAgendaResource(request, self.eventInstance)
+        self["application"] = EventApplicationResource(request, self.eventInstance)
+        self["card_order"] = EventCardOrderResource(request, self.eventInstance)
+        self["position_mapping"] = EventPositionMappingResource(request, self.eventInstance)
+        self["store_session"] = EventStoreSessionResource(request, self.eventInstance)
+        self["ticket"] = EventTicketResource(request, self.eventInstance)
 
 @view_config(context=EventInstanceResource, name='', request_method='GET', renderer='json', permission='event_get')
 def get_event(context, request):
@@ -94,7 +123,9 @@ def get_tickets(context, request):
 
 @view_config(context=EventInstanceResource, name='new_memberships', request_method='GET', renderer='json', permission='event_memberships_get')
 def get_new_memberships(context, request):
-    users = request.db.query(User).join(Ticket, Ticket.owner_uuid == User.uuid).join(TicketType, Ticket.ticket_type_uuid==TicketType.uuid).filter(and_(Ticket.event_uuid == context.eventInstance.uuid, TicketType.grants_membership == True)).all()
+    users = request.db.query(User).join(Ticket, Ticket.owner_uuid == User.uuid) \
+        .join(TicketType, Ticket.ticket_type_uuid==TicketType.uuid) \
+        .filter(and_(Ticket.event_uuid == context.eventInstance.uuid, TicketType.grants_membership == True)).all()
     return [ map_user_simple_with_secret_fields(user, request) for user in users ]
 
 @view_config(context=EventInstanceResource, name='ticket_availability', request_method='GET', renderer='json', permission='ticket_availability_get')
@@ -130,7 +161,46 @@ def get_ticket_types(context, request):
     static_types = context.eventInstance.static_ticket_types
     return list(set(row_types+static_types))
 
-@view_config(name='edit', context=EventInstanceResource, request_method='PATCH', renderer='json', permission='event_edit')
+# Get all card orders for specified or current event
+@view_config(name="card_orders", context=EventInstanceResource, request_method="GET", renderer="json", permission="list_card_orders")
+def get_card_orders(context, request):
+    # We either get the specified event or the current event
+    return request.db.query(CardOrder).filter(CardOrder.event == context.eventInstance).all()
+
+# Generates the crew card a given user gets for this event
+@view_config(name='crew_card', context=EventInstanceResource, request_method='GET', renderer='pillow', permission='get_crew_card')
+@validate(get=['user_uuid'])
+def create_crew_card(context, request):
+    # The pillow renderer can only render images, so errors have to be raised
+    user = validateUuidAndQuery(request, User, User.uuid, request.GET['user_uuid'])
+    if user is None:
+        raise HTTPBadRequest("User not found")
+
+    # A crew card only makes sense for someone holding a position at the event.
+    # Lifetime positions count, the same way generate_badge treats them, but only
+    # when they are global or belong to the brand putting on the event
+    mapping = request.db.query(PositionMapping) \
+        .join(Position) \
+        .filter(and_(
+            PositionMapping.user == user,
+            or_(
+                PositionMapping.event == context.eventInstance,
+                and_(
+                    PositionMapping.event == None,
+                    or_(
+                        Position.event_brand_uuid == None,
+                        Position.event_brand_uuid == context.eventInstance.event_brand_uuid
+                    )
+                )
+            )
+        )) \
+        .first()
+    if mapping is None:
+        raise HTTPBadRequest("User does not belong to this event")
+
+    return generate_badge(request, user, context.eventInstance)
+
+@view_config(name='', context=EventInstanceResource, request_method='PATCH', renderer='json', permission='event_edit')
 def edit_event(context, request):
 
     error = list()
@@ -273,5 +343,3 @@ def edit_event(context, request):
         'info': 'Event information updated successfully',
         'data': context.eventInstance
     }
-    
-

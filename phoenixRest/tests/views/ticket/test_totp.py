@@ -5,12 +5,10 @@ import transaction
 import pyotp
 import time
 
-def test_totp_generated_when_none_exists(testapp, upcoming_event):
-    testapp.ensure_typical_event()
-    token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
+def test_totp_generated_when_none_exists(testapp, upcoming_event, ticket_types, admin_user):
+    token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
 
-    current_event = testapp.get('/event/current', status=200).json_body
-    ticket = ensure_ticket(testapp, token, current_event['uuid'])
+    ticket = ensure_ticket(testapp, token, upcoming_event.uuid)
 
     # Get totp - should generate one since none exists
     res = testapp.get('/ticket/%s/totp' % ticket['ticket_id'], headers=dict({
@@ -19,12 +17,10 @@ def test_totp_generated_when_none_exists(testapp, upcoming_event):
 
     assert res['totp'] is not None
 
-def test_totp_idempotent(testapp, upcoming_event):
-    testapp.ensure_typical_event()
-    token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
+def test_totp_idempotent(testapp, upcoming_event, ticket_types, admin_user):
+    token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
 
-    current_event = testapp.get('/event/current', status=200).json_body
-    ticket = ensure_ticket(testapp, token, current_event['uuid'])
+    ticket = ensure_ticket(testapp, token, upcoming_event.uuid)
 
     # Get totp twice
     res1 = testapp.get('/ticket/%s/totp' % ticket['ticket_id'], headers=dict({
@@ -37,28 +33,24 @@ def test_totp_idempotent(testapp, upcoming_event):
 
     assert res1['totp'] == res2['totp']
 
-def test_totp_forbidden_for_non_owner(testapp, upcoming_event):
-    testapp.ensure_typical_event()
-    owner_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
-    other_token, refresh = testapp.auth_get_tokens('jeff@example.com', 'sixcharacters')
+def test_totp_forbidden_for_non_owner(testapp, upcoming_event, ticket_types, admin_user, jeff_user):
+    owner_token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
+    other_token, refresh = testapp.auth_get_tokens(jeff_user.email, 'sixcharacters')
 
-    current_event = testapp.get('/event/current', status=200).json_body
-    ticket = ensure_ticket(testapp, owner_token, current_event['uuid'])
+    ticket = ensure_ticket(testapp, owner_token, upcoming_event.uuid)
 
     # Non-owner should get 403
     testapp.get('/ticket/%s/totp' % ticket['ticket_id'], headers=dict({
         "Authorization": "Bearer " + other_token
     }), status=403)
 
-def test_totp_reset_after_transfer(db, testapp, upcoming_event):
-    testapp.ensure_typical_event()
-    sender_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
-    receiver_token, refresh = testapp.auth_get_tokens('jeff@example.com', 'sixcharacters')
+def test_totp_reset_after_transfer(db, testapp, upcoming_event, ticket_types, admin_user, jeff_user):
+    sender_token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
+    receiver_token, refresh = testapp.auth_get_tokens(jeff_user.email, 'sixcharacters')
 
     receiver_user = testapp.get_user(receiver_token)
 
-    current_event = testapp.get('/event/current', status=200).json_body
-    ticket = ensure_ticket(testapp, sender_token, current_event['uuid'])
+    ticket = ensure_ticket(testapp, sender_token, upcoming_event.uuid)
 
     # Get totp before transfer
     totp_before = testapp.get('/ticket/%s/totp' % ticket['ticket_id'], headers=dict({
@@ -85,15 +77,13 @@ def test_totp_reset_after_transfer(db, testapp, upcoming_event):
     assert totp_after['totp'] is not None
     assert totp_before['totp'] != totp_after['totp']
 
-def test_ticket_transfer_totp_cleanup(db, testapp, upcoming_event):
-    testapp.ensure_typical_event()
-    sender_token, refresh = testapp.auth_get_tokens('test@example.com', 'sixcharacters')
-    receiver_token, refresh = testapp.auth_get_tokens('jeff@example.com', 'sixcharacters')
+def test_ticket_transfer_totp_cleanup(db, testapp, upcoming_event, ticket_types, admin_user, jeff_user):
+    sender_token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
+    receiver_token, refresh = testapp.auth_get_tokens(jeff_user.email, 'sixcharacters')
 
     receiver_user = testapp.get_user(receiver_token)
 
-    current_event = testapp.get('/event/current', status=200).json_body
-    ticket = ensure_ticket(testapp, sender_token, current_event['uuid'])
+    ticket = ensure_ticket(testapp, sender_token, upcoming_event.uuid)
 
     # Get totp before transfer
     totp_before = testapp.get('/ticket/%s/totp' % ticket['ticket_id'], headers=dict({
@@ -115,12 +105,10 @@ def test_ticket_transfer_totp_cleanup(db, testapp, upcoming_event):
     transaction.commit()
 
 
-def test_get_ticket_verifies_totp_when_set(testapp, upcoming_event):
-    testapp.ensure_typical_event()
-    token, refresh = testapp.auth_get_tokens("test@example.com", "sixcharacters")
+def test_get_ticket_verifies_totp_when_set(testapp, upcoming_event, ticket_types, admin_user):
+    token, refresh = testapp.auth_get_tokens(admin_user.email, "sixcharacters")
 
-    current_event = testapp.get("/event/current", status=200).json_body
-    ticket = ensure_ticket(testapp, token, current_event["uuid"])
+    ticket = ensure_ticket(testapp, token, upcoming_event.uuid)
 
     totp_res = testapp.get(
         "/ticket/%s/totp" % ticket["ticket_id"],
@@ -144,12 +132,10 @@ def test_get_ticket_verifies_totp_when_set(testapp, upcoming_event):
     )
 
 
-def test_checkin_verifies_totp_when_set(testapp, upcoming_event):
-    testapp.ensure_typical_event()
-    token, refresh = testapp.auth_get_tokens("test@example.com", "sixcharacters")
+def test_checkin_verifies_totp_when_set(testapp, upcoming_event, ticket_types, admin_user):
+    token, refresh = testapp.auth_get_tokens(admin_user.email, "sixcharacters")
 
-    current_event = testapp.get("/event/current", status=200).json_body
-    ticket = ensure_ticket(testapp, token, current_event["uuid"])
+    ticket = ensure_ticket(testapp, token, upcoming_event.uuid)
 
     totp_res = testapp.get(
         "/ticket/%s/totp" % ticket["ticket_id"],

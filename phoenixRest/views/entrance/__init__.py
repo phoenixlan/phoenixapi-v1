@@ -9,7 +9,7 @@ from phoenixRest.models.tickets.entrance import Entrance
 from phoenixRest.utils import validate
 from phoenixRest.resource import resource
 
-from phoenixRest.roles import ADMIN, TICKET_ADMIN
+from phoenixRest.roles import ADMIN
 
 from phoenixRest.views.seatmap.instance import SeatmapInstanceViews
 
@@ -20,8 +20,7 @@ log = logging.getLogger(__name__)
 class EntranceResource(object):
     __acl__ = [
         (Allow, Everyone, 'getAll'),
-        (Allow, ADMIN, 'create'),
-        (Allow, TICKET_ADMIN, 'create'),
+        (Allow, ADMIN(), 'create'),
 
         # Authenticated pages
         #(Allow, Authenticated, Authenticated),
@@ -41,6 +40,4 @@ def create_entrance(context, request):
     request.db.add(entrance)
     request.db.flush()
     return entrance
-
-
 

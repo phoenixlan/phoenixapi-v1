@@ -23,7 +23,7 @@ from phoenixRest.utils import validate
 from phoenixRest.resource import resource
 from phoenixRest.views.user.instance import UserInstanceResource
 
-from phoenixRest.roles import ADMIN, HR_ADMIN, TICKET_ADMIN
+from phoenixRest.roles import ADMIN
 
 from datetime import datetime, date
 
@@ -37,12 +37,9 @@ class UserViews(object):
     __acl__ = [
         (Allow, Authenticated, 'current_get'),
         (Allow, Everyone, 'activate_user_by_code'),
-        (Allow, ADMIN, 'all_get'),
-        (Allow, HR_ADMIN, 'all_get'),
+        (Allow, ADMIN(), 'all_get'),
 
-        (Allow, ADMIN, 'search'),
-        (Allow, HR_ADMIN, 'search'),
-        (Allow, TICKET_ADMIN, 'search'),
+        (Allow, ADMIN(), 'search'),
 
         (Allow, Everyone, 'register'),
         (Allow, Everyone, 'connect_discord'),
@@ -76,18 +73,20 @@ def search_users(context, request):
         }
 
     query = request.GET['query']
+
+    if len(query) < 4:
+        request.response.status = 400
+        return {
+            "error": "Query must be at least 4 characters"
+        }
+
     users = request.db.query(User).filter(or_(
         User.firstname.contains(query),
         User.lastname.contains(query),
         User.username.contains(query),
         User.email.contains(query)
-    )).all()
+    )).limit(10).all()
     return [ map_user_simple_with_secret_fields(user, request) for user in users ]
-
-@view_config(context=UserViews, name='', request_method='GET', renderer='json', permission='all_get')
-def all_users(context, request):
-    users = request.db.query(User).order_by(User.created).all()
-    return [map_user_simple_with_secret_fields(user, request) for user in users]
 
 #https://stackoverflow.com/questions/201323/how-can-i-validate-an-email-address-using-a-regular-expression
 email_regex = re.compile("(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*)@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9]))\.){3}(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9])|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])")

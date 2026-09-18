@@ -3,7 +3,7 @@ from phoenixRest.mappers.ticket import map_ticket_simple
 from phoenixRest.roles import HR_ADMIN, ADMIN, TICKET_ADMIN
 
 def map_seat_for_availability(seat, request):
-    is_admin = ADMIN in request.effective_principals or TICKET_ADMIN in request.effective_principals
+    is_admin = ADMIN() in request.effective_principals or TICKET_ADMIN(seat.row.seatmap.event_brand_uuid) in request.effective_principals
     return {
         'uuid': str(seat.uuid),
         'number': seat.number,

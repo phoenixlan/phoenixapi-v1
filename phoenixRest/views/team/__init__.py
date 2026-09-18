@@ -19,7 +19,7 @@ class TeamViews(object):
     __acl__ = [
         (Allow, Everyone, 'current::get'),
         (Allow, Everyone, 'get'),
-        (Allow, ADMIN, 'create'),
+        (Allow, ADMIN(), 'create'),
 
         # Authenticated pages
         #(Allow, Authenticated, Authenticated),

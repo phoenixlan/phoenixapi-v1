@@ -2,9 +2,9 @@ from test_app import TestApp
 import uuid
 from phoenixRest.models.crew.card_order import OrderStates
 
-def test_card_order(testapp:TestApp, upcoming_event):
+def test_card_order(testapp:TestApp, upcoming_event, admin_user):
     # Log in as an admin user
-    admin_user_token, refresh = testapp.auth_get_tokens("test@example.com", "sixcharacters")
+    admin_user_token, refresh = testapp.auth_get_tokens(admin_user.email, "sixcharacters")
     admin = testapp.get_user(admin_user_token)
     admin_uuid = admin["uuid"]
     
@@ -13,21 +13,21 @@ def test_card_order(testapp:TestApp, upcoming_event):
     
     #? ---- __init__.py ----
     # Admin orders a card for themself
-    res = testapp.post_json("/card_order/", dict({
+    res = testapp.post_json("/event/%s/card_order" % upcoming_event.uuid, dict({
         "user_uuid" : admin_uuid
     }), headers=dict({
         'Authorization': "Bearer " + admin_user_token
     }), status=200)
     
     # Admin orders a card with the wrong user uuid and it fails
-    res = testapp.post_json("/card_order/", dict({
+    res = testapp.post_json("/event/%s/card_order" % upcoming_event.uuid, dict({
         "user_uuid" : str(uuid.uuid4())
     }), headers=dict({
         'Authorization': "Bearer " + admin_user_token
     }), status=400)
     
     # Admin views all card orders, i.e the one they created
-    res = testapp.get("/card_order/", headers=dict({
+    res = testapp.get(f"/event/{upcoming_event.uuid}/card_orders", headers=dict({
         'Authorization': "Bearer " + admin_user_token
     }), status=200).json_body
     assert len(res) == 1
@@ -60,7 +60,7 @@ def test_card_order(testapp:TestApp, upcoming_event):
     assert res["state"] == OrderStates.FINISHED.value
     
     # Admin orders a new card for themself
-    res = testapp.post_json("/card_order/", dict({
+    res = testapp.post_json("/event/%s/card_order" % upcoming_event.uuid, dict({
         "user_uuid" : admin_uuid
     }), headers=dict({
         'Authorization': "Bearer " + admin_user_token
@@ -80,15 +80,24 @@ def test_card_order(testapp:TestApp, upcoming_event):
     }), status=400)
     
     # Admin views all card orders for the current event
-    res = testapp.get("/card_order/", headers=dict({
+    res = testapp.get(f"/event/{upcoming_event.uuid}/card_orders", headers=dict({
         'Authorization': "Bearer " + admin_user_token
     }), status=200)
     assert len(res.json_body) == 2
+
+def test_chief_can_create_card_order_only_for_own_brand(
+        testapp, upcoming_event, other_upcoming_event, chief_user):
+    token, refresh = testapp.auth_get_tokens(chief_user.email, 'sixcharacters')
+
+    testapp.post_json('/event/%s/card_order' % upcoming_event.uuid, {
+        'user_uuid': str(chief_user.uuid)
+    }, headers={
+        'Authorization': "Bearer " + token
+    }, status=200)
+
+    testapp.post_json('/event/%s/card_order' % other_upcoming_event.uuid, {
+        'user_uuid': str(chief_user.uuid)
+    }, headers={
+        'Authorization': "Bearer " + token
+    }, status=403)
     
-    # Admin views all card orders for a specified event, which happens to be the current one for convenience
-    current_event_uuid = testapp.get("/event/current/", status=200).json_body["uuid"]
-    
-    res = testapp.get(f"/card_order/", params=f"event_uuid={current_event_uuid}", headers=dict({
-        'Authorization': "Bearer " + admin_user_token
-    }), status=200)
-    assert len(res.json_body) == 2

@@ -1,17 +1,17 @@
 from test_app import TestApp
 
-def test_friend_request(testapp:TestApp):
+def test_friend_request(testapp:TestApp, greg_user, jeff_user):
     
     # Log in as the test user
-    greg_user_token, refresh = testapp.auth_get_tokens('greg@example.com', 'sixcharacters')
-    jeff_user_token, refresh = testapp.auth_get_tokens('jeff@example.com', 'sixcharacters')
+    greg_user_token, refresh = testapp.auth_get_tokens(greg_user.email, 'sixcharacters')
+    jeff_user_token, refresh = testapp.auth_get_tokens(jeff_user.email, 'sixcharacters')
     
     greg = testapp.get_user(greg_user_token)
     jeff = testapp.get_user(jeff_user_token)
     
     # Greg sends a friend request to jeff
     res = testapp.post_json('/friend_request', dict({
-        "user_email":"jeff@example.com"
+        "user_email": jeff_user.email
     }), headers=dict({
         "Authorization": "Bearer " + greg_user_token
     }), status=200)
@@ -62,7 +62,7 @@ def test_friend_request(testapp:TestApp):
     
     # Greg sends a friend request to jeff
     res = testapp.post_json('/friend_request', dict({
-        "user_email":"jeff@example.com"
+        "user_email": jeff_user.email
     }), headers=dict({
         "Authorization": "Bearer " + greg_user_token
     }), status=200)

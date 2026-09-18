@@ -11,7 +11,9 @@ from phoenixRest.utils import validate
 from phoenixRest.models.core.user import User
 from phoenixRest.models.core.agenda_entry import AgendaEntry
 
-from phoenixRest.roles import ADMIN, EVENT_ADMIN, CHIEF, INFO_ADMIN, COMPO_ADMIN
+from phoenixRest.roles import ADMIN, BRAND_ADMIN, CHIEF, INFO_ADMIN, COMPO_ADMIN
+
+from sqlalchemy.orm import joinedload
 
 from datetime import datetime
 
@@ -22,21 +24,29 @@ class AgendaInstanceResource(object):
     def __acl__(self):
         acl = [
             (Allow, Everyone, 'agenda_get'),
-            (Allow, ADMIN, 'agenda_get'),
-            (Allow, EVENT_ADMIN, 'agenda_get'),
-            (Allow, INFO_ADMIN, 'agenda_get'),
-            (Allow, COMPO_ADMIN, 'agenda_get'),
+            (Allow, ADMIN(), 'agenda_get'),
+            (Allow, BRAND_ADMIN(self.agendaInstance.event.event_brand_uuid), 'agenda_get'),
+            (Allow, INFO_ADMIN(self.agendaInstance.event.event_brand_uuid), 'agenda_get'),
+            (Allow, COMPO_ADMIN(self.agendaInstance.event.event_brand_uuid), 'agenda_get'),
 
-            (Allow, EVENT_ADMIN, 'agenda_delete'),
-            (Allow, ADMIN, 'agenda_delete'),
-            (Allow, INFO_ADMIN, 'agenda_delete'),
-            (Allow, COMPO_ADMIN, 'agenda_delete'),
+            (Allow, BRAND_ADMIN(self.agendaInstance.event.event_brand_uuid), 'agenda_delete'),
+            (Allow, ADMIN(), 'agenda_delete'),
+            (Allow, INFO_ADMIN(self.agendaInstance.event.event_brand_uuid), 'agenda_delete'),
+            (Allow, COMPO_ADMIN(self.agendaInstance.event.event_brand_uuid), 'agenda_delete'),
+
+            (Allow, BRAND_ADMIN(self.agendaInstance.event.event_brand_uuid), 'agenda_modify'),
+            (Allow, ADMIN(), 'agenda_modify'),
+            (Allow, INFO_ADMIN(self.agendaInstance.event.event_brand_uuid), 'agenda_modify'),
+            (Allow, COMPO_ADMIN(self.agendaInstance.event.event_brand_uuid), 'agenda_modify'),
         ]
         return acl
 
     def __init__(self, request, uuid):
         self.request = request
-        self.agendaInstance = request.db.query(AgendaEntry).filter(AgendaEntry.uuid == uuid).first()
+        self.agendaInstance = request.db.query(AgendaEntry) \
+            .options(joinedload(AgendaEntry.event)) \
+            .filter(AgendaEntry.uuid == uuid) \
+            .first()
 
         if self.agendaInstance is None:
             raise HTTPNotFound("Agenda not found")
@@ -50,7 +60,7 @@ def delete_agenda_entry(context, request):
     request.db.delete(context.agendaInstance)
 
 # Modify agenda entry
-@view_config(context=AgendaInstanceResource, request_method='PATCH', renderer='json', permission='create')
+@view_config(context=AgendaInstanceResource, request_method='PATCH', renderer='json', permission='agenda_modify')
 def modify_agenda_entry(context, request):
 
     if 'title' in request.json_body:
@@ -163,5 +173,4 @@ def modify_agenda_entry(context, request):
 
     return context.agendaInstance
     
-
 
