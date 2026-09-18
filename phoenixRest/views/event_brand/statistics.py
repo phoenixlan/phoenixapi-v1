@@ -25,7 +25,6 @@ log = logging.getLogger(__name__)
 
 from datetime import date
 
-@resource(name='statistics')
 class EventBrandStatisticsResource(object):
     __acl__ = [
         (Allow, ADMIN(), 'get_ticket_sales_stats'),

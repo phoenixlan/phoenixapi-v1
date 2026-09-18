@@ -200,7 +200,7 @@ def create_crew_card(context, request):
 
     return generate_badge(request, user, context.eventInstance)
 
-@view_config(name='edit', context=EventInstanceResource, request_method='PATCH', renderer='json', permission='event_edit')
+@view_config(name='', context=EventInstanceResource, request_method='PATCH', renderer='json', permission='event_edit')
 def edit_event(context, request):
 
     error = list()

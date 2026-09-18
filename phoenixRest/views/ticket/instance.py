@@ -107,10 +107,12 @@ def seat_ticket(context, request):
             "error": "You cannot seat a ticket for an event that is not current"
         }
 
-    if event.seatmap_uuid != seat.row.seatmap.uuid:
+    # May be str, so lazy and convert both
+    # TODO: maybe avoid this sort of bs?
+    if str(event.seatmap_uuid) != str(seat.row.seatmap.uuid):
         request.response.status = 400
         return {
-            "error": "The seat belongs to a different seatmap than that of the event the ticket belongs to"
+            "error": f"The seat belongs to a different seatmap than that of the event the ticket belongs to ({event.seatmap_uuid} vs {seat.row.seatmap.uuid})"
         }
         
     seating_time = event.booking_time + timedelta(seconds=event.seating_time_delta)

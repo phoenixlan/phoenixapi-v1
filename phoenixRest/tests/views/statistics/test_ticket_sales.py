@@ -1,13 +1,13 @@
 from phoenixRest.models.core.event import Event
 
-def test_smoketest_ticket_sales(db, testapp, ticketsale_ongoing_event, ongoing_ticket_types, admin_user, jeff_user):
+def test_smoketest_ticket_sales(db, testapp, ticketsale_ongoing_event, ongoing_ticket_types, event_brand, admin_user, jeff_user):
     """Simple test that just makes sure ticket sales statistics isn't obviously broken
     """
     # test is an admin
     token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
     unprivileged_token, refresh = testapp.auth_get_tokens(jeff_user.email, 'sixcharacters')
 
-    stats = testapp.get('/statistics/ticket_sales', headers=dict({
+    stats = testapp.get(f"/event_brand/{event_brand.uuid}/statistics/ticket_sales", headers=dict({
         "Authorization": "Bearer " + token
     }), status=200).json_body
 
@@ -28,7 +28,7 @@ def test_smoketest_ticket_sales(db, testapp, ticketsale_ongoing_event, ongoing_t
     # Get unprivileged user UUID
     unprivileged_user = testapp.get_user(unprivileged_token)
     # Get a test user
-    stats = testapp.get('/statistics/ticket_sales', headers=dict({
+    stats = testapp.get(f"/event_brand/{event_brand.uuid}/statistics/ticket_sales", headers=dict({
         "Authorization": "Bearer " + token
     }), status=200).json_body
 
@@ -42,7 +42,7 @@ def test_smoketest_ticket_sales(db, testapp, ticketsale_ongoing_event, ongoing_t
         }), status=200)
 
     # Ensure at least one ticket is sold
-    stats = testapp.get('/statistics/ticket_sales', headers=dict({
+    stats = testapp.get(f"/event_brand/{event_brand.uuid}/statistics/ticket_sales", headers=dict({
         "Authorization": "Bearer " + token
     }), status=200).json_body
 

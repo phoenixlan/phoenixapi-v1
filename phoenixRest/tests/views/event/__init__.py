@@ -115,7 +115,7 @@ def test_edit_event(testapp, upcoming_event, admin_user, jeff_user):
 
     ### Test to edit an event as an admin (privileged) and as a regular user (unprivileged)
     # Attempt to edit an event as an admin (Expects 200)
-    privileged_entry = testapp.patch_json('/event/%s/edit' % upcoming_event.uuid, dict({
+    privileged_entry = testapp.patch_json('/event/%s' % upcoming_event.uuid, dict({
         'name': "Edit name as admin",
         'start_time': 1896130800,
         'end_time': 1896303600,
@@ -134,7 +134,7 @@ def test_edit_event(testapp, upcoming_event, admin_user, jeff_user):
     }), status=200)
 
     # Attempt to create an event entry as a regular user (Expects 403)
-    unprivileged_entry = testapp.patch_json('/event/%s/edit' % upcoming_event.uuid, dict({
+    unprivileged_entry = testapp.patch_json('/event/%s' % upcoming_event.uuid, dict({
         'name': "Edit event name as user",
         'start_time': 1896130403,
         'end_time': 1896303403,

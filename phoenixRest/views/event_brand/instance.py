@@ -56,10 +56,11 @@ class EventBrandInstanceResource(dict):
         self.request = request
         self.eventBrandInstance = request.db.query(EventBrand).filter(EventBrand.uuid == uuid).first()
 
-        self["statistics"] = EventBrandStatisticsResource(self.request, self.eventBrandInstance)
-
         if self.eventBrandInstance is None:
             raise HTTPNotFound("Event brand not found")
+
+        self["statistics"] = EventBrandStatisticsResource(self.request, self.eventBrandInstance)
+
 
 
 @view_config(context=EventBrandInstanceResource, name='', request_method='GET', renderer='json', permission='get')
