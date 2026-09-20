@@ -75,10 +75,10 @@ def create_ticket(context, request):
         "Du har mottatt en billett",
         "ticket_received.jinja2",
         {
-            "mail": request.registry.settings['api.contact'],
+            "mail": context.event.event_brand.contact_email,
+            "name": context.event.event_brand.name,
             "domain": request.registry.settings['api.mainpage'],
             "type": ticket_type.name,
-            "name": request.registry.settings['api.name'],
         }
     )
     return ticket

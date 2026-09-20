@@ -241,8 +241,8 @@ def transfer_ticket(context, request):
     request.db.flush()
 
     request.service_manager.get_service('email').send_mail(request.user.email, "Du har overført en billett", "ticket_transferred_to_sender.jinja2", {
-        "mail": request.registry.settings["api.contact"],
-        "name": request.registry.settings["api.name"],
+        "mail": context.ticketInstance.event.event_brand.contact_email,
+        "name": context.ticketInstance.event.event_brand.name,
         "domain": request.registry.settings["api.mainpage"],
         "recipient": transfer_target,
         "hours": expiry_offset/60/60,
@@ -250,8 +250,8 @@ def transfer_ticket(context, request):
     })
 
     request.service_manager.get_service('email').send_mail(transfer_target.email, "Du har blitt overført en billett", "ticket_transferred_to_recipient.jinja2", {
-        "mail": request.registry.settings["api.contact"],
-        "name": request.registry.settings["api.name"],
+        "mail": context.ticketInstance.event.event_brand.contact_email,
+        "name": context.ticketInstance.event.event_brand.name,
         "domain": request.registry.settings["api.mainpage"],
         "sender": request.user,
         "hours": expiry_offset/60/60,

@@ -128,10 +128,10 @@ def edit_application(context, request):
         position.position_mappings.append(mapping)
 
     # Send mail
-    name = request.registry.settings["api.name"]
+    name = context.applicationInstance.event.event_brand.name
     log.info("Registered change in application - sending e-mail")
     request.service_manager.get_service('email').send_mail(context.applicationInstance.user.email, "Vedrørende din crew-søknad til %s" % name, "application_response.jinja2", {
-        "mail": request.registry.settings["api.contact"],
+        "mail": context.applicationInstance.event.event_brand.contact_email,
         "accepted": context.applicationInstance.state == ApplicationState.accepted,
         "accepted_crew": accepted_crew,
         "name": name,

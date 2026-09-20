@@ -30,12 +30,15 @@ class EventBrand(Base):
     events = relationship("Event", back_populates="event_brand")
 
     name = Column(Text, nullable=False)
+    contact_email= Column(Text, nullable=False)
 
-    def __init__(self, name: str):
+    def __init__(self, name: str, contact_email: str):
         self.name = name
+        self.contact_email = contact_email
 
     def __json__(self, request):
         return {
             'uuid': str(self.uuid),
+            'contact_email': str(self.contact_email),
             'name': str(self.name)
         }

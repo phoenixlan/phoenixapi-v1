@@ -39,10 +39,10 @@ def get_event_brands(context, request):
     return event_types
 
 @view_config(context=EventBrandResource, request_method='POST', renderer='json', permission='create')
-@validate(json_body={'name': str})
+@validate(json_body={'name': str, 'contact_email': str})
 def create_event_brand(context, request):
     # Find all events and sort them by start time
-    brand = EventBrand(request.json_body['name'])
+    brand = EventBrand(request.json_body['name'], request.json_body["contact_email"])
 
     request.db.add(brand)
     request.db.flush()

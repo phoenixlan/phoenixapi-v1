@@ -33,8 +33,8 @@ def mint_tickets(request, payment: Payment):
 
     # Send a mail
     request.service_manager.get_service('email').send_mail(payment.user.email, "Kvittering for kjøp av billetter", "tickets_minted.jinja2", {
-        "mail": request.registry.settings["api.contact"],
-        "name": request.registry.settings["api.name"],
+        "mail": payment.store_session.event.event_brand.contact_email,
+        "name": payment.store_session.event.event_brand.name,
         "payment": payment,
     })
 

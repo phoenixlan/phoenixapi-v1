@@ -88,8 +88,8 @@ def create_application(context, request):
         "Mottatt søknad",
         "application_received.jinja2",
         {
-            "mail": request.registry.settings["api.contact"],
-            "name": request.registry.settings["api.name"],
+            "mail": context.event.event_brand.contact_email,
+            "name": context.event.event_brand.name,
             "crew_list": crew_list
         }
     )

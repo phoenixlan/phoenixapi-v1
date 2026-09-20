@@ -80,8 +80,8 @@ def create_voucher(context, request):
     request.db.flush()
 
     request.service_manager.get_service('email').send_mail(recipient_user.email, "Du har mottatt et billett-gavekort", "ticket_voucher_received.jinja2", {
-        "mail": request.registry.settings["api.contact"],
-        "name": request.registry.settings["api.name"],
+        "mail": voucher.event_brand.contact_email,
+        "name": voucher.event_brand.name,
         "domain": request.registry.settings["api.mainpage"],
         "ticket_type": ticket_type,
         "last_use_event": last_use_event

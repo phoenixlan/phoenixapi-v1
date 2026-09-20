@@ -3,7 +3,7 @@ from phoenixRest.models.core.event_brand import EventBrand
 
 def test_seatmaps_are_listed_only_for_their_event_brand(
         testapp, db, event_brand, admin_token):
-    other_brand = EventBrand('Other event brand')
+    other_brand = EventBrand('Other event brand', "test@example.com")
     db.add(other_brand)
     db.flush()
 

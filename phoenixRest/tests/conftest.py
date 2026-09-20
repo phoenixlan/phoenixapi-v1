@@ -55,14 +55,14 @@ def testapp(app, tm, db):
 @pytest.fixture
 def event_brand(db):
     """Creates an event brand that an event can be associated with"""
-    brand = EventBrand("Event brand!")
+    brand = EventBrand("Event brand!", "test@example.com")
     db.add(brand)
     db.flush()
     return brand
 
 @pytest.fixture
 def other_event_brand(db):
-    brand = EventBrand("Other event brand")
+    brand = EventBrand("Other event brand", "test@example.com")
     db.add(brand)
     db.flush()
     return brand

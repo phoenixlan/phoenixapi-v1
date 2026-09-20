@@ -16,7 +16,7 @@ def test_position_mapping_brand_sanity(testapp, db, upcoming_event, event_brand,
     current_user_dbobject = jeff_user
 
     # Create another event brand
-    other_brand = EventBrand("Other brand!")
+    other_brand = EventBrand("Other brand!", "test@example.com")
     db.add(other_brand)
 
     # Create two unique positions

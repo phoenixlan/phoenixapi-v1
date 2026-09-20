@@ -10,7 +10,8 @@ def test_event_brand_create_and_list(testapp, db, admin_user):
 
     # Create a new event brand
     res = testapp.post_json('/event_brand', {
-        'name': 'Test Brand'
+        'name': 'Test Brand',
+        'contact_email': 'test@example.com'
     }, headers={
         "Authorization": "Bearer " + token
     }, status=200)

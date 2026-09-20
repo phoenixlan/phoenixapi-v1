@@ -43,6 +43,7 @@ def upgrade():
     event_brand_table = op.create_table('event_brand',
     sa.Column('uuid', sa.UUID(), nullable=False),
     sa.Column('name', sa.Text(), nullable=False),
+    sa.Column('contact_email', sa.Text(), nullable=False),
     sa.PrimaryKeyConstraint('uuid', name=op.f('pk_event_brand')),
     sa.UniqueConstraint('uuid', name=op.f('uq_event_brand_uuid'))
     )
@@ -52,6 +53,7 @@ def upgrade():
             {
                 'uuid': default_brand_uuid,
                 'name': 'Default brand',
+                'contact_email': 'test@example.com',
             },
         ]
     )
