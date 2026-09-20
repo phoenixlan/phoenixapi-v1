@@ -15,6 +15,8 @@ from phoenixRest.roles import ADMIN, HR_ADMIN
 
 from phoenixRest.utils import validate
 
+from sqlalchemy.orm import joinedload
+
 import logging
 log = logging.getLogger(__name__)
 
@@ -22,11 +24,11 @@ log = logging.getLogger(__name__)
 class PositionMappingInstanceResource(object):
     def __acl__(self):
         return [
-            (Allow, ADMIN, 'get_mapping'),
-            (Allow, HR_ADMIN, 'get_mapping'),
+            (Allow, ADMIN(), 'get_mapping'),
+            (Allow, HR_ADMIN(self.positionMappingInstance.event.event_brand_uuid), 'get_mapping'),
 
-            (Allow, ADMIN, 'delete_mapping'),
-            (Allow, HR_ADMIN, 'delete_mapping'),
+            (Allow, ADMIN(), 'delete_mapping'),
+            (Allow, HR_ADMIN(self.positionMappingInstance.event.event_brand_uuid), 'delete_mapping'),
 
             (Allow, "%s" % self.positionMappingInstance.user.uuid, 'get_mapping')
         ]
@@ -34,6 +36,7 @@ class PositionMappingInstanceResource(object):
     def __init__(self, request, uuid):
         self.request = request
         self.positionMappingInstance = request.db.query(PositionMapping) \
+            .options(joinedload(PositionMapping.event)) \
             .filter(PositionMapping.uuid == uuid) \
             .first()
 

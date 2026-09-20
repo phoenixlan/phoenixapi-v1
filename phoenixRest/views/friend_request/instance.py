@@ -3,7 +3,7 @@ from pyramid.view import view_config, view_defaults
 from pyramid.httpexceptions import HTTPNotFound
 
 from pyramid.authorization import Allow, Deny
-from phoenixRest.roles import ADMIN, HR_ADMIN
+from phoenixRest.roles import ADMIN
 
 from phoenixRest.models.core.friendship import Friendship
 
@@ -19,12 +19,11 @@ class FriendRequestInstanceResource(object):
         source_user_uuid = str(self.friendRequestInstance.source_user.uuid)
         recipient_user_uuid = str(self.friendRequestInstance.recipient_user.uuid)
         acl = [
-            (Allow, ADMIN, "view"),
-            (Allow, HR_ADMIN, "view"),
+            (Allow, ADMIN(), "view"),
             (Allow, source_user_uuid, "view"),
             (Allow, recipient_user_uuid, "view"),
             
-            (Allow, ADMIN, "revoke"),
+            (Allow, ADMIN(), "revoke"),
             (Allow, source_user_uuid, "revoke"),
             (Allow, recipient_user_uuid, "revoke"),
             

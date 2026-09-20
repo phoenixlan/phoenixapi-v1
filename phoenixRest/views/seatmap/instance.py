@@ -38,14 +38,14 @@ class SeatmapInstanceViews(object):
     def __acl__(self):
         return [
         (Allow, Authenticated, 'seatmap_get_availability'),
-        (Allow, ADMIN, 'create_row'),
-        (Allow, TICKET_ADMIN, 'create_row'),
+        (Allow, ADMIN(), 'create_row'),
+        (Allow, TICKET_ADMIN(self.seatmapInstance.event_brand_uuid), 'create_row'),
 
-        (Allow, ADMIN, 'upload_background'),
-        (Allow, TICKET_ADMIN, 'upload_background'),
+        (Allow, ADMIN(), 'upload_background'),
+        (Allow, TICKET_ADMIN(self.seatmapInstance.event_brand_uuid), 'upload_background'),
 
-        (Allow, ADMIN, 'seatmap_view'),
-        (Allow, TICKET_ADMIN, 'seatmap_view'),
+        (Allow, ADMIN(), 'seatmap_view'),
+        (Allow, TICKET_ADMIN(self.seatmapInstance.event_brand_uuid), 'seatmap_view'),
         # Authenticated pages
         #(Allow, Authenticated, Authenticated),
         #(Deny, Everyone, Authenticated),
@@ -64,17 +64,21 @@ def get_seatmap(context, request):
     return context.seatmapInstance
 
 @view_config(context=SeatmapInstanceViews, name='availability', request_method='GET', renderer='json', permission='seatmap_get_availability')
+@validate(get={"event_uuid": str})
 def get_seatmap_availability(context, request):
-    event = None
-    if 'event_uuid' in request.GET:
-        event = request.db.query(Event).filter(Event.uuid == request.GET['event_uuid']).first()
-        if event is None:
-            request.response.status = 404
-            return {
-                'error': "Event not found"
-            }
-    else:
-        event = get_current_event(request)
+    event = request.db.query(Event).filter(Event.uuid == request.GET['event_uuid']).first()
+    if event is None:
+        request.response.status = 400
+        return {
+            'error': "Event not found"
+        }
+
+    if not event.seatmap or event.seatmap.uuid != context.seatmapInstance.uuid:
+        request.response.status = 400
+        return {
+            'error': "Specified event does not use this seatmap"
+        }
+        
     
     seatmap = request.db.query(Seatmap) \
         .join(Row, Row.seatmap_uuid == Seatmap.uuid) \
@@ -104,6 +108,7 @@ def upload_background(context, request):
     extension = filename.split(".")[-1]
 
     background = SeatmapBackground(request.user, extension)
+    background.event_brand = context.seatmapInstance.event_brand
     request.db.add(background)
     request.db.flush()
 
@@ -162,5 +167,3 @@ def create_row(context, request):
     request.db.add(row)
     request.db.flush()
     return row
-
-

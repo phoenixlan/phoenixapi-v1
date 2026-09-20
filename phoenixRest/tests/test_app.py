@@ -26,23 +26,6 @@ class TestApp(webtest.TestApp):
 
         return res.json_body['access_token'], res.json_body['refresh_token']
     
-    def ensure_typical_event(self):
-        token, refresh = self.auth_get_tokens('test@example.com', 'sixcharacters')
-
-        current_event = self.get('/event/current', status=200).json_body
-
-        # Add typical Ticket Types
-        all_ticket_types = self.get('/ticketType', headers=dict({
-            'Authorization': "Bearer " + token
-        }), status=200).json_body
-
-        for ticket_type in all_ticket_types:
-            self.put_json('/event/%s/ticketType' % current_event['uuid'], dict({
-                'ticket_type_uuid': ticket_type['uuid']
-            }), headers=dict({
-                'Authorization': "Bearer " + token
-            }), status=200)
-    
     def get_last_event(self, db):
         return db.query(Event) \
             .filter(Event.end_time < datetime.now()) \

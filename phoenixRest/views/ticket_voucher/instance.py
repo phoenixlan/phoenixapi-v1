@@ -23,8 +23,8 @@ log = logging.getLogger(__name__)
 class TicketVoucherInstanceResource(object):
     def __acl__(self):
         acl = [
-            (Allow, ADMIN, 'burn'),
-            (Allow, TICKET_ADMIN, 'burn'),
+            (Allow, ADMIN(), 'burn'),
+            (Allow, TICKET_ADMIN(self.ticketVoucherInstance.event_brand_uuid), 'burn'),
             # Authenticated pages
             #(Allow, Authenticated, Authenticated),
             #(Deny, Everyone, Authenticated),
@@ -60,7 +60,7 @@ def burn_voucher(context, request):
 
     # Mint the ticket!
     context.ticketVoucherInstance.used = datetime.now()
-    ticket = Ticket(context.ticketVoucherInstance.recipient_user, None, context.ticketVoucherInstance.ticket_type, get_current_event(request))
+    ticket = Ticket(context.ticketVoucherInstance.recipient_user, None, context.ticketVoucherInstance.ticket_type, get_current_event(request.db, context.ticketVoucherInstance.event_brand))
     context.ticketVoucherInstance.ticket = ticket
 
     # Save it
@@ -69,8 +69,8 @@ def burn_voucher(context, request):
     log.info(f"Minted ticket {ticket.ticket_id} by burning voucher {context.ticketVoucherInstance.uuid} for user {context.ticketVoucherInstance.recipient_user.uuid}")
 
     request.service_manager.get_service('email').send_mail(context.ticketVoucherInstance.recipient_user.email, "Du har brukt et billett-gavekort", "ticket_voucher_burned.jinja2", {
-        "mail": request.registry.settings["api.contact"],
-        "name": request.registry.settings["api.name"],
+        "mail": context.ticketVoucherInstance.event_brand.contact_email,
+        "name": context.ticketVoucherInstance.event_brand.name,
         "domain": request.registry.settings["api.mainpage"],
         "ticket_voucher": context.ticketVoucherInstance
     })

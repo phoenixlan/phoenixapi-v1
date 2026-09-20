@@ -41,6 +41,10 @@ class PositionMapping(Base):
         self.user = user
         self.position = position
         self.event = event
+        if event is not None:
+            self.event_brand = event.event_brand
+        elif position.event_brand is not None:
+            self.event_brand = position.event_brand
         self.created = datetime.now()
     
     def __json__(self, request):
