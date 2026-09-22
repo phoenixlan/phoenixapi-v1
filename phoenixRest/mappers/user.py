@@ -24,6 +24,25 @@ def map_user_with_secret_fields(user, request):
         'consents': user.consents
     }
 
+def map_user_with_secret_fields_member_personalia(user, request):
+    return {
+        'uuid': str(user.uuid),
+        'birthdate': str(user.birthdate),
+        'email': user.email,
+        
+        'firstname': user.firstname,
+        'lastname': user.lastname,
+        
+        'gender': str(user.gender),
+
+        'guardian_phone': user.guardian_phone,
+
+        'member_personalia': user.member_personalia if user.member_personalia is not None else None,
+
+        'tos_level': user.tos_level,
+        'created': int(user.created.timestamp()),
+    }
+
 def map_user_public_with_positions(user, request):
     return {
         'uuid': str(user.uuid),
