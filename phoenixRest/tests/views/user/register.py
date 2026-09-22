@@ -26,7 +26,6 @@ def test_activate_user_by_code(testapp, db, admin_user):
 def test_smoketest_registration(testapp):
     # ensure you can register
     user_register_obj = dict({
-        "username": "testfoo_123",
         "firstname": "Jeff",
         "surname": "Jefferson",
         "password": "test123",
@@ -35,10 +34,7 @@ def test_smoketest_registration(testapp):
         "emailRepeat": "testfoo@example.com",
         "gender": "male",
         "dateOfBirth": "1998-03-27",
-        "phone": "90000000", # Fake
         "guardianPhone": "", # Over 18, so this should be allowed
-        "address": "1 fake street",
-        "zip": "1337",
         "event_notice_consent": True,
         "clientId": "phoenix-crew-test"
     })
@@ -48,7 +44,6 @@ def test_smoketest_registration(testapp):
 def test_registration_uppercase_email(testapp, db):
     # ensure you can register
     user_register_obj = dict({
-        "username": "testfoo_123",
         "firstname": "Jeff",
         "surname": "Jefferson",
         "password": "test123",
@@ -57,23 +52,19 @@ def test_registration_uppercase_email(testapp, db):
         "emailRepeat": "TESTFOO@example.com",
         "gender": "male",
         "dateOfBirth": "1998-03-27",
-        "phone": "90000000", # Fake
         "guardianPhone": "", # Over 18, so this should be allowed
-        "address": "1 fake street",
-        "zip": "1337",
         "event_notice_consent": True,
         "clientId": "phoenix-crew-test"
     })
     user_registration_result = testapp.post_json('/user/register', user_register_obj, status=200).json_body
     assert user_registration_result['message'] == "An e-mail has been sent"
 
-    user = db.query(User).filter(User.username == "testfoo_123").first()
+    user = db.query(User).filter(User.email == "testfoo@example.com").first()
     assert user.email == "testfoo@example.com"
 
 def test_register_validation(testapp, admin_user):
     # Ensure we validate the registration form
     user_register_obj = dict({
-        "username": "testfoo_123",
         "firstname": "Jeff",
         "surname": "Jefferson",
         "password": "test123",
@@ -82,18 +73,15 @@ def test_register_validation(testapp, admin_user):
         "emailRepeat": "testfoo@example.com",
         "gender": "male",
         "dateOfBirth": "1998-03-27",
-        "phone": "90000000", # Fake
         "guardianPhone": "", # Fake
-        "address": "1 fake street",
-        "zip": "1337",
         "event_notice_consent": True,
     })
     for key in user_register_obj.keys():
         new_obj = user_register_obj.copy()
         del new_obj[key]
 
-        missing_username = testapp.post_json('/user/register', new_obj, status=400)
-        assert key in missing_username.text
+        missing_key = testapp.post_json('/user/register', new_obj, status=400)
+        assert key in missing_key.text
     
     # Does it validate that email and password must match?
     not_repeat_pw = testapp.post_json('/user/register', dict({
@@ -117,13 +105,6 @@ def test_register_validation(testapp, admin_user):
     }), status=400).json_body
     assert short_pw["error"] == "Password is too short. Use at least 6 characters"
 
-    # What if the user already exists?
-    existing_user = testapp.post_json('/user/register', dict({
-        **user_register_obj,
-        "username": admin_user.username
-    }), status=400).json_body
-    assert existing_user["error"] == "A user by this username, phone number, or e-mail already exists"
-
     # Do we validate emails?
     email_regex = testapp.post_json('/user/register', dict({
         **user_register_obj,
@@ -131,13 +112,6 @@ def test_register_validation(testapp, admin_user):
         "emailRepeat": "foobar"
     }), status=400).json_body
     assert email_regex["error"] == "You must enter a valid e-mail address"
-
-    # Empty username?
-    empty_username = testapp.post_json('/user/register', dict({
-        **user_register_obj,
-        "username": ""
-    }), status=400).json_body
-    assert empty_username["error"] == "A username is required"
 
     # Empty name?
     empty_name = testapp.post_json('/user/register', dict({

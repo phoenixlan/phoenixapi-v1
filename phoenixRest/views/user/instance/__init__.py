@@ -7,6 +7,7 @@ from pyramid.httpexceptions import (
 from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
 from phoenixRest.models.core.user import Gender, User
+from phoenixRest.models.core.membership_personalia import MembershipPersonalia
 from phoenixRest.models.core.friendship import Friendship
 from phoenixRest.models.core.event import Event
 from phoenixRest.models.core.avatar import Avatar
@@ -72,6 +73,9 @@ class UserInstanceResource(object):
             (Allow, ADMIN(), 'user_list_ticket_transfers'),
             # Who can view payments?
             (Allow, ADMIN(), 'list_payments'),
+            # Admins can get_upsert personalia
+            (Allow, ADMIN(), 'get_member_personalia'),
+            (Allow, ADMIN(), 'upsert_member_personalia'),
 
             # Applications?
             (Allow, ADMIN(), 'get_applications'),
@@ -116,7 +120,10 @@ class UserInstanceResource(object):
                 # Users can delete their own discord mappings
                 (Allow, "%s" % self.userInstance.uuid, 'delete_discord_mapping'),
                 # Users can get their own applications
-                (Allow, "%s" % self.userInstance.uuid, 'get_applications')
+                (Allow, "%s" % self.userInstance.uuid, 'get_applications'),
+                # Users can get and set their own personalia
+                (Allow, "%s" % self.userInstance.uuid, 'get_member_personalia'),
+                (Allow, "%s" % self.userInstance.uuid, 'upsert_member_personalia'),
             ]
         return acl
 
@@ -613,3 +620,31 @@ def get_applications(context, request):
         )) \
         .order_by(Application.created.asc()).all()
     return applications
+
+
+@view_config(context=UserInstanceResource, name='member_personalia', request_method='GET', renderer='json', permission='get_member_personalia')
+def get_member_personalia(context, request):
+    if context.userInstance.membership_personalia is None:
+        request.response.status = 404
+        return {
+            "error": "No personalia"
+        }
+
+    return context.userInstance.membership_personalia
+
+@view_config(context=UserInstanceResource, name='member_personalia', request_method='PUT', renderer='json', permission='upsert_member_personalia')
+@validate(json_body={'address': str, 'postal_code': str, 'country_code': str, 'phone': str})
+def upsert_membership_personalia(context, request):
+    if context.userInstance.membership_personalia is None:
+        personalia = MembershipPersonalia(context.userInstance, request.json["address"], request.json["postal_code"], request.json["country_code"], request.json["phone"])
+        request.db.add(personalia)
+        context.userInstance.membership_personalia = personalia
+    else:
+        context.userInstance.membership_personalia.address = request.json["address"]
+        context.userInstance.membership_personalia.postal_code = request.json["postal_code"]
+        context.userInstance.membership_personalia.country_code = request.json["country_code"]
+        context.userInstance.membership_personalia.phone = request.json["phone"]
+
+    # Flush so the timestamps are updated
+    request.db.flush()
+    return context.userInstance.membership_personalia

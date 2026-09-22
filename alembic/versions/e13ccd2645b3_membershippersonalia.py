@@ -21,6 +21,7 @@ def upgrade():
     op.create_table('membership_personalia',
     sa.Column('user_uuid', sa.UUID(), nullable=False),
     sa.Column('address', sa.Text(), nullable=False),
+    sa.Column('phone', sa.Text(), nullable=False),
     sa.Column('postal_code', sa.Text(), nullable=False),
     sa.Column('country_code', sa.Text(), nullable=False),
     sa.Column('created', sa.DateTime(), nullable=False),
@@ -29,7 +30,11 @@ def upgrade():
     sa.PrimaryKeyConstraint('user_uuid', name=op.f('pk_membership_personalia')),
     sa.UniqueConstraint('user_uuid', name=op.f('uq_membership_personalia_user_uuid'))
     )
+    
+    op.get_bind().execute(sa.text('INSERT INTO membership_personalia (user_uuid, address, phone, postal_code, country_code, created, modified) (SELECT uuid, address, phone, postal_code, country_code, NOW(), NOW() from "user");'))
+
     op.drop_column('user', 'address')
+    op.drop_column('user', 'phone')
     op.drop_column('user', 'country_code')
     op.drop_column('user', 'postal_code')
     # ### end Alembic commands ###
@@ -40,5 +45,6 @@ def downgrade():
     op.add_column('user', sa.Column('postal_code', sa.TEXT(), autoincrement=False, nullable=False))
     op.add_column('user', sa.Column('country_code', sa.TEXT(), autoincrement=False, nullable=False))
     op.add_column('user', sa.Column('address', sa.TEXT(), autoincrement=False, nullable=False))
+    op.add_column('user', sa.Column('phone', sa.TEXT(), autoincrement=False, nullable=False))
     op.drop_table('membership_personalia')
     # ### end Alembic commands ###

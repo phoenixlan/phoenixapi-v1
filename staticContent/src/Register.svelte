@@ -16,8 +16,6 @@
 	var GET_PARAMS = {};
    	location.search.substr(1).split("&").forEach(function(item) {GET_PARAMS[item.split("=")[0]] = decodeURIComponent(item.split("=")[1]) });
 
-	let username="";
-
 	let firstname = "";
 	let surname = "";
 
@@ -29,10 +27,7 @@
 
 	let genderRadio = "male";
 
-	let phone = "";
 	let guardianPhone = "";
-	let address = "";
-	let zip = "";
 
 	let tosAccepted = false;
 
@@ -75,7 +70,6 @@
 		console.log(dateOfBirth);
 
 		const payload = {
-			username,
 			firstname,
 			surname,
 			password,
@@ -84,10 +78,7 @@
 			email,
 			emailRepeat,
 			gender: genderRadio,
-			phone,
 			guardianPhone,
-			address,
-			zip,
 			clientId: GET_PARAMS['client_id'],
 			event_notice_consent: eventNoticeConsented
 		}
@@ -134,28 +125,22 @@
 			<form id="registerForm" on:submit|preventDefault={handleRegister}>
 				<h1>Registrer deg</h1>
 				<Textfield
-					name="username"
-					autocomplete="off"
-					required
-					bind:value={username}
-					label="Brukernavn"
-					message="Ditt brukernavn"
-				/>
-				<Textfield
-					name="firstname"
+					type="email"
+					name="email"
 					autocomplete="on"
 					required
-					bind:value={firstname}
-					label="Fornavn"
-					message="Fornavnet ditt"
+					bind:value={email}
+					label="E-post addresse"
+					message="Din e-post addresse"
 				/>
 				<Textfield
-					name="surname"
+					type="email"
+					name="emailrepeat"
 					autocomplete="on"
 					required
-					bind:value={surname}
-					label="Etternavn"
-					message="Ditt etternavn"
+					bind:value={emailRepeat}
+					label="Gjenta E-post addresse"
+					message="Skriv inn e-post addressen din igjen for å forebygge skriveleif"
 				/>
 				<Textfield
 					type="password"
@@ -176,22 +161,20 @@
 					message="Skriv det samme passordet igjen"
 				/>
 				<Textfield
-					type="email"
-					name="email"
+					name="firstname"
 					autocomplete="on"
 					required
-					bind:value={email}
-					label="E-post addresse"
-					message="Din e-post addresse"
+					bind:value={firstname}
+					label="Fornavn"
+					message="Fornavnet ditt"
 				/>
 				<Textfield
-					type="email"
-					name="emailrepeat"
+					name="surname"
 					autocomplete="on"
 					required
-					bind:value={emailRepeat}
-					label="Gjenta E-post addresse"
-					message="Skriv inn e-post addressen din igjen for å forebygge skriveleif"
+					bind:value={surname}
+					label="Etternavn"
+					message="Ditt etternavn"
 				/>
 				<div class="gender">
 					<Radio bind:group={genderRadio} color="#1976d2" value="male"><span>Mann</span></Radio>
@@ -208,33 +191,9 @@
 						}
 					}
 				/>
-				<Textfield
-					type="tel"
-					name="phone"
-					autocomplete="on"
-					required
-					bind:value={phone}
-					label="Telefonnummeret ditt"
-					message="Ditt telefonnummer, med eller uten landskode foran(+47)"
-				/>
-				<Textfield
-					name="address"
-					autocomplete="on"
-					required
-					bind:value={address}
-					label="Addresse"
-					message="Stedet der du bor"
-				/>
-				<Textfield
-					type="number"
-					min="1"
-					max="9999"
-					name="zip"
-					autocomplete="on"
-					required
-					bind:value={zip}
-					label="Postkode"
-				/>
+	{#if getAge(dateOfBirth) < 18}
+	<p><b>NB: </b>Du er under 18 og må derfor oppgi telefonnummeret til en av dine foresatte. Dette for å ha noen å kontakte dersom noe skulle skje.</p>
+	{/if}
 				<Textfield
 					type="tel"
 					name="guardianPhone"
@@ -245,7 +204,7 @@
 					message="Obligatorisk dersom du er under 18 år"
 				/>
 				<Checkbox bind:checked={tosAccepted}>Jeg godtar brukervilkårene for {metadata["name"]}</Checkbox>
-				<p>Brukervilkår finner du <a href="tos.html" target="_blank">her.</a></p>
+				<p>Brukervilkår, inkludert hvordan vi behandler informasjonen du gir oss, finner du <a href="tos.html" target="_blank">her.</a></p>
 				<Checkbox bind:checked={eventNoticeConsented}>Send meg en e-post med påminnelse om kommende arrangementer</Checkbox>
 			</form>
 
