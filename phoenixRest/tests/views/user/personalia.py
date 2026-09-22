@@ -14,7 +14,6 @@ def test_personalia_flow(testapp, db, jeff_user):
         "address": "foo st.",
         "postal_code": "13",
         "phone": "1337",
-        "country_code": "no",
     }), headers=dict({
         "Authorization": "Bearer " + token
     }), status=200)
@@ -34,7 +33,6 @@ def test_admin_access(testapp, db, jeff_user, admin_user):
         "address": "foo st.",
         "postal_code": "13",
         "phone": "1337",
-        "country_code": "no",
     }), headers=dict({
         "Authorization": "Bearer " + jeff_token
     }), status=200)

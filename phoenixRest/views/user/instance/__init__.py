@@ -633,16 +633,15 @@ def get_member_personalia(context, request):
     return context.userInstance.membership_personalia
 
 @view_config(context=UserInstanceResource, name='member_personalia', request_method='PUT', renderer='json', permission='upsert_member_personalia')
-@validate(json_body={'address': str, 'postal_code': str, 'country_code': str, 'phone': str})
+@validate(json_body={'address': str, 'postal_code': str, 'phone': str})
 def upsert_membership_personalia(context, request):
     if context.userInstance.membership_personalia is None:
-        personalia = MembershipPersonalia(context.userInstance, request.json["address"], request.json["postal_code"], request.json["country_code"], request.json["phone"])
+        personalia = MembershipPersonalia(context.userInstance, request.json["address"], request.json["postal_code"], "no", request.json["phone"])
         request.db.add(personalia)
         context.userInstance.membership_personalia = personalia
     else:
         context.userInstance.membership_personalia.address = request.json["address"]
         context.userInstance.membership_personalia.postal_code = request.json["postal_code"]
-        context.userInstance.membership_personalia.country_code = request.json["country_code"]
         context.userInstance.membership_personalia.phone = request.json["phone"]
 
     # Flush so the timestamps are updated
