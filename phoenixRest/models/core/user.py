@@ -1,4 +1,4 @@
-"""Payment object"""
+"""User"""
 from sqlalchemy import (
     Column,
     DateTime,
@@ -61,10 +61,6 @@ class User(Base):
     phone = Column(Text, nullable=False)
     guardian_phone = Column(Text, nullable=True)
 
-    address = Column(Text, nullable=False)
-    postal_code = Column(Text, nullable=False)
-    country_code = Column(Text, nullable=False, default="no")
-
     tos_level = Column(Integer, nullable=False, default=0)
 
     password = Column(Text, nullable=False)
@@ -75,6 +71,8 @@ class User(Base):
     created = Column(DateTime, nullable=False)
 
     avatar = relationship("Avatar", uselist=False, back_populates="user")
+
+    membership_personalia = relationship("MembershipPersonalia", uselist=False, back_populates="user")
 
     owned_tickets = relationship("Ticket", back_populates="owner", foreign_keys="[Ticket.owner_uuid]")
     purchased_tickets = relationship("Ticket", back_populates="buyer", foreign_keys="[Ticket.buyer_uuid]")
