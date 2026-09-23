@@ -47,8 +47,29 @@ def test_ticket_sale_start_limit(testapp, db, upcoming_event, ticket_types, jeff
         "Authorization": "Bearer " + token
     }), status=400)
 
+def test_payment_requires_membership_personalia(testapp, upcoming_event, membership_ticket_type, admin_user):
+    """Paying for a ticket that grants membership requires membership personalia"""
+    token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
+
+    res = testapp.put_json('/event/%s/store_session' % upcoming_event.uuid, dict({
+        'cart': [
+            {'qty': 1, 'uuid': str(membership_ticket_type.uuid)}
+        ]
+    }), headers=dict({
+        "Authorization": "Bearer " + token
+    }), status=200)
+    store_session = res.json_body['uuid']
+
+    res = testapp.post_json('/payment', dict({
+        'store_session': store_session,
+        'provider': 'vipps'
+    }), headers=dict({
+        "Authorization": "Bearer " + token
+    }), status=400)
+    assert 'membership personalia' in res.json_body['error']
+
 # Test if we can create a payment
-def test_payment_flow_vipps(testapp, upcoming_event, ticket_types, admin_user):
+def test_payment_flow_vipps(testapp, upcoming_event, ticket_types, admin_user, admin_membership_personalia):
     token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
 
     store_session = _create_store_session(testapp, upcoming_event, token)
@@ -129,7 +150,7 @@ def test_payment_flow_vipps(testapp, upcoming_event, ticket_types, admin_user):
     
 
 # Test if we can create a payment
-def test_payment_flow_stripe(testapp, upcoming_event, ticket_types, admin_user):
+def test_payment_flow_stripe(testapp, upcoming_event, ticket_types, admin_user, admin_membership_personalia):
     token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
 
     store_session = _create_store_session(testapp, upcoming_event, token)

@@ -88,7 +88,14 @@ def create_payment(context, request):
         return {
             "error": "The store session has expired. Please create a new order"
         }
-    
+
+    if request.user.membership_personalia is None and \
+            any(entry.ticket_type.grants_membership for entry in store_session.cart_entries):
+        request.response.status = 400
+        return {
+            "error": "You must fill in your membership personalia before buying a ticket that grants membership"
+        }
+
     # Make sure you can't create two payments for the same store session
     existing_payment = request.db.query(Payment).filter(Payment.store_session == store_session).first()
     if existing_payment:

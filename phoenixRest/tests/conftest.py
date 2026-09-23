@@ -373,3 +373,10 @@ def jeff_membership_personalia(db, jeff_user):
     db.add(personalia)
     db.flush()
     return personalia
+
+@pytest.fixture
+def admin_membership_personalia(db, admin_user):
+    personalia = MembershipPersonalia(admin_user, '1. Mann. Co rd', '1395', 'no')
+    db.add(personalia)
+    db.flush()
+    return personalia
