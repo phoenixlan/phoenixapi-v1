@@ -24,7 +24,6 @@ class TicketTypeResource(object):
         # Don't allow anyone to fetch ticket types from here
         # Anyone could use the event-specific endpoint instead.
         (Allow, ADMIN(), 'getAll'),
-        (Allow, ADMIN(), 'create'),
 
         # Authenticated pages
         #(Allow, Authenticated, Authenticated),

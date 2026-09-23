@@ -181,14 +181,39 @@ def create_event(context, request):
 @view_config(context=EventBrandInstanceResource, name='ticket_type', request_method='POST', renderer='json', permission='create_ticket_type')
 @validate(json_body={'name': str, 'price': int, 'refundable': bool, 'grants_admission': bool, 'seatable': bool, 'description': str})
 def create_ticket_type(context, request):
+    # Create an error list
+    error = list()
+
+    name = request.json_body['name'].strip()
+    if len(name) == 0:
+        error.append("name cannot be empty")
+
+    price = request.json_body['price']
+    if price < 0:
+        error.append("price cannot be negative")
+
+    for key in ('requires_membership', 'grants_membership'):
+        if key in request.json_body and type(request.json_body[key]) != bool:
+            error.append("Invalid type of %s (not boolean)" % key)
+
+    if len(error) > 0:
+        request.response.status = 400
+        return {
+            "error": ",".join(error)
+        }
+
     ticket_type = TicketType(
-        request.json_body['name'],
-        request.json_body['price'],
+        name,
+        price,
         request.json_body['description'],
         request.json_body['refundable'],
         request.json_body['seatable'],
         request.json_body['grants_admission']
     )
+    if 'requires_membership' in request.json_body:
+        ticket_type.requires_membership = request.json_body['requires_membership']
+    if 'grants_membership' in request.json_body:
+        ticket_type.grants_membership = request.json_body['grants_membership']
     ticket_type.event_brand = context.eventBrandInstance
     request.db.add(ticket_type)
     request.db.flush()

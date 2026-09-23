@@ -54,6 +54,107 @@ def test_create_ticket_type_for_brand(testapp, event_brand, admin_token):
     assert ticket_type['seatable'] is False
     assert ticket_type['grants_admission'] is True
     assert ticket_type['event_brand_uuid'] == str(event_brand.uuid)
+    assert ticket_type['requires_membership'] is False
+    assert ticket_type['grants_membership'] is True
+
+
+def _ticket_type_payload(name, **overrides):
+    payload = {
+        'name': name,
+        'price': 100,
+        'description': 'Ticket type created by tests',
+        'refundable': True,
+        'seatable': True,
+        'grants_admission': True
+    }
+    payload.update(overrides)
+    return payload
+
+
+def test_create_ticket_type_sets_membership_flags(testapp, event_brand, admin_token):
+    ticket_type = testapp.post_json(
+        '/event_brand/%s/ticket_type' % event_brand.uuid,
+        _ticket_type_payload(
+            'Membership ticket', requires_membership=True,
+            grants_membership=False
+        ),
+        headers={'Authorization': "Bearer " + admin_token},
+        status=200
+    ).json_body
+
+    assert ticket_type['requires_membership'] is True
+    assert ticket_type['grants_membership'] is False
+
+
+def test_create_ticket_type_brand_admin_is_scoped(
+        testapp, event_brand, other_event_brand, brand_admin_user):
+    token, refresh = testapp.auth_get_tokens(
+        brand_admin_user.email, 'sixcharacters'
+    )
+    headers = {'Authorization': "Bearer " + token}
+
+    ticket_type = testapp.post_json(
+        '/event_brand/%s/ticket_type' % event_brand.uuid,
+        _ticket_type_payload('Brand admin ticket'), headers=headers, status=200
+    ).json_body
+    assert ticket_type['event_brand_uuid'] == str(event_brand.uuid)
+
+    testapp.post_json(
+        '/event_brand/%s/ticket_type' % other_event_brand.uuid,
+        _ticket_type_payload('Wrong-brand ticket'), headers=headers, status=403
+    )
+
+
+def test_create_ticket_type_ticket_admin_is_scoped(
+        testapp, event_brand, other_event_brand, ticket_admin_user):
+    token, refresh = testapp.auth_get_tokens(
+        ticket_admin_user.email, 'sixcharacters'
+    )
+    headers = {'Authorization': "Bearer " + token}
+
+    ticket_type = testapp.post_json(
+        '/event_brand/%s/ticket_type' % event_brand.uuid,
+        _ticket_type_payload('Ticket admin ticket'), headers=headers, status=200
+    ).json_body
+    assert ticket_type['event_brand_uuid'] == str(event_brand.uuid)
+
+    testapp.post_json(
+        '/event_brand/%s/ticket_type' % other_event_brand.uuid,
+        _ticket_type_payload('Wrong-brand ticket'), headers=headers, status=403
+    )
+
+
+def test_create_ticket_type_rejects_unprivileged_users(
+        testapp, event_brand, hr_admin_user, adam_user):
+    for user in (hr_admin_user, adam_user):
+        token, refresh = testapp.auth_get_tokens(user.email, 'sixcharacters')
+        testapp.post_json(
+            '/event_brand/%s/ticket_type' % event_brand.uuid,
+            _ticket_type_payload('Forbidden ticket'),
+            headers={'Authorization': "Bearer " + token}, status=403
+        )
+
+    testapp.post_json(
+        '/event_brand/%s/ticket_type' % event_brand.uuid,
+        _ticket_type_payload('Anonymous ticket'), status=403
+    )
+
+
+def test_create_ticket_type_validates_input(testapp, event_brand, admin_token):
+    headers = {'Authorization': "Bearer " + admin_token}
+    url = '/event_brand/%s/ticket_type' % event_brand.uuid
+
+    testapp.post_json(url, _ticket_type_payload('   '), headers=headers, status=400)
+    testapp.post_json(url, _ticket_type_payload('Negative', price=-1), headers=headers, status=400)
+    testapp.post_json(url, _ticket_type_payload('Bool price', price=True), headers=headers, status=400)
+    testapp.post_json(
+        url, _ticket_type_payload('Bad flag', requires_membership='yes'),
+        headers=headers, status=400
+    )
+
+    missing_price = _ticket_type_payload('Missing price')
+    del missing_price['price']
+    testapp.post_json(url, missing_price, headers=headers, status=400)
 
 
 def test_positions_are_listed_only_for_their_event_brand(
