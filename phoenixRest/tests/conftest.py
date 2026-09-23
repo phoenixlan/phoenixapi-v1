@@ -349,6 +349,19 @@ def non_membership_ticket_type(db, ticket_types):
     ticket_type.grants_membership = False
     return ticket_type
 
+@pytest.fixture
+def non_transferable_ticket_type(db, upcoming_event):
+    """A ticket type on the upcoming event's brand that cannot be transferred"""
+    ticket_type = TicketType(
+        'Non-transferable ticket', 100, 'Ticket type that cannot be transferred',
+        True, True, True
+    )
+    ticket_type.transferable = False
+    ticket_type.event_brand = upcoming_event.event_brand
+    db.add(ticket_type)
+    db.flush()
+    return ticket_type
+
 def _create_ticket(db, owner, ticket_type, event):
     ticket = Ticket(owner, None, ticket_type, event)
     db.add(ticket)
@@ -366,6 +379,10 @@ def adam_membership_ticket(db, adam_user, membership_ticket_type, upcoming_event
 @pytest.fixture
 def greg_non_membership_ticket(db, greg_user, non_membership_ticket_type, upcoming_event):
     return _create_ticket(db, greg_user, non_membership_ticket_type, upcoming_event)
+
+@pytest.fixture
+def jeff_non_transferable_ticket(db, jeff_user, non_transferable_ticket_type, upcoming_event):
+    return _create_ticket(db, jeff_user, non_transferable_ticket_type, upcoming_event)
 
 @pytest.fixture
 def jeff_membership_personalia(db, jeff_user):

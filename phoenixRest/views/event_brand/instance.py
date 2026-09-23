@@ -192,7 +192,7 @@ def create_ticket_type(context, request):
     if price < 0:
         error.append("price cannot be negative")
 
-    for key in ('requires_membership', 'grants_membership'):
+    for key in ('requires_membership', 'grants_membership', 'transferable'):
         if key in request.json_body and type(request.json_body[key]) != bool:
             error.append("Invalid type of %s (not boolean)" % key)
 
@@ -214,6 +214,8 @@ def create_ticket_type(context, request):
         ticket_type.requires_membership = request.json_body['requires_membership']
     if 'grants_membership' in request.json_body:
         ticket_type.grants_membership = request.json_body['grants_membership']
+    if 'transferable' in request.json_body:
+        ticket_type.transferable = request.json_body['transferable']
     ticket_type.event_brand = context.eventBrandInstance
     request.db.add(ticket_type)
     request.db.flush()

@@ -134,3 +134,26 @@ def test_ticket_transfer_flow(testapp, upcoming_event, ticket_types, admin_user,
     }), headers=dict({
         "Authorization": "Bearer " + sender_token
     }), status=400)
+
+def test_non_transferable_ticket_cannot_be_transferred(testapp, upcoming_event, jeff_user, adam_user, jeff_non_transferable_ticket):
+    token, refresh = testapp.auth_get_tokens(jeff_user.email, 'sixcharacters')
+
+    # The owner can't transfer a ticket whose ticket type is not transferable
+    testapp.post_json('/ticket/%s/transfer' % jeff_non_transferable_ticket.ticket_id, dict({
+        'user_email': adam_user.email
+    }), headers=dict({
+        "Authorization": "Bearer " + token
+    }), status=400)
+
+    # The owner is unchanged
+    ticket = testapp.get('/ticket/%s' % jeff_non_transferable_ticket.ticket_id, headers=dict({
+        "Authorization": "Bearer " + token
+    }), status=200).json_body
+    assert ticket['owner']['uuid'] == str(jeff_user.uuid)
+    assert ticket['ticket_type']['transferable'] is False
+
+    # No transfer was recorded
+    transfers = testapp.get('/user/%s/ticket_transfers?event_uuid=%s' % (jeff_user.uuid, upcoming_event.uuid), headers=dict({
+        "Authorization": "Bearer " + token,
+    }), status=200).json_body
+    assert len(transfers) == 0

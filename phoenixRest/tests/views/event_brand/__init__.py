@@ -56,6 +56,7 @@ def test_create_ticket_type_for_brand(testapp, event_brand, admin_token):
     assert ticket_type['event_brand_uuid'] == str(event_brand.uuid)
     assert ticket_type['requires_membership'] is False
     assert ticket_type['grants_membership'] is True
+    assert ticket_type['transferable'] is True
 
 
 def _ticket_type_payload(name, **overrides):
@@ -84,6 +85,17 @@ def test_create_ticket_type_sets_membership_flags(testapp, event_brand, admin_to
 
     assert ticket_type['requires_membership'] is True
     assert ticket_type['grants_membership'] is False
+
+
+def test_create_ticket_type_sets_transferable_flag(testapp, event_brand, admin_token):
+    ticket_type = testapp.post_json(
+        '/event_brand/%s/ticket_type' % event_brand.uuid,
+        _ticket_type_payload('Non-transferable ticket', transferable=False),
+        headers={'Authorization': "Bearer " + admin_token},
+        status=200
+    ).json_body
+
+    assert ticket_type['transferable'] is False
 
 
 def test_create_ticket_type_brand_admin_is_scoped(
@@ -149,6 +161,10 @@ def test_create_ticket_type_validates_input(testapp, event_brand, admin_token):
     testapp.post_json(url, _ticket_type_payload('Bool price', price=True), headers=headers, status=400)
     testapp.post_json(
         url, _ticket_type_payload('Bad flag', requires_membership='yes'),
+        headers=headers, status=400
+    )
+    testapp.post_json(
+        url, _ticket_type_payload('Bad transferable', transferable='yes'),
         headers=headers, status=400
     )
 

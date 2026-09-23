@@ -207,6 +207,12 @@ def get_totp(context, request):
 @view_config(context=TicketInstanceResource, name='transfer', request_method='POST', renderer='json', permission='transfer_ticket')
 @validate(json_body={'user_email': str})
 def transfer_ticket(context, request):
+    if not context.ticketInstance.ticket_type.transferable:
+        request.response.status = 400
+        return {
+            'error': "This ticket type cannot be transferred"
+        }
+
     transfer_target = request.db.query(User).filter(User.email == request.json_body['user_email'].lower()).first()
     if transfer_target is None:
         request.response.status = 404

@@ -37,7 +37,9 @@ class TicketType(Base):
 
     requires_membership = Column(Boolean, server_default="false", nullable=False)
     grants_membership = Column(Boolean, server_default="true", nullable=False)
-    
+
+    transferable = Column(Boolean, server_default="true", nullable=False)
+
     description = Column(Text)
     
 
@@ -61,5 +63,6 @@ class TicketType(Base):
             'grants_admission': self.grants_admission,
             'description': self.description,
             'requires_membership': self.requires_membership,
-            'grants_membership': self.grants_membership
+            'grants_membership': self.grants_membership,
+            'transferable': self.transferable
         }
