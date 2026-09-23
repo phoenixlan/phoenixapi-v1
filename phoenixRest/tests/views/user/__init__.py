@@ -108,6 +108,7 @@ def test_modify_user(testapp, admin_user, jeff_user, adam_user):
     # Get a secondary user to test against
     seconadry_testuser = testapp.get_user(secondary_testuser_token)
     seconadry_testuser_email = seconadry_testuser['email']
+    seconadry_testuser_phone = seconadry_testuser['phone']
 
     ### Test to modify user information (Functionality and security test)
     # Attempt to modify a user as an admin (Expects 200)
@@ -116,9 +117,8 @@ def test_modify_user(testapp, admin_user, jeff_user, adam_user):
         'firstname': "Adam Modified",
         'lastname': "Adamson Modified",
         'email': "adam.modified@example.com",
+        'phone': "99999991",
         'guardian_phone': "99999992",
-        'address': "1. Mann. Co rd Mod",
-        'postal_code': "1396",
         'birthdate': "2001-11-19",
         'gender': "female"
     }), headers=dict({
@@ -131,9 +131,8 @@ def test_modify_user(testapp, admin_user, jeff_user, adam_user):
         'firstname': "Adam Modified",
         'lastname': "Adamson Modified",
         'email': "adam.modified@example.com",
+        'phone': "99999991",
         'guardian_phone': "99999992",
-        'address': "1. Mann. Co rd Mod",
-        'postal_code': "1396",
         'birthdate': "2001-11-19",
         'gender': "female"
     }), headers=dict({
@@ -163,16 +162,9 @@ def test_modify_user(testapp, admin_user, jeff_user, adam_user):
         "Authorization": "Bearer " + privileged_token
     }), status=400)
 
-    dependency_address_empty = testapp.patch_json('/user/' + primary_testuser_uuid, dict({
+    dependency_phone_empty = testapp.patch_json('/user/' + primary_testuser_uuid, dict({
         'uuid': primary_testuser_uuid,
-        'address': "",
-    }), headers=dict({
-        "Authorization": "Bearer " + privileged_token
-    }), status=400)
-
-    dependency_postalcode_empty = testapp.patch_json('/user/' + primary_testuser_uuid, dict({
-        'uuid': primary_testuser_uuid,
-        'postal_code': "",
+        'phone': "",
     }), headers=dict({
         "Authorization": "Bearer " + privileged_token
     }), status=400)
@@ -191,10 +183,17 @@ def test_modify_user(testapp, admin_user, jeff_user, adam_user):
         "Authorization": "Bearer " + privileged_token
     }), status=400)
 
-    # Attempt to set username, email and phone which is already taken by a secondary user.
+    # Attempt to set email and phone which is already taken by a secondary user.
     dependency_email_alreadytaken = testapp.patch_json('/user/' + primary_testuser_uuid, dict({
         'uuid': primary_testuser_uuid,
         'email': seconadry_testuser_email,
+    }), headers=dict({
+        "Authorization": "Bearer " + privileged_token
+    }), status=400)
+
+    dependency_phone_alreadytaken = testapp.patch_json('/user/' + primary_testuser_uuid, dict({
+        'uuid': primary_testuser_uuid,
+        'phone': seconadry_testuser_phone,
     }), headers=dict({
         "Authorization": "Bearer " + privileged_token
     }), status=400)

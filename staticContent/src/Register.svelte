@@ -27,6 +27,7 @@
 
 	let genderRadio = "male";
 
+	let phone = "";
 	let guardianPhone = "";
 
 	let tosAccepted = false;
@@ -78,6 +79,7 @@
 			email,
 			emailRepeat,
 			gender: genderRadio,
+			phone,
 			guardianPhone,
 			clientId: GET_PARAMS['client_id'],
 			event_notice_consent: eventNoticeConsented
@@ -190,6 +192,15 @@
 							return date.getYear() < new Date().getYear()
 						}
 					}
+				/>
+				<Textfield
+					type="tel"
+					name="phone"
+					autocomplete="on"
+					required
+					bind:value={phone}
+					label="Telefonnummeret ditt"
+					message="Ditt telefonnummer, med eller uten landskode foran(+47)"
 				/>
 	{#if getAge(dateOfBirth) < 18}
 	<p><b>NB: </b>Du er under 18 og må derfor oppgi telefonnummeret til en av dine foresatte. Dette for å ha noen å kontakte dersom noe skulle skje.</p>

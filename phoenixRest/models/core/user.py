@@ -57,6 +57,7 @@ class User(Base):
     birthdate = Column(Date, nullable=False)
     gender = Column(Enum(Gender), nullable=False)
 
+    phone = Column(Text, nullable=False)
     guardian_phone = Column(Text, nullable=True)
 
     tos_level = Column(Integer, nullable=False, default=0)
@@ -83,7 +84,8 @@ class User(Base):
     consents = relationship("UserConsent", back_populates="user")
 
     def __init__(self, email: str, password: str,
-            firstname: str, lastname: str, birthdate: date, gender: Gender):
+            firstname: str, lastname: str, birthdate: date, gender: Gender,
+            phone: str):
         self.email = email
 
         self.firstname = firstname
@@ -91,6 +93,8 @@ class User(Base):
 
         self.birthdate = birthdate
         self.gender = gender
+
+        self.phone = phone
 
         self.password = argon2.hash(password)
         self.password_type = 1

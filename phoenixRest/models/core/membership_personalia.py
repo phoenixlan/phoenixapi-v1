@@ -40,22 +40,19 @@ class MembershipPersonalia(Base):
     address = Column(Text, nullable=False)
     postal_code = Column(Text, nullable=False)
     country_code = Column(Text, nullable=False, default="no")
-    phone = Column(Text, nullable=False)
 
     created = Column(DateTime, nullable=False, default=datetime.now)
     modified= Column(DateTime, nullable=False, default=datetime.now, onupdate=datetime.now)
 
-    def __init__(self, user: "User", address: str, postal_code: str, phone: str, country_code: str):
+    def __init__(self, user: "User", address: str, postal_code: str, country_code: str):
         self.user = user
         self.address = address
-        self.phone = phone
         self.postal_code = postal_code
 
     def __json__(self, request):
         return {
             'user_uuid': str(self.user_uuid),
             'address': self.address,
-            'phone': self.phone,
 
             'postal_code': self.postal_code,
             'country_code': self.country_code,

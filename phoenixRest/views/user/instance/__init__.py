@@ -74,8 +74,8 @@ class UserInstanceResource(object):
             # Who can view payments?
             (Allow, ADMIN(), 'list_payments'),
             # Admins can get_upsert personalia
-            (Allow, ADMIN(), 'get_member_personalia'),
-            (Allow, ADMIN(), 'upsert_member_personalia'),
+            (Allow, ADMIN(), 'get_membership_personalia'),
+            (Allow, ADMIN(), 'upsert_membership_personalia'),
 
             # Applications?
             (Allow, ADMIN(), 'get_applications'),
@@ -122,8 +122,8 @@ class UserInstanceResource(object):
                 # Users can get their own applications
                 (Allow, "%s" % self.userInstance.uuid, 'get_applications'),
                 # Users can get and set their own personalia
-                (Allow, "%s" % self.userInstance.uuid, 'get_member_personalia'),
-                (Allow, "%s" % self.userInstance.uuid, 'upsert_member_personalia'),
+                (Allow, "%s" % self.userInstance.uuid, 'get_membership_personalia'),
+                (Allow, "%s" % self.userInstance.uuid, 'upsert_membership_personalia'),
             ]
         return acl
 
@@ -173,19 +173,6 @@ def modify_user(context, request):
         if len(lastname) < 1:
             error.append("lastname cannot be empty")
 
-    username = None
-    if 'username' in request.json_body:
-        username = request.json_body['username']
-        if type(username) != str:
-            error.append("invalid type for username (not string)")
-        if len(username) < 1:
-            error.append("username cannot be empty")
-        if request.db.query(User).filter(and_( 
-                User.username == username, 
-                User.uuid != user_uuid
-            )).first():
-            error.append("username is already in use")
-  
     email = None
     if 'email' in request.json_body:
         email = request.json_body['email']
@@ -218,22 +205,6 @@ def modify_user(context, request):
         if type(guardian_phone) != str:
             error.append("invalid type for guardian_phone (not string)")
 
-    address = None
-    if 'address' in request.json_body:
-        address = request.json_body['address']
-        if type(address) != str:
-            error.append("invalid type for address (not string)")
-        if len(address) < 1:
-            error.append("address cannot be empty")
-
-    postal_code = None
-    if 'postal_code' in request.json_body:
-        postal_code = request.json_body['postal_code']
-        if type(postal_code) != str:
-            error.append("invalid type for postal_code (not string)")
-        if len(postal_code) < 1:
-            error.append("postal code cannot be empty")
-  
     birthdate = None
     if 'birthdate' in request.json_body:
         local_birthdate = request.json_body['birthdate']
@@ -274,12 +245,9 @@ def modify_user(context, request):
     # All checks passed, set the variables to the database and return a success message!
     if firstname is not None: context.userInstance.firstname = firstname
     if lastname is not None: context.userInstance.lastname = lastname
-    if username is not None: context.userInstance.username = username
     if email is not None: context.userInstance.email = email
     if phone is not None: context.userInstance.phone = phone
     if guardian_phone is not None: context.userInstance.guardian_phone = guardian_phone
-    if address is not None: context.userInstance.address = address
-    if postal_code is not None: context.userInstance.postal_code = postal_code
     if birthdate is not None: context.userInstance.birthdate = birthdate
     if gender is not None: context.userInstance.gender = gender
     
@@ -622,8 +590,8 @@ def get_applications(context, request):
     return applications
 
 
-@view_config(context=UserInstanceResource, name='member_personalia', request_method='GET', renderer='json', permission='get_member_personalia')
-def get_member_personalia(context, request):
+@view_config(context=UserInstanceResource, name='membership_personalia', request_method='GET', renderer='json', permission='get_membership_personalia')
+def get_membership_personalia(context, request):
     if context.userInstance.membership_personalia is None:
         request.response.status = 404
         return {
@@ -632,17 +600,16 @@ def get_member_personalia(context, request):
 
     return context.userInstance.membership_personalia
 
-@view_config(context=UserInstanceResource, name='member_personalia', request_method='PUT', renderer='json', permission='upsert_member_personalia')
-@validate(json_body={'address': str, 'postal_code': str, 'phone': str})
+@view_config(context=UserInstanceResource, name='membership_personalia', request_method='PUT', renderer='json', permission='upsert_membership_personalia')
+@validate(json_body={'address': str, 'postal_code': str})
 def upsert_membership_personalia(context, request):
     if context.userInstance.membership_personalia is None:
-        personalia = MembershipPersonalia(context.userInstance, request.json["address"], request.json["postal_code"], "no", request.json["phone"])
+        personalia = MembershipPersonalia(context.userInstance, request.json["address"], request.json["postal_code"], "no")
         request.db.add(personalia)
         context.userInstance.membership_personalia = personalia
     else:
         context.userInstance.membership_personalia.address = request.json["address"]
         context.userInstance.membership_personalia.postal_code = request.json["postal_code"]
-        context.userInstance.membership_personalia.phone = request.json["phone"]
 
     # Flush so the timestamps are updated
     request.db.flush()

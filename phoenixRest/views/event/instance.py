@@ -27,7 +27,7 @@ from phoenixRest.views.event.position_mapping import EventPositionMappingResourc
 from phoenixRest.views.event.store_session import EventStoreSessionResource
 from phoenixRest.views.event.ticket import EventTicketResource
 
-from phoenixRest.mappers.user import map_user_with_secret_fields_member_personalia
+from phoenixRest.mappers.user import map_user_with_secret_fields_membership_personalia
 
 from phoenixRest.features.crew_card import generate_badge
 
@@ -126,7 +126,7 @@ def get_new_memberships(context, request):
     users = request.db.query(User).join(Ticket, Ticket.owner_uuid == User.uuid) \
         .join(TicketType, Ticket.ticket_type_uuid==TicketType.uuid) \
         .filter(and_(Ticket.event_uuid == context.eventInstance.uuid, TicketType.grants_membership == True)).all()
-    return [ map_user_with_secret_fields_member_personalia(user, request) for user in users ]
+    return [ map_user_with_secret_fields_membership_personalia(user, request) for user in users ]
 
 @view_config(context=EventInstanceResource, name='ticket_availability', request_method='GET', renderer='json', permission='ticket_availability_get')
 def get_ticket_availability(context, request):

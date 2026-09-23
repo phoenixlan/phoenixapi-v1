@@ -6,11 +6,13 @@ from phoenixRest.tests.test_app import TestApp
 from phoenixRest.models import setup_dbengine, get_tm_session
 from phoenixRest.models.core.event import Event
 from phoenixRest.models.core.user import Gender, User
+from phoenixRest.models.core.membership_personalia import MembershipPersonalia
 from phoenixRest.models.crew.crew import Crew
 from phoenixRest.models.crew.position import Position
 from phoenixRest.models.crew.position_mapping import PositionMapping
 from phoenixRest.models.crew.permission import Permission
 from phoenixRest.models.crew.team import Team
+from phoenixRest.models.tickets.ticket import Ticket
 from phoenixRest.models.tickets.ticket_type import TicketType
 from phoenixRest import main
 
@@ -119,10 +121,10 @@ def testteam(db, testcrew):
     db.flush()
     return team
 
-def _create_user(db, email, firstname, lastname):
+def _create_user(db, email, firstname, lastname, phone):
     user = User(
         email, 'sixcharacters', firstname, lastname,
-        date(1998, 3, 27), Gender.male
+        date(1998, 3, 27), Gender.male, phone
     )
     db.add(user)
     db.flush()
@@ -137,7 +139,7 @@ def _add_crew_position(db, user, testcrew, testteam=None):
     db.flush()
 
 def _create_scoped_permission_user(db, event, permission, firstname, email):
-    user = _create_user(db, email, firstname, 'User')
+    user = _create_user(db, email, firstname, 'User', '99999999')
     position = Position('%s position' % permission, 'Position used by tests')
     position.event_brand = event.event_brand
     db.add(Permission(position, permission, None))
@@ -149,7 +151,7 @@ def _create_scoped_permission_user(db, event, permission, firstname, email):
 def admin_user(db, testcrew):
     user = _create_user(
         db, 'fixture-admin@example.com',
-        'Fixture', 'Admin'
+        'Fixture', 'Admin', '98643254'
     )
     admin_position = db.query(Position).filter(Position.name == 'Superadmin').one()
     db.add(PositionMapping(user, admin_position))
@@ -158,19 +160,19 @@ def admin_user(db, testcrew):
 
 @pytest.fixture
 def greg_user(db, testcrew, testteam):
-    user = _create_user(db, 'greg@example.com', 'Greg', 'Gregsson')
+    user = _create_user(db, 'greg@example.com', 'Greg', 'Gregsson', '99999999')
     _add_crew_position(db, user, testcrew, testteam)
     return user
 
 @pytest.fixture
 def jeff_user(db, testcrew, testteam):
-    user = _create_user(db, 'jeff@example.com', 'Jeff', 'Jefferson')
+    user = _create_user(db, 'jeff@example.com', 'Jeff', 'Jefferson', '99999999')
     _add_crew_position(db, user, testcrew, testteam)
     return user
 
 @pytest.fixture
 def adam_user(db):
-    return _create_user(db, 'adam@example.com', 'Adam', 'Adamson')
+    return _create_user(db, 'adam@example.com', 'Adam', 'Adamson', '99999999')
 
 @pytest.fixture
 def ticket_admin_user(db, upcoming_event):
@@ -194,7 +196,7 @@ def brand_admin_user(db, upcoming_event):
 @pytest.fixture
 def chief_user(db, upcoming_event, testcrew):
     user = _create_user(
-        db, 'chief@example.com', 'Chief', 'User'
+        db, 'chief@example.com', 'Chief', 'User', '99999999'
     )
     position = Position(None, None)
     position.event_brand = upcoming_event.event_brand
@@ -332,5 +334,42 @@ def ticket_types(db, testapp, upcoming_event, admin_token):
         }), headers=dict({
             'Authorization': "Bearer " + admin_token
         }), status=200)
-    
-    
+
+@pytest.fixture
+def membership_ticket_type(db, ticket_types):
+    """A ticket type on the upcoming event that grants membership"""
+    ticket_type = db.query(TicketType).filter(TicketType.name == 'Gratis').one()
+    ticket_type.grants_membership = True
+    return ticket_type
+
+@pytest.fixture
+def non_membership_ticket_type(db, ticket_types):
+    """A ticket type on the upcoming event that does not grant membership"""
+    ticket_type = db.query(TicketType).filter(TicketType.name == 'Multisal').one()
+    ticket_type.grants_membership = False
+    return ticket_type
+
+def _create_ticket(db, owner, ticket_type, event):
+    ticket = Ticket(owner, None, ticket_type, event)
+    db.add(ticket)
+    db.flush()
+    return ticket
+
+@pytest.fixture
+def jeff_membership_ticket(db, jeff_user, membership_ticket_type, upcoming_event):
+    return _create_ticket(db, jeff_user, membership_ticket_type, upcoming_event)
+
+@pytest.fixture
+def adam_membership_ticket(db, adam_user, membership_ticket_type, upcoming_event):
+    return _create_ticket(db, adam_user, membership_ticket_type, upcoming_event)
+
+@pytest.fixture
+def greg_non_membership_ticket(db, greg_user, non_membership_ticket_type, upcoming_event):
+    return _create_ticket(db, greg_user, non_membership_ticket_type, upcoming_event)
+
+@pytest.fixture
+def jeff_membership_personalia(db, jeff_user):
+    personalia = MembershipPersonalia(jeff_user, '1. Mann. Co rd', '1395', 'no')
+    db.add(personalia)
+    db.flush()
+    return personalia

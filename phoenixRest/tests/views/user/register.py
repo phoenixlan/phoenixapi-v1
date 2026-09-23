@@ -34,13 +34,14 @@ def test_smoketest_registration(testapp):
         "emailRepeat": "testfoo@example.com",
         "gender": "male",
         "dateOfBirth": "1998-03-27",
+        "phone": "90000000", # Fake
         "guardianPhone": "", # Over 18, so this should be allowed
         "event_notice_consent": True,
         "clientId": "phoenix-crew-test"
     })
     user_registration_result = testapp.post_json('/user/register', user_register_obj, status=200).json_body
     assert user_registration_result['message'] == "An e-mail has been sent"
-    
+
 def test_registration_uppercase_email(testapp, db):
     # ensure you can register
     user_register_obj = dict({
@@ -52,6 +53,7 @@ def test_registration_uppercase_email(testapp, db):
         "emailRepeat": "TESTFOO@example.com",
         "gender": "male",
         "dateOfBirth": "1998-03-27",
+        "phone": "90000000", # Fake
         "guardianPhone": "", # Over 18, so this should be allowed
         "event_notice_consent": True,
         "clientId": "phoenix-crew-test"
@@ -73,6 +75,7 @@ def test_register_validation(testapp, admin_user):
         "emailRepeat": "testfoo@example.com",
         "gender": "male",
         "dateOfBirth": "1998-03-27",
+        "phone": "90000000", # Fake
         "guardianPhone": "", # Fake
         "event_notice_consent": True,
     })
@@ -104,6 +107,13 @@ def test_register_validation(testapp, admin_user):
         "passwordRepeat": "123"
     }), status=400).json_body
     assert short_pw["error"] == "Password is too short. Use at least 6 characters"
+
+    # What if the user already exists?
+    existing_user = testapp.post_json('/user/register', dict({
+        **user_register_obj,
+        "phone": admin_user.phone
+    }), status=400).json_body
+    assert existing_user["error"] == "A user by this phone number or e-mail already exists"
 
     # Do we validate emails?
     email_regex = testapp.post_json('/user/register', dict({
