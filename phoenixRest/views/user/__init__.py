@@ -83,7 +83,6 @@ def search_users(context, request):
     users = request.db.query(User).filter(or_(
         User.firstname.contains(query),
         User.lastname.contains(query),
-        User.username.contains(query),
         User.email.contains(query)
     )).limit(10).all()
     return [ map_user_simple_with_secret_fields(user, request) for user in users ]
@@ -92,7 +91,7 @@ def search_users(context, request):
 email_regex = re.compile("(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*)@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9]))\.){3}(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9])|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])")
 
 @view_config(context=UserViews, name='register', request_method="POST", renderer='json', permission="register")
-@validate(json_body={'username': str, 'firstname': str, 'surname': str, 'password': str, 'passwordRepeat': str, 'email': str, 'emailRepeat': str, 'gender': str, "dateOfBirth": str, 'phone': str, 'address': str, 'zip': str, 'guardianPhone': str, 'event_notice_consent': bool})
+@validate(json_body={'firstname': str, 'surname': str, 'password': str, 'passwordRepeat': str, 'email': str, 'emailRepeat': str, 'gender': str, "dateOfBirth": str, 'guardianPhone': str, 'event_notice_consent': bool})
 def register_user(context, request):
     if request.json_body["password"] != request.json_body["passwordRepeat"]:
         request.response.status = 400
@@ -112,28 +111,19 @@ def register_user(context, request):
         }
 
     email = request.json_body['email'].lower()
-    username = request.json_body['username']
 
-    existingUsername = request.db.query(User).filter(User.username == username).first()
     existingEmail = request.db.query(User).filter(User.email == email).first()
-    existingPhone = request.db.query(User).filter(User.phone == request.json_body["phone"]).first()
 
-    if existingUsername is not None or existingEmail is not None or existingPhone is not None:
+    if existingEmail is not None:
         request.response.status = 400
         return {
-            "error": "A user by this username, phone number, or e-mail already exists"
+            "error": "A user e-mail already exists"
         }
     
     if email_regex.match(email) is None:
         request.response.status = 400
         return {
             "error": "You must enter a valid e-mail address"
-        }
-
-    if len(username) < 1:
-        request.response.status = 400
-        return {
-            "error": "A username is required"
         }
     
     firstname = request.json_body['firstname']
@@ -174,7 +164,7 @@ def register_user(context, request):
             "error": "Invalid gender"
         }
 
-    user = User(username, email, request.json_body["password"], firstname, surname, birthdate, gender, request.json_body["phone"], request.json_body["address"], request.json_body["zip"])
+    user = User(email, request.json_body["password"], firstname, surname, birthdate, gender)
     if "guardianPhone" in request.json_body and len(request.json_body["guardianPhone"]) > 0:
         user.guardian_phone = request.json_body["guardianPhone"]
     elif calculate_age(birthdate) < 18:

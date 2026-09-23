@@ -119,10 +119,10 @@ def testteam(db, testcrew):
     db.flush()
     return team
 
-def _create_user(db, username, email, firstname, lastname, phone):
+def _create_user(db, email, firstname, lastname):
     user = User(
-        username, email, 'sixcharacters', firstname, lastname,
-        date(1998, 3, 27), Gender.male, phone, '1. Mann. Co rd', '1395'
+        email, 'sixcharacters', firstname, lastname,
+        date(1998, 3, 27), Gender.male
     )
     db.add(user)
     db.flush()
@@ -136,8 +136,8 @@ def _add_crew_position(db, user, testcrew, testteam=None):
     db.add(PositionMapping(user, position))
     db.flush()
 
-def _create_scoped_permission_user(db, event, permission, username, email):
-    user = _create_user(db, username, email, username.title(), 'User', '99999999')
+def _create_scoped_permission_user(db, event, permission, firstname, email):
+    user = _create_user(db, email, firstname, 'User')
     position = Position('%s position' % permission, 'Position used by tests')
     position.event_brand = event.event_brand
     db.add(Permission(position, permission, None))
@@ -148,8 +148,8 @@ def _create_scoped_permission_user(db, event, permission, username, email):
 @pytest.fixture
 def admin_user(db, testcrew):
     user = _create_user(
-        db, 'fixture_admin', 'fixture-admin@example.com',
-        'Fixture', 'Admin', '98643254'
+        db, 'fixture-admin@example.com',
+        'Fixture', 'Admin'
     )
     admin_position = db.query(Position).filter(Position.name == 'Superadmin').one()
     db.add(PositionMapping(user, admin_position))
@@ -158,19 +158,19 @@ def admin_user(db, testcrew):
 
 @pytest.fixture
 def greg_user(db, testcrew, testteam):
-    user = _create_user(db, 'greg', 'greg@example.com', 'Greg', 'Gregsson', '99999999')
+    user = _create_user(db, 'greg@example.com', 'Greg', 'Gregsson')
     _add_crew_position(db, user, testcrew, testteam)
     return user
 
 @pytest.fixture
 def jeff_user(db, testcrew, testteam):
-    user = _create_user(db, 'jeff', 'jeff@example.com', 'Jeff', 'Jefferson', '99999999')
+    user = _create_user(db, 'jeff@example.com', 'Jeff', 'Jefferson')
     _add_crew_position(db, user, testcrew, testteam)
     return user
 
 @pytest.fixture
 def adam_user(db):
-    return _create_user(db, 'adam', 'adam@example.com', 'Adam', 'Adamson', '99999999')
+    return _create_user(db, 'adam@example.com', 'Adam', 'Adamson')
 
 @pytest.fixture
 def ticket_admin_user(db, upcoming_event):
@@ -194,7 +194,7 @@ def brand_admin_user(db, upcoming_event):
 @pytest.fixture
 def chief_user(db, upcoming_event, testcrew):
     user = _create_user(
-        db, 'chief', 'chief@example.com', 'Chief', 'User', '99999999'
+        db, 'chief@example.com', 'Chief', 'User'
     )
     position = Position(None, None)
     position.event_brand = upcoming_event.event_brand

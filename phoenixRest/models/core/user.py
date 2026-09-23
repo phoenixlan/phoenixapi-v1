@@ -1,4 +1,4 @@
-"""Payment object"""
+"""User"""
 from sqlalchemy import (
     Column,
     DateTime,
@@ -50,7 +50,6 @@ class User(Base):
     uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
     
     email = Column(Text, unique=True, nullable=False)
-    username = Column(Text, unique=True, nullable=False)
 
     firstname = Column(Text, nullable=False)
     lastname = Column(Text, nullable=False)
@@ -58,12 +57,7 @@ class User(Base):
     birthdate = Column(Date, nullable=False)
     gender = Column(Enum(Gender), nullable=False)
 
-    phone = Column(Text, nullable=False)
     guardian_phone = Column(Text, nullable=True)
-
-    address = Column(Text, nullable=False)
-    postal_code = Column(Text, nullable=False)
-    country_code = Column(Text, nullable=False, default="no")
 
     tos_level = Column(Integer, nullable=False, default=0)
 
@@ -76,6 +70,8 @@ class User(Base):
 
     avatar = relationship("Avatar", uselist=False, back_populates="user")
 
+    membership_personalia = relationship("MembershipPersonalia", uselist=False, back_populates="user")
+
     owned_tickets = relationship("Ticket", back_populates="owner", foreign_keys="[Ticket.owner_uuid]")
     purchased_tickets = relationship("Ticket", back_populates="buyer", foreign_keys="[Ticket.buyer_uuid]")
     seatable_tickets = relationship("Ticket", back_populates="seater", foreign_keys="[Ticket.seater_uuid]")
@@ -86,22 +82,15 @@ class User(Base):
 
     consents = relationship("UserConsent", back_populates="user")
 
-    def __init__(self, username: str, email: str, password: str,
-            firstname: str, lastname: str, birthdate: date, gender: Gender,
-            phone: str, address: str, postal_code: str):
+    def __init__(self, email: str, password: str,
+            firstname: str, lastname: str, birthdate: date, gender: Gender):
         self.email = email
-        self.username = username
 
         self.firstname = firstname
         self.lastname = lastname
 
         self.birthdate = birthdate
         self.gender = gender
-
-        self.phone = phone
-        self.address = address
-        self.postal_code = postal_code
-
 
         self.password = argon2.hash(password)
         self.password_type = 1
@@ -129,7 +118,6 @@ class User(Base):
     def __json__(self, request):
         return {
             'uuid': str(self.uuid),
-            'username': self.username,
             
             'firstname': self.firstname,
             'lastname': self.lastname,
