@@ -28,6 +28,7 @@ from phoenixRest.models.core import (
     membership_personalia,
     friendship,
     event,
+    event_ticket_type_mapping,
     avatar,
     agenda_entry,
     activation_code,

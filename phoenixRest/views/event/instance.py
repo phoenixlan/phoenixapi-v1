@@ -7,17 +7,16 @@ from pyramid.httpexceptions import (
 )
 from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
-from phoenixRest.models.core.event import Event
+from phoenixRest.models.core.event import Event, validate_ticket_sales_caps
+from phoenixRest.models.core.event_ticket_type_mapping import EventTicketTypeMapping
 from phoenixRest.models.core.agenda_entry import AgendaEntry
-from phoenixRest.models.core.user import User
+from phoenixRest.models.core.user import User, EventTicketTypeMappingActivations
 from phoenixRest.models.crew.application import Application
 from phoenixRest.models.crew.card_order import CardOrder
 from phoenixRest.models.crew.application_crew_mapping import ApplicationCrewMapping
 from phoenixRest.models.crew.position import Position
 from phoenixRest.models.crew.position_mapping import PositionMapping
 from phoenixRest.models.tickets.ticket import Ticket
-from phoenixRest.models.tickets.row import Row
-from phoenixRest.models.tickets.seatmap import Seatmap
 from phoenixRest.models.tickets.ticket_type import TicketType
 
 from phoenixRest.views.event.agenda import EventAgendaResource
@@ -35,7 +34,7 @@ from phoenixRest.roles import ADMIN, BRAND_ADMIN, CHIEF, HR_ADMIN, TICKET_ADMIN
 
 from phoenixRest.utils import validate, validateUuidAndQuery
 
-from sqlalchemy import and_, or_
+from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import joinedload
 
 from datetime import datetime
@@ -60,8 +59,15 @@ class EventInstanceResource(dict):
             (Allow, TICKET_ADMIN(self.eventInstance.event_brand_uuid), 'event_memberships_get'),
             (Allow, HR_ADMIN(self.eventInstance.event_brand_uuid), 'event_memberships_get'),
 
-            (Allow, ADMIN(), 'add_ticket_type'),
-            (Allow, TICKET_ADMIN(self.eventInstance.event_brand_uuid), 'add_ticket_type'),
+            (Allow, ADMIN(), 'ticket_type_mapping_list'),
+            (Allow, BRAND_ADMIN(self.eventInstance.event_brand_uuid), 'ticket_type_mapping_list'),
+            (Allow, TICKET_ADMIN(self.eventInstance.event_brand_uuid), 'ticket_type_mapping_list'),
+
+            (Allow, ADMIN(), 'ticket_type_mapping_create'),
+            (Allow, BRAND_ADMIN(self.eventInstance.event_brand_uuid), 'ticket_type_mapping_create'),
+            (Allow, TICKET_ADMIN(self.eventInstance.event_brand_uuid), 'ticket_type_mapping_create'),
+
+            (Allow, Authenticated, 'unlock_ticket_type'),
 
             (Allow, CHIEF(self.eventInstance.event_brand_uuid), 'applications_get'),
             (Allow, ADMIN(), 'applications_get'),
@@ -85,7 +91,7 @@ class EventInstanceResource(dict):
 
     def __init__(self, request, uuid):
         self.request = request
-        self.eventInstance = request.db.query(Event).filter(Event.uuid == uuid).first()
+        self.eventInstance = validateUuidAndQuery(request, Event, Event.uuid, uuid)
 
         if self.eventInstance is None:
             raise HTTPNotFound("Event not found")
@@ -130,36 +136,150 @@ def get_new_memberships(context, request):
 
 @view_config(context=EventInstanceResource, name='ticket_availability', request_method='GET', renderer='json', permission='ticket_availability_get')
 def get_ticket_availability(context, request):
+    event = context.eventInstance
+
+    # Only report availability for ticket types the requester is allowed to see
+    visible_mappings = request.db.query(EventTicketTypeMapping.uuid) \
+        .filter(EventTicketTypeMapping.event_uuid == event.uuid)
+    if request.authenticated_userid is None:
+        visible_mappings = visible_mappings.filter(EventTicketTypeMapping.access_code == None)
+    else:
+        visible_mappings = visible_mappings.filter(or_(
+            EventTicketTypeMapping.access_code == None,
+            EventTicketTypeMapping.uuid.in_(
+                select(EventTicketTypeMappingActivations.c.event_ticket_type_mapping_uuid) \
+                    .where(EventTicketTypeMappingActivations.c.user_uuid == request.authenticated_userid)
+            )
+        ))
+    visible_mapping_uuids = set(row[0] for row in visible_mappings.all())
+
+    # Precalc the sales by ticket type, as the two next functions depend on it
+    ticket_type_sales = event.get_sales_by_ticket_type(request.db)
+
+    group_availability = event.get_ticket_group_availability(request.db, ticket_type_sales)
+    ticket_type_availability = event.get_ticket_type_availability(request.db, ticket_type_sales, group_availability)
+
     return {
-        'total': max(context.eventInstance.get_total_ticket_availability(request), 0)
+        'ticket_types': [ entry for entry in ticket_type_availability if entry['ticket_type_mapping_uuid'] in visible_mapping_uuids ],
+        'groups': [ { 'group': group, 'remaining': remaining } for group, remaining in group_availability.items() ]
     }
 
-@view_config(name='ticketType', context=EventInstanceResource, request_method='PUT', renderer='json', permission='add_ticket_type')
-@validate(json_body={'ticket_type_uuid': str})
-def add_ticket_type(context, request):
-    ticket_type = request.db.query(TicketType).filter(TicketType.uuid == request.json_body['ticket_type_uuid']).first()
-    if not ticket_type:
-        request.response.status = 404
+@view_config(context=EventInstanceResource, name='ticket_type_mapping', request_method='GET', renderer='json', permission='ticket_type_mapping_list')
+def get_ticket_type_mappings(context, request):
+    return context.eventInstance.ticket_types
+
+@view_config(context=EventInstanceResource, name='ticket_type_mapping', request_method='PUT', renderer='json', permission='ticket_type_mapping_create')
+@validate(json_body={'ticket_type_uuid': str, 'sales_cap_groups': list})
+def create_ticket_type_mapping(context, request):
+    ticket_type = validateUuidAndQuery(request, TicketType, TicketType.uuid, request.json_body['ticket_type_uuid'])
+    if ticket_type is None:
+        request.response.status = 400
         return {
             'error': "Ticket type not found"
         }
-    if ticket_type in context.eventInstance.static_ticket_types:
-        return context.eventInstance
-    context.eventInstance.static_ticket_types.append(ticket_type)
-    return context.eventInstance
+    if ticket_type.event_brand_uuid != context.eventInstance.event_brand_uuid:
+        request.response.status = 400
+        return {
+            'error': "Ticket type belongs to a different event brand"
+        }
+
+    error = list()
+
+    sales_cap = request.json_body.get('sales_cap', None)
+    if sales_cap is not None:
+        if type(sales_cap) != int:
+            error.append("Invalid type of sales_cap (not integer or null)")
+        elif sales_cap < 0:
+            error.append("sales_cap cannot be negative")
+
+    sales_cap_groups = list()
+    for group in request.json_body['sales_cap_groups']:
+        if type(group) != str:
+            error.append("Invalid type of sales_cap_groups entry (not string)")
+            continue
+        group = group.strip()
+        if len(group) == 0:
+            error.append("sales_cap_groups cannot contain an empty group name")
+        elif group in sales_cap_groups:
+            error.append("sales_cap_groups contains %s more than once" % group)
+        else:
+            sales_cap_groups.append(group)
+
+    # A mapping for a ticket type that grants admission must be limited by something, or we could admit an unlimited
+    # amount of people. Other ticket types may be sold without limit
+    if ticket_type.grants_admission and sales_cap is None and len(request.json_body['sales_cap_groups']) == 0:
+        error.append("A ticket type mapping relating to a ticket type that grants admission must either have a sales_cap or belong to at least one sales cap group")
+
+    generate_code = request.json_body.get('generate_code', False)
+    if type(generate_code) != bool:
+        error.append("Invalid type of generate_code (not boolean)")
+
+    if len(error) > 0:
+        request.response.status = 400
+        return {
+            'error': ",".join(error)
+        }
+
+    existing_mapping = request.db.query(EventTicketTypeMapping) \
+        .filter(and_(
+            EventTicketTypeMapping.event_uuid == context.eventInstance.uuid,
+            EventTicketTypeMapping.ticket_type_uuid == ticket_type.uuid
+        )) \
+        .first()
+    if existing_mapping is not None:
+        request.response.status = 400
+        return {
+            'error': "The ticket type is already mapped to this event"
+        }
+
+    mapping = EventTicketTypeMapping(context.eventInstance, ticket_type, sales_cap_groups, generate_code, sales_cap)
+    request.db.add(mapping)
+    request.db.flush()
+    return mapping
+
+@view_config(context=EventInstanceResource, name='unlock_ticket_type', request_method='POST', renderer='json', permission='unlock_ticket_type')
+@validate(json_body={'code': str})
+def unlock_ticket_type(context, request):
+    code = request.json_body['code'].strip()
+    if len(code) == 0:
+        request.response.status = 400
+        return {
+            'error': "code cannot be empty"
+        }
+
+    mapping = request.db.query(EventTicketTypeMapping) \
+        .filter(and_(
+            EventTicketTypeMapping.event_uuid == context.eventInstance.uuid,
+            EventTicketTypeMapping.access_code == code
+        )) \
+        .first()
+    if mapping is None:
+        return {
+            'success': False
+        }
+
+    if mapping not in request.user.event_ticket_type_activations:
+        request.user.event_ticket_type_activations.append(mapping)
+    return {
+        'success': True
+    }
 
 @view_config(context=EventInstanceResource, name='ticketType', request_method='GET', renderer='json', permission='event_ticket_type_get')
 def get_ticket_types(context, request):
-    # Ticket types deduced through rows configured to only allow them
-    row_types = request.db.query(TicketType) \
-        .join(Row, TicketType.uuid == Row.ticket_type_uuid) \
-        .join(Seatmap, Row.seatmap_uuid == Seatmap.uuid) \
-        .join(Event, Event.seatmap_uuid == Seatmap.uuid) \
-        .filter(Event.uuid == context.eventInstance.uuid).all()
-
-    # Ticket types assigned to the event
-    static_types = context.eventInstance.static_ticket_types
-    return list(set(row_types+static_types))
+    # Ticket types with an access code are only shown to users who have unlocked them
+    mappings = request.db.query(EventTicketTypeMapping) \
+        .filter(EventTicketTypeMapping.event_uuid == context.eventInstance.uuid)
+    if request.authenticated_userid is None:
+        mappings = mappings.filter(EventTicketTypeMapping.access_code == None)
+    else:
+        mappings = mappings.filter(or_(
+            EventTicketTypeMapping.access_code == None,
+            EventTicketTypeMapping.uuid.in_(
+                select(EventTicketTypeMappingActivations.c.event_ticket_type_mapping_uuid) \
+                    .where(EventTicketTypeMappingActivations.c.user_uuid == request.authenticated_userid)
+            )
+        ))
+    return [ mapping.ticket_type for mapping in mappings.order_by(EventTicketTypeMapping.created).all() ]
 
 # Get all card orders for specified or current event
 @view_config(name="card_orders", context=EventInstanceResource, request_method="GET", renderer="json", permission="list_card_orders")
@@ -247,11 +367,12 @@ def edit_event(context, request):
             error.append("Failed to update seating_time_delta, invalid type (not integer)")
         update_seating_time_delta = True
 
-    update_max_participants = False
-    if 'max_participants' in request.json_body:
-        if type(request.json_body['max_participants']) != int:
-            error.append("Failed to update max_participants, invalid type (not integer)")
-        update_max_participants = True
+    update_ticket_sales_caps = False
+    if 'ticket_sales_caps' in request.json_body:
+        ticket_sales_caps_error = validate_ticket_sales_caps(request.json_body['ticket_sales_caps'])
+        if ticket_sales_caps_error is not None:
+            error.append("Failed to update ticket_sales_caps, %s" % ticket_sales_caps_error)
+        update_ticket_sales_caps = True
 
     update_participant_age_limit_inclusive = False
     if 'participant_age_limit_inclusive' in request.json_body:
@@ -318,8 +439,8 @@ def edit_event(context, request):
     if update_seating_time_delta is True:
         context.eventInstance.seating_time_delta = request.json_body['seating_time_delta']
     
-    if update_max_participants is True:
-        context.eventInstance.max_participants = request.json_body['max_participants']
+    if update_ticket_sales_caps is True:
+        context.eventInstance.ticket_sales_caps = request.json_body['ticket_sales_caps']
     
     if update_participant_age_limit_inclusive is True:
         context.eventInstance.participant_age_limit_inclusive = request.json_body['participant_age_limit_inclusive']
