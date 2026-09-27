@@ -354,6 +354,13 @@ def non_membership_ticket_type(db, ticket_types):
     return ticket_type
 
 @pytest.fixture
+def free_ticket_type(db, ticket_types):
+    """A ticket type on the upcoming event that costs nothing and does not grant membership"""
+    ticket_type = db.query(TicketType).filter(TicketType.name == 'Gratis').one()
+    ticket_type.grants_membership = False
+    return ticket_type
+
+@pytest.fixture
 def non_transferable_ticket_type(db, upcoming_event):
     """A ticket type on the upcoming event's brand that cannot be transferred"""
     ticket_type = TicketType(

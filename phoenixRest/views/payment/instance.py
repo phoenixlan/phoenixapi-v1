@@ -12,8 +12,11 @@ from phoenixRest.roles import ADMIN, TICKET_ADMIN
 
 from phoenixRest.features.payment.vipps import initialize_vipps_payment
 from phoenixRest.features.payment.stripe import initialize_stripe_payment
+from phoenixRest.features.payment import mint_tickets
 
 from sqlalchemy.orm import joinedload
+
+from datetime import datetime
 
 import logging
 log = logging.getLogger(__name__)
@@ -77,6 +80,28 @@ def initiate_payment(context, request):
         client_secret = initialize_stripe_payment(request, context.paymentInstance)
         request.db.flush()
         return {'client_secret': client_secret}
+    elif context.paymentInstance.provider == PaymentProvider.free:
+        store_session = context.paymentInstance.store_session
+        if store_session is None or datetime.now() > store_session.expires:
+            request.response.status = 400
+            return {
+                "error": "The store session has expired. Please create a new order"
+            }
+
+        if context.paymentInstance.price > 0 or store_session.get_total() > 0:
+            log.error("User %s (%s) tried to get non-free tickets for free: %s" % (
+                request.user.uuid,
+                request.user.email,
+                ", ".join(entry.ticket_type.name for entry in store_session.cart_entries)
+            ))
+            request.response.status = 400
+            return {
+                "error": "This cart is not free"
+            }
+
+        # Nothing to pay - mint the tickets right away
+        mint_tickets(request, context.paymentInstance)
+        return context.paymentInstance
     else:
         request.response.status = 400
         return {

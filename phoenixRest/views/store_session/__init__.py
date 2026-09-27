@@ -7,6 +7,8 @@ from phoenixRest.resource import resource
 
 from phoenixRest.roles import ADMIN
 
+from phoenixRest.views.store_session.instance import StoreSessionInstanceResource
+
 from datetime import datetime
 
 import logging
@@ -23,6 +25,14 @@ class StoreSessionResource(object):
         #(Allow, Authenticated, Authenticated),
         #(Deny, Everyone, Authenticated),
     ]
+
+    def __getitem__(self, key):
+        """Traverse to a specific store session"""
+        node = StoreSessionInstanceResource(self.request, key)
+        node.__parent__ = self
+        node.__name__ = key
+        return node
+
     def __init__(self, request):
         self.request = request
 

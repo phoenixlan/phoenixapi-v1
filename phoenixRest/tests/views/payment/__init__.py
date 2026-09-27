@@ -60,8 +60,7 @@ def test_payment_requires_membership_personalia(testapp, upcoming_event, members
     }), status=200)
     store_session = res.json_body['uuid']
 
-    res = testapp.post_json('/payment', dict({
-        'store_session': store_session,
+    res = testapp.post_json('/store_session/%s/payment' % store_session, dict({
         'provider': 'vipps'
     }), headers=dict({
         "Authorization": "Bearer " + token
@@ -74,8 +73,7 @@ def test_payment_flow_vipps(testapp, upcoming_event, ticket_types, admin_user, a
 
     store_session = _create_store_session(testapp, upcoming_event, token)
     # Create a payment
-    res = testapp.post_json('/payment', dict({
-        'store_session': store_session,
+    res = testapp.post_json('/store_session/%s/payment' % store_session, dict({
         'provider': 'vipps'
     }), headers=dict({
         "Authorization": "Bearer " + token
@@ -155,8 +153,7 @@ def test_payment_flow_stripe(testapp, upcoming_event, ticket_types, admin_user, 
 
     store_session = _create_store_session(testapp, upcoming_event, token)
     # Create a payment
-    res = testapp.post_json('/payment', dict({
-        'store_session': store_session,
+    res = testapp.post_json('/store_session/%s/payment' % store_session, dict({
         'provider': 'stripe'
     }), headers=dict({
         "Authorization": "Bearer " + token

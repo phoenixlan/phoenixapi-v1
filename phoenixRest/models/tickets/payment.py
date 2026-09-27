@@ -26,6 +26,7 @@ import uuid
 class PaymentProvider(enum.Enum):
     vipps = 1
     stripe = 2
+    free = 3
 
 class PaymentState(enum.Enum):
     created = 1

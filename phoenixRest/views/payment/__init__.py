@@ -8,18 +8,13 @@ from pyramid.httpexceptions import (
 from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
 
-from phoenixRest.models.tickets.payment import Payment, PaymentProvider
-from phoenixRest.models.tickets.store_session import StoreSession
-from phoenixRest.models.core.event import get_current_event
+from phoenixRest.models.tickets.payment import Payment
 
-from phoenixRest.utils import validate
 from phoenixRest.resource import resource
 
 from phoenixRest.roles import ADMIN
 
 from phoenixRest.views.payment.instance import PaymentInstanceResource
-
-from datetime import datetime
 
 import logging
 log = logging.getLogger(__name__)
@@ -27,7 +22,6 @@ log = logging.getLogger(__name__)
 @resource(name='payment')
 class PaymentResource(object):
     __acl__ = [
-        (Allow, Authenticated, 'create'),
         (Allow, ADMIN(), 'fetch_all'),
 
         # Authenticated pages
@@ -50,64 +44,3 @@ class PaymentResource(object):
 def get_all_payments(request):
     # Returns all payments
     return request.db.query(Payment).order_by(Payment.created).all()
-
-@view_config(context=PaymentResource, name='', request_method='POST', renderer='json', permission='create')
-@validate(json_body={'store_session': str, 'provider': str})
-def create_payment(context, request):
-    # Validate provider
-    chosen_provider = PaymentProvider[request.json_body['provider']]
-    if chosen_provider is None:
-        request.response.status = 400
-        return {
-            "error": "Invalid payment provider"
-        }
-
-    if chosen_provider == PaymentProvider.vipps and 'vipps' not in request.feature_flags:
-        request.response.status = 400
-        return {
-            "error": "Vipps payments are not enabled"
-        }
-
-    if chosen_provider == PaymentProvider.stripe and 'stripe' not in request.feature_flags:
-        request.response.status = 400
-        return {
-            "error": "Stripe payments are not enabled"
-        }
-
-    # Store session
-    store_session = request.db.query(StoreSession).filter(StoreSession.uuid == request.json_body['store_session']).first()
-
-    if not store_session or store_session.user != request.user:
-        request.response.status = 404
-        return {
-            "error": "Store session not found"
-        }
-    
-    if datetime.now() > store_session.expires:
-        request.response.status = 400
-        return {
-            "error": "The store session has expired. Please create a new order"
-        }
-
-    if request.user.membership_personalia is None and \
-            any(entry.ticket_type.grants_membership for entry in store_session.cart_entries):
-        request.response.status = 400
-        return {
-            "error": "You must fill in your membership personalia before buying a ticket that grants membership"
-        }
-
-    # Make sure you can't create two payments for the same store session
-    existing_payment = request.db.query(Payment).filter(Payment.store_session == store_session).first()
-    if existing_payment:
-        request.response.status = 400
-        return {
-            "error": "You have already created a payment for this card. Please finish it!"
-        }
-
-    payment = Payment(request.user, chosen_provider, store_session.get_total(), store_session.event)
-    payment.store_session = store_session
-
-    request.db.add(payment)
-    request.db.flush()
-
-    return payment
