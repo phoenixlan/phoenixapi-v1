@@ -7,7 +7,7 @@ from pyramid.httpexceptions import (
 from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
 from phoenixRest.models.core.event_brand import EventBrand
-from phoenixRest.models.core.event import Event, get_current_event
+from phoenixRest.models.core.event import Event, get_current_event, validate_ticket_sales_caps
 from phoenixRest.models.crew.position import Position
 from phoenixRest.models.crew.crew import Crew
 from phoenixRest.models.tickets.seatmap import Seatmap
@@ -72,7 +72,7 @@ def get_active_event(context, request):
     return get_current_event(request.db, context.eventBrandInstance)
 
 @view_config(context=EventBrandInstanceResource, name='event', request_method='PUT', renderer='json', permission='create_event')
-@validate(json_body={'booking_time': int, 'priority_seating_time_delta': int, 'seating_time_delta': int, 'start_time': int, 'end_time': int, 'name': str, 'max_participants': int})
+@validate(json_body={'booking_time': int, 'priority_seating_time_delta': int, 'seating_time_delta': int, 'start_time': int, 'end_time': int, 'name': str})
 def create_event(context, request):
     # Create an error list
     error = list()
@@ -111,11 +111,13 @@ def create_event(context, request):
         if type(seating_time_delta) != int:
             error.append("Invalid type of seating_time_delta (not integer)")
 
-    if request.json_body['max_participants'] is not None:
-        max_participants = request.json_body['max_participants']
-        if type(max_participants) != int:
-            error.append("Invalid type of max_participants (not integer)")
-            
+    ticket_sales_caps = dict()
+    if 'ticket_sales_caps' in request.json_body:
+        ticket_sales_caps = request.json_body['ticket_sales_caps']
+        ticket_sales_caps_error = validate_ticket_sales_caps(ticket_sales_caps)
+        if ticket_sales_caps_error is not None:
+            error.append(ticket_sales_caps_error)
+
     if request.json_body['priority_seating_time_delta'] is not None:
         priority_seating_time_delta = request.json_body['priority_seating_time_delta']
         if type(priority_seating_time_delta) != int:
@@ -164,7 +166,7 @@ def create_event(context, request):
         booking_time = booking_time,
         priority_seating_time_delta=priority_seating_time_delta,
         seating_time_delta=seating_time_delta,
-        max_participants=max_participants,
+        ticket_sales_caps=ticket_sales_caps,
         participant_age_limit_inclusive=participant_age_limit_inclusive,
         crew_age_limit_inclusive=crew_age_limit_inclusive,
         theme=theme,

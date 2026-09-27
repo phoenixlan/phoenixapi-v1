@@ -1,3 +1,5 @@
+from phoenixRest.models.tickets.ticket_type import TicketType
+
 from datetime import datetime, timedelta
 
 def _event_payload(name):
@@ -9,7 +11,7 @@ def _event_payload(name):
         'booking_time': int((start_time - timedelta(days=30)).timestamp()),
         'priority_seating_time_delta': 1800,
         'seating_time_delta': 3600,
-        'max_participants': 500
+        'ticket_sales_caps': {'all': 500, 'floor': 200}
     }
 
 
@@ -24,12 +26,57 @@ def test_create_event_for_brand_as_admin(testapp, event_brand, admin_token):
 
     assert event['name'] == 'Admin-created event'
     assert event['event_brand_uuid'] == str(event_brand.uuid)
-    assert event['max_participants'] == 500
+    assert event['ticket_sales_caps'] == {'all': 500, 'floor': 200}
     assert event['start_time'] == payload['start_time']
     assert event['end_time'] == payload['end_time']
     assert event['booking_time'] == payload['booking_time']
     assert event['priority_seating_time_delta'] == 1800
     assert event['seating_time_delta'] == 3600
+
+
+INVALID_TICKET_SALES_CAPS = [
+    ([], "Invalid type of ticket_sales_caps (not object)"),
+    ({'all': "500"}, "Invalid type of ticket_sales_caps value for group all (not integer)"),
+    ({'all': True}, "Invalid type of ticket_sales_caps value for group all (not integer)"),
+    ({'all': None}, "Invalid type of ticket_sales_caps value for group all (not integer)"),
+    ({'all': -1}, "ticket_sales_caps value for group all cannot be negative"),
+    ({' ': 5}, "ticket_sales_caps cannot contain an empty group name"),
+]
+
+
+def test_create_event_validates_ticket_sales_caps(testapp, event_brand, admin_token):
+    for ticket_sales_caps, error in INVALID_TICKET_SALES_CAPS:
+        payload = _event_payload('Invalid event')
+        payload['ticket_sales_caps'] = ticket_sales_caps
+        res = testapp.put_json(
+            '/event_brand/%s/event' % event_brand.uuid,
+            payload,
+            headers={'Authorization': "Bearer " + admin_token},
+            status=400
+        )
+        assert res.json_body['error'] == error
+
+    # ticket_sales_caps is optional, and no caps are configured by default
+    payload = _event_payload('Uncapped event')
+    del payload['ticket_sales_caps']
+    event = testapp.put_json(
+        '/event_brand/%s/event' % event_brand.uuid,
+        payload,
+        headers={'Authorization': "Bearer " + admin_token},
+        status=200
+    ).json_body
+    assert event['ticket_sales_caps'] == {}
+
+
+def test_edit_event_validates_ticket_sales_caps(testapp, upcoming_event, admin_token):
+    for ticket_sales_caps, error in INVALID_TICKET_SALES_CAPS:
+        res = testapp.patch_json('/event/%s' % upcoming_event.uuid, {
+            'ticket_sales_caps': ticket_sales_caps
+        }, headers={'Authorization': "Bearer " + admin_token}, status=400)
+        assert res.json_body['data'] == ["Failed to update ticket_sales_caps, %s" % error]
+
+    event = testapp.get('/event/%s' % upcoming_event.uuid, status=200).json_body
+    assert event['ticket_sales_caps'] == {}
 
 
 def test_create_event_brand_admin_is_scoped(
@@ -62,7 +109,7 @@ def test_create_event_rejects_permissionless_user(
 
 
 # Get ticket types for an event(we will use the current one)
-def test_get_ticket_types(testapp, upcoming_event, admin_user):
+def test_get_ticket_types(db, testapp, upcoming_event, admin_user):
     token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
 
     # Ensure there are ticket types. By default there aren't
@@ -77,9 +124,12 @@ def test_get_ticket_types(testapp, upcoming_event, admin_user):
         "Authorization": "Bearer " + token
     }), status=200).json_body
 
-    # Add a ticket type
-    testapp.put_json('/event/%s/ticketType' % upcoming_event.uuid, dict({
-        'ticket_type_uuid': ticket_types[0]['uuid']
+    # Move the ticket type to the event's brand so it can be mapped, then map it
+    ticket_type = db.query(TicketType).filter(TicketType.uuid == ticket_types[0]['uuid']).one()
+    ticket_type.event_brand = upcoming_event.event_brand
+    testapp.put_json('/event/%s/ticket_type_mapping' % upcoming_event.uuid, dict({
+        'ticket_type_uuid': ticket_types[0]['uuid'],
+        'sales_cap_groups': ['floor']
     }), headers=dict({
         "Authorization": "Bearer " + token
     }), status=200)
@@ -122,7 +172,7 @@ def test_edit_event(testapp, upcoming_event, admin_user, jeff_user):
         'booking_time': 1893452400,
         'priority_seating_time_delta': 200,
 	    'seating_time_delta': 200,
-	    'max_participants': 200,
+	    'ticket_sales_caps': {'all': 200},
 	    'participant_age_limit_inclusive': 20,
 	    'crew_age_limit_inclusive': 20,
 	    'theme': "Edit theme as admin",
@@ -141,7 +191,7 @@ def test_edit_event(testapp, upcoming_event, admin_user, jeff_user):
         'booking_time': 1893452403,
         'priority_seating_time_delta': 403,
 	    'seating_time_delta': 403,
-	    'max_participants': 403,
+	    'ticket_sales_caps': {'all': 403},
 	    'participant_age_limit_inclusive': 40,
 	    'crew_age_limit_inclusive': 40,
 	    'theme': "Edit theme as user",
@@ -159,7 +209,7 @@ def test_edit_event(testapp, upcoming_event, admin_user, jeff_user):
     assert privileged_entry.json_body['data']['booking_time'] == 1893452400
     assert privileged_entry.json_body['data']['priority_seating_time_delta'] == 200
     assert privileged_entry.json_body['data']['seating_time_delta'] == 200
-    assert privileged_entry.json_body['data']['max_participants'] == 200
+    assert privileged_entry.json_body['data']['ticket_sales_caps'] == {'all': 200}
     assert privileged_entry.json_body['data']['participant_age_limit_inclusive'] == 20
     assert privileged_entry.json_body['data']['crew_age_limit_inclusive'] == 20
     assert privileged_entry.json_body['data']['theme'] == "Edit theme as admin"

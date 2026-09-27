@@ -187,8 +187,10 @@ def test_ticket_seating_non_current_event(testapp, db, earlier_upcoming_event, l
     }), status=200).json_body
 
     for ticket_type in all_ticket_types:
-        testapp.put_json('/event/%s/ticketType' % earlier_event.uuid, dict({
-            'ticket_type_uuid': ticket_type['uuid']
+        testapp.put_json('/event/%s/ticket_type_mapping' % earlier_event.uuid, dict({
+            'ticket_type_uuid': ticket_type['uuid'],
+            'sales_cap_groups': [],
+            'sales_cap': 400
         }), headers=dict({
             'Authorization': "Bearer " + token
         }), status=200)

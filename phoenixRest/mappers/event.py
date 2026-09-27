@@ -9,7 +9,7 @@ def map_event_simple(event):
         'start_time': int(event.start_time.timestamp()),
         'end_time': int(event.end_time.timestamp()),
         'theme': event.theme,
-        'max_participants': event.max_participants,
+        'ticket_sales_caps': event.ticket_sales_caps,
         'cancellation_reason': event.cancellation_reason,
         'seatmap_uuid': event.seatmap_uuid
     }

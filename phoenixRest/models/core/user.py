@@ -45,6 +45,12 @@ def calculate_age(dob):
             years -= 1
         return years
 
+# Stores what "secret" ticket types a user has access to
+EventTicketTypeMappingActivations = Table('user_event_ticket_type_activations', Base.metadata, 
+    Column('user_uuid', UUID(as_uuid=True), ForeignKey('user.uuid')),
+    Column('event_ticket_type_mapping_uuid', UUID(as_uuid=True), ForeignKey('event_ticket_type_mapping.uuid'))
+)
+
 class User(Base):
     __tablename__ = "user"
     uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
@@ -82,6 +88,8 @@ class User(Base):
     discord_mapping = relationship("DiscordMapping", uselist=False, back_populates="user")
 
     consents = relationship("UserConsent", back_populates="user")
+
+    event_ticket_type_activations = relationship("EventTicketTypeMapping", secondary=EventTicketTypeMappingActivations)
 
     def __init__(self, email: str, password: str,
             firstname: str, lastname: str, birthdate: date, gender: Gender,

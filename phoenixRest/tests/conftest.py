@@ -227,7 +227,7 @@ def upcoming_event(db, event_brand):
     event_end = datetime.now() + timedelta(days=65)
     event_booking = datetime.now() + timedelta(days=30)
 
-    e = Event("Test event", event_start, event_end, event_booking, 3600, 1800, 400, None, None, None, None, None, event_brand)
+    e = Event("Test event", event_start, event_end, event_booking, 3600, 1800, {}, None, None, None, None, None, event_brand)
     db.add(e)
     db.flush()
     return e
@@ -241,7 +241,7 @@ def earlier_upcoming_event(db, event_brand):
     event_end = datetime.now() + timedelta(days=22)
     event_booking = datetime.now() + timedelta(days=2)
 
-    e = Event("Earlier event", event_start, event_end, event_booking, 3600, 30, 400, None, None, None, None, None, event_brand)
+    e = Event("Earlier event", event_start, event_end, event_booking, 3600, 30, {}, None, None, None, None, None, event_brand)
     db.add(e)
     db.flush()
     return e
@@ -254,7 +254,7 @@ def later_upcoming_event(db, event_brand):
     event_end = datetime.now() + timedelta(days=303)
     event_booking = datetime.now() + timedelta(days=250)
 
-    e = Event("Later event", event_start, event_end, event_booking, 3600, 30, 400, None, None, None, None, None, event_brand)
+    e = Event("Later event", event_start, event_end, event_booking, 3600, 30, {}, None, None, None, None, None, event_brand)
     db.add(e)
     db.flush()
     return e
@@ -267,7 +267,7 @@ def previous_event(db, event_brand):
     event_end = datetime.now() - timedelta(days=62)
     event_booking = datetime.now() - timedelta(days=95)
 
-    e = Event("Previous event", event_start, event_end, event_booking, 3600, 1800, 400, None, None, None, None, None, event_brand)
+    e = Event("Previous event", event_start, event_end, event_booking, 3600, 1800, {}, None, None, None, None, None, event_brand)
     db.add(e)
     db.flush()
     return e
@@ -278,7 +278,7 @@ def other_upcoming_event(db, other_event_brand):
     event_end = datetime.now() + timedelta(days=65)
     event_booking = datetime.now() + timedelta(days=30)
 
-    event = Event("Other upcoming event", event_start, event_end, event_booking, 3600, 1800, 400, None, None, None, None, None, other_event_brand)
+    event = Event("Other upcoming event", event_start, event_end, event_booking, 3600, 1800, {}, None, None, None, None, None, other_event_brand)
     db.add(event)
     db.flush()
     return event
@@ -291,7 +291,7 @@ def ticketsale_ongoing_event(db, event_brand):
     event_end = datetime.now() + timedelta(days=13)
     event_booking = datetime.now()
 
-    e = Event("Test event(Ticket sale ongoing)", event_start, event_end, event_booking, 3600, 1800, 400, None, None, None, None, None, event_brand)
+    e = Event("Test event(Ticket sale ongoing)", event_start, event_end, event_booking, 3600, 1800, {}, None, None, None, None, None, event_brand)
     db.add(e)
     db.flush()
     return e
@@ -309,8 +309,10 @@ def ongoing_ticket_types(db, testapp, ticketsale_ongoing_event, admin_token):
             TicketType.uuid == ticket_type['uuid']
         ).one()
         ticket_type_model.event_brand = ticketsale_ongoing_event.event_brand
-        testapp.put_json('/event/%s/ticketType' % ticketsale_ongoing_event.uuid, dict({
-            'ticket_type_uuid': ticket_type['uuid']
+        testapp.put_json('/event/%s/ticket_type_mapping' % ticketsale_ongoing_event.uuid, dict({
+            'ticket_type_uuid': ticket_type['uuid'],
+            'sales_cap_groups': [],
+            'sales_cap': 400
         }), headers=dict({
             'Authorization': "Bearer " + admin_token
         }), status=200)
@@ -329,8 +331,10 @@ def ticket_types(db, testapp, upcoming_event, admin_token):
             TicketType.uuid == ticket_type['uuid']
         ).one()
         ticket_type_model.event_brand = upcoming_event.event_brand
-        testapp.put_json('/event/%s/ticketType' % upcoming_event.uuid, dict({
-            'ticket_type_uuid': ticket_type['uuid']
+        testapp.put_json('/event/%s/ticket_type_mapping' % upcoming_event.uuid, dict({
+            'ticket_type_uuid': ticket_type['uuid'],
+            'sales_cap_groups': [],
+            'sales_cap': 400
         }), headers=dict({
             'Authorization': "Bearer " + admin_token
         }), status=200)
