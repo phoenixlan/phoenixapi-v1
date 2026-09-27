@@ -146,8 +146,9 @@ def create_store_session(context, request):
             "error": "You can only buy %s tickets at a time" % max_purchase_amt
         }
 
-    # An admission ticket type that no cap applies to could be sold without limit. This should be impossible
-    # to configure through the API, so it is our fault if it happens
+    # An admission ticket type that no cap applies to could be sold without limit. This is very hard but possible to
+    # to configure through the API. The crew page has a linter that helpfully warns of such a condition, but just in case
+    # we just stop the ticket sale completely.
     for mapping in event.ticket_types:
         if mapping.ticket_type_uuid in cart and \
                 mapping.ticket_type.grants_admission and \
@@ -156,7 +157,7 @@ def create_store_session(context, request):
             log.error("Ticket type mapping %s grants admission, but has no sales cap and belongs to no sales cap group" % mapping.uuid)
             request.response.status = 500
             return {
-                "error": "Sorry! We configured it wrong"
+                "error": "Sorry! The event is misconfigured, and we can't let you buy this combination of tickets. Please contact support and tell them what ticket(s) you were trying to buy"
             }
 
     # Precalc the sales by ticket type, as the two next functions depend on it
