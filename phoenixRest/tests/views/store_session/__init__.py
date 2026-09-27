@@ -1,3 +1,5 @@
+from phoenixRest.models.tickets.store_session import StoreSession
+
 # Test if we can reserve a store session
 def test_create_store_session(testapp, upcoming_event, ticket_types, admin_user):
     token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
@@ -30,6 +32,47 @@ def test_store_session_rejects_ticket_type_from_other_brand(
 
     assert response.json_body['error'] == \
         'Ticket type belongs to a different event brand'
+
+def test_get_active_store_sessions_for_event(
+        testapp, db, upcoming_event, other_upcoming_event, admin_token, jeff_user):
+    active = StoreSession(jeff_user, 3600, upcoming_event)
+    # Expired sessions and sessions for other events are left out
+    db.add_all([
+        active,
+        StoreSession(jeff_user, -3600, upcoming_event),
+        StoreSession(jeff_user, 3600, other_upcoming_event)
+    ])
+    db.flush()
+
+    res = testapp.get('/event/%s/store_session/active' % upcoming_event.uuid, headers=dict({
+        "Authorization": "Bearer " + admin_token
+    }), status=200)
+    assert [session['uuid'] for session in res.json_body] == [str(active.uuid)]
+
+def test_get_active_store_sessions_as_ticket_admin(testapp, db, upcoming_event, ticket_admin_user, jeff_user):
+    store_session = StoreSession(jeff_user, 3600, upcoming_event)
+    db.add(store_session)
+    db.flush()
+    token, refresh = testapp.auth_get_tokens(ticket_admin_user.email, 'sixcharacters')
+
+    res = testapp.get('/event/%s/store_session/active' % upcoming_event.uuid, headers=dict({
+        "Authorization": "Bearer " + token
+    }), status=200)
+    assert [session['uuid'] for session in res.json_body] == [str(store_session.uuid)]
+
+def test_get_active_store_sessions_as_other_brand_ticket_admin(testapp, other_upcoming_event, ticket_admin_user):
+    token, refresh = testapp.auth_get_tokens(ticket_admin_user.email, 'sixcharacters')
+
+    testapp.get('/event/%s/store_session/active' % other_upcoming_event.uuid, headers=dict({
+        "Authorization": "Bearer " + token
+    }), status=403)
+
+def test_get_active_store_sessions_as_regular_user(testapp, upcoming_event, jeff_user):
+    token, refresh = testapp.auth_get_tokens(jeff_user.email, 'sixcharacters')
+
+    testapp.get('/event/%s/store_session/active' % upcoming_event.uuid, headers=dict({
+        "Authorization": "Bearer " + token
+    }), status=403)
 
 def _create_store_session(testapp, event, ticket_type, token):
     res = testapp.put_json('/event/%s/store_session' % event.uuid, dict({

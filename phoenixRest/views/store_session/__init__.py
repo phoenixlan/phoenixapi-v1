@@ -9,8 +9,6 @@ from phoenixRest.roles import ADMIN
 
 from phoenixRest.views.store_session.instance import StoreSessionInstanceResource
 
-from datetime import datetime
-
 import logging
 log = logging.getLogger(__name__)
 
@@ -18,8 +16,6 @@ log = logging.getLogger(__name__)
 class StoreSessionResource(object):
     __acl__ = [
         (Allow, ADMIN(), 'fetch_all'),
-
-        (Allow, ADMIN(), 'fetch_active'),
 
         # Authenticated pages
         #(Allow, Authenticated, Authenticated),
@@ -41,8 +37,3 @@ class StoreSessionResource(object):
 def get_all_sessions(request):
     # Returns all active store sessions
     return request.db.query(StoreSession).order_by(StoreSession.created).all()
-
-@view_config(context=StoreSessionResource, name='active', request_method='GET', renderer='json', permission='fetch_active')
-def get_active_sessions(request):
-    # Returns all active store sessions
-    return request.db.query(StoreSession).filter(StoreSession.expires > datetime.now()).order_by(StoreSession.created).all()

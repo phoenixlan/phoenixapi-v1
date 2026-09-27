@@ -13,6 +13,7 @@ from phoenixRest.models.tickets.store_session_cart_entry import StoreSessionCart
 from phoenixRest.models.tickets.ticket_type import TicketType
 from phoenixRest.roles import (
     ADMIN,
+    TICKET_ADMIN,
     TICKET_BYPASS_TICKETSALE_START_RESTRICTION,
     TICKET_WHOLESALE
 )
@@ -23,13 +24,29 @@ log = logging.getLogger(__name__)
 
 
 class EventStoreSessionResource(object):
-    __acl__ = [
-        (Allow, Authenticated, 'create')
-    ]
+    def __acl__(self):
+        return [
+            (Allow, Authenticated, 'create'),
+
+            (Allow, ADMIN(), 'fetch_active'),
+            (Allow, TICKET_ADMIN(self.event.event_brand_uuid), 'fetch_active')
+        ]
 
     def __init__(self, request, event):
         self.request = request
         self.event = event
+
+
+@view_config(context=EventStoreSessionResource, name='active', request_method='GET', renderer='json', permission='fetch_active')
+def get_active_sessions(context, request):
+    # Returns all active store sessions for the event
+    return request.db.query(StoreSession) \
+        .filter(and_(
+            StoreSession.event_uuid == context.event.uuid,
+            StoreSession.expires > datetime.now()
+        )) \
+        .order_by(StoreSession.created) \
+        .all()
 
 
 @view_config(context=EventStoreSessionResource, request_method='PUT', renderer='json', permission='create')
