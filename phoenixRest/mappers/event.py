@@ -11,5 +11,6 @@ def map_event_simple(event):
         'theme': event.theme,
         'ticket_sales_caps': event.ticket_sales_caps,
         'cancellation_reason': event.cancellation_reason,
+        'announced': event.announced,
         'seatmap_uuid': event.seatmap_uuid
     }

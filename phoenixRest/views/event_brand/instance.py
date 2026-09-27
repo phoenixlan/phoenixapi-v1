@@ -153,6 +153,12 @@ def create_event(context, request):
         if type(seatmap_uuid) != str:
             error.append("Invalid type of seatmap_uuid (not string)")
 
+    announced = True
+    if 'announced' in request.json_body:
+        announced = request.json_body['announced']
+        if type(announced) != bool:
+            error.append("Invalid type of announced (not boolean)")
+
     if len(error) > 0:
         request.response.status = 400
         return {
@@ -172,7 +178,8 @@ def create_event(context, request):
         theme=theme,
         location_uuid=location_uuid,
         seatmap_uuid=seatmap_uuid,
-        event_brand=context.eventBrandInstance
+        event_brand=context.eventBrandInstance,
+        announced=announced
     )
 
     request.db.add(event)

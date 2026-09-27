@@ -76,11 +76,14 @@ class Event(Base):
 
     cancellation_reason = Column(Text)
 
+    # Unannounced events are not yet made public
+    announced = Column(Boolean, nullable=False, default=True, server_default="true")
+
     ticket_types = relationship("EventTicketTypeMapping", back_populates="event", order_by="EventTicketTypeMapping.created")
 
     def __init__(self, name: str, start_time: DateTime, end_time: DateTime, booking_time: DateTime, priority_seating_time_delta: int, seating_time_delta: int,
                  ticket_sales_caps: dict, participant_age_limit_inclusive: int, crew_age_limit_inclusive: int, theme: Optional[str], location_uuid: Optional[str],
-                 seatmap_uuid: Optional[str], event_brand):
+                 seatmap_uuid: Optional[str], event_brand, announced: bool = True):
         self.name = name
         self.start_time = start_time
         self.end_time = end_time
@@ -96,6 +99,7 @@ class Event(Base):
         self.theme = theme
         self.location_uuid = location_uuid
         self.seatmap_uuid = seatmap_uuid
+        self.announced = announced
 
     def __json__(self, request):
         return {
@@ -115,7 +119,8 @@ class Event(Base):
             'theme': self.theme,
             'location_uuid': self.location_uuid,
             'seatmap_uuid': self.seatmap_uuid,
-            'cancellation_reason': self.cancellation_reason
+            'cancellation_reason': self.cancellation_reason,
+            'announced': self.announced
         }
 
     def get_sales_by_ticket_type(self, db):

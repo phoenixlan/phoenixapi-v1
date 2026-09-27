@@ -414,6 +414,12 @@ def edit_event(context, request):
                 error.append("Failed to update cancellation_reason, invalid type (not string or None)")
         update_cancellation_reason = True
 
+    update_announced = False
+    if 'announced' in request.json_body:
+        if type(request.json_body['announced']) != bool:
+            error.append("Failed to update announced, invalid type (not boolean)")
+        update_announced = True
+
     if len(error) > 0:
         request.response.status = 400
         return {
@@ -459,7 +465,10 @@ def edit_event(context, request):
     
     if update_cancellation_reason is True:
         context.eventInstance.cancellation_reason = request.json_body['cancellation_reason']
-    
+
+    if update_announced is True:
+        context.eventInstance.announced = request.json_body['announced']
+
     return {
         'info': 'Event information updated successfully',
         'data': context.eventInstance
