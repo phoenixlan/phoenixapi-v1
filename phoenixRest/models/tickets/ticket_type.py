@@ -41,7 +41,9 @@ class TicketType(Base):
     transferable = Column(Boolean, server_default="true", nullable=False)
 
     description = Column(Text)
-    
+
+    disclaimer = Column(Text)
+
 
     def __init__(self, name: str, price: int, description: str, refundable: bool, seatable: bool, grants_admission: bool):
         self.name = name
@@ -62,6 +64,7 @@ class TicketType(Base):
             'seatable': self.seatable,
             'grants_admission': self.grants_admission,
             'description': self.description,
+            'disclaimer': self.disclaimer,
             'requires_membership': self.requires_membership,
             'grants_membership': self.grants_membership,
             'transferable': self.transferable

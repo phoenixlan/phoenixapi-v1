@@ -98,6 +98,30 @@ def test_create_ticket_type_sets_transferable_flag(testapp, event_brand, admin_t
     assert ticket_type['transferable'] is False
 
 
+def test_create_ticket_type_sets_disclaimer(testapp, event_brand, admin_token):
+    headers = {'Authorization': "Bearer " + admin_token}
+    url = '/event_brand/%s/ticket_type' % event_brand.uuid
+
+    ticket_type = testapp.post_json(
+        url, _ticket_type_payload('Disclaimer ticket', disclaimer='  Special terms  '),
+        headers=headers, status=200
+    ).json_body
+    assert ticket_type['disclaimer'] == 'Special terms'
+
+    ticket_type = testapp.post_json(
+        url, _ticket_type_payload('No disclaimer ticket'), headers=headers, status=200
+    ).json_body
+    assert ticket_type['disclaimer'] is None
+
+    # A blank disclaimer is stored as no disclaimer
+    for disclaimer in ('', '   ', None):
+        ticket_type = testapp.post_json(
+            url, _ticket_type_payload('Blank disclaimer ticket', disclaimer=disclaimer),
+            headers=headers, status=200
+        ).json_body
+        assert ticket_type['disclaimer'] is None
+
+
 def test_create_ticket_type_brand_admin_is_scoped(
         testapp, event_brand, other_event_brand, brand_admin_user):
     token, refresh = testapp.auth_get_tokens(
@@ -165,6 +189,10 @@ def test_create_ticket_type_validates_input(testapp, event_brand, admin_token):
     )
     testapp.post_json(
         url, _ticket_type_payload('Bad transferable', transferable='yes'),
+        headers=headers, status=400
+    )
+    testapp.post_json(
+        url, _ticket_type_payload('Bad disclaimer', disclaimer=123),
         headers=headers, status=400
     )
 

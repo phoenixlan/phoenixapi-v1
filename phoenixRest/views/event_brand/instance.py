@@ -208,6 +208,14 @@ def create_ticket_type(context, request):
         if key in request.json_body and type(request.json_body[key]) != bool:
             error.append("Invalid type of %s (not boolean)" % key)
 
+    disclaimer = request.json_body.get('disclaimer', None)
+    if disclaimer is not None:
+        if type(disclaimer) != str:
+            error.append("Invalid type of disclaimer (not string or null)")
+        else:
+            # A blank disclaimer means the ticket type has none
+            disclaimer = disclaimer.strip() or None
+
     if len(error) > 0:
         request.response.status = 400
         return {
@@ -228,6 +236,7 @@ def create_ticket_type(context, request):
         ticket_type.grants_membership = request.json_body['grants_membership']
     if 'transferable' in request.json_body:
         ticket_type.transferable = request.json_body['transferable']
+    ticket_type.disclaimer = disclaimer
     ticket_type.event_brand = context.eventBrandInstance
     request.db.add(ticket_type)
     request.db.flush()
