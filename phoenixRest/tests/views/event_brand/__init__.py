@@ -173,6 +173,50 @@ def test_create_ticket_type_validates_input(testapp, event_brand, admin_token):
     testapp.post_json(url, missing_price, headers=headers, status=400)
 
 
+def test_list_ticket_types_for_brand(
+        testapp, event_brand, non_transferable_ticket_type, other_ticket_type,
+        admin_token, brand_admin_user, ticket_admin_user):
+    brand_admin_token, refresh = testapp.auth_get_tokens(
+        brand_admin_user.email, 'sixcharacters'
+    )
+    ticket_admin_token, refresh = testapp.auth_get_tokens(
+        ticket_admin_user.email, 'sixcharacters'
+    )
+
+    for token in (admin_token, brand_admin_token, ticket_admin_token):
+        ticket_types = testapp.get(
+            '/event_brand/%s/ticket_type' % event_brand.uuid,
+            headers={'Authorization': "Bearer " + token},
+            status=200
+        ).json_body
+
+        assert {ticket_type['uuid'] for ticket_type in ticket_types} == {
+            str(non_transferable_ticket_type.uuid)
+        }
+
+
+def test_list_ticket_types_brand_and_ticket_admin_are_scoped(
+        testapp, other_event_brand, brand_admin_user, ticket_admin_user):
+    for user in (brand_admin_user, ticket_admin_user):
+        token, refresh = testapp.auth_get_tokens(user.email, 'sixcharacters')
+        testapp.get(
+            '/event_brand/%s/ticket_type' % other_event_brand.uuid,
+            headers={'Authorization': "Bearer " + token}, status=403
+        )
+
+
+def test_list_ticket_types_rejects_unprivileged_users(
+        testapp, event_brand, hr_admin_user, adam_user):
+    for user in (hr_admin_user, adam_user):
+        token, refresh = testapp.auth_get_tokens(user.email, 'sixcharacters')
+        testapp.get(
+            '/event_brand/%s/ticket_type' % event_brand.uuid,
+            headers={'Authorization': "Bearer " + token}, status=403
+        )
+
+    testapp.get('/event_brand/%s/ticket_type' % event_brand.uuid, status=403)
+
+
 def test_positions_are_listed_only_for_their_event_brand(
         testapp, event_brand, other_event_brand, brand_position,
         other_position, admin_token):

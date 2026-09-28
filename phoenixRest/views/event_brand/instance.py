@@ -42,6 +42,9 @@ class EventBrandInstanceResource(dict):
             (Allow, ADMIN(), 'create_ticket_type'),
             (Allow, BRAND_ADMIN(self.eventBrandInstance.uuid), 'create_ticket_type'),
             (Allow, TICKET_ADMIN(self.eventBrandInstance.uuid), 'create_ticket_type'),
+            (Allow, ADMIN(), 'get_all_ticket_types'),
+            (Allow, BRAND_ADMIN(self.eventBrandInstance.uuid), 'get_all_ticket_types'),
+            (Allow, TICKET_ADMIN(self.eventBrandInstance.uuid), 'get_all_ticket_types'),
             (Allow, ADMIN(), 'get_all_seatmaps'),
             (Allow, TICKET_ADMIN(self.eventBrandInstance.uuid), 'get_all_seatmaps'),
 
@@ -229,6 +232,13 @@ def create_ticket_type(context, request):
     request.db.add(ticket_type)
     request.db.flush()
     return ticket_type
+
+@view_config(context=EventBrandInstanceResource, name='ticket_type', request_method='GET', renderer='json', permission='get_all_ticket_types')
+def get_all_ticket_types(context, request):
+    return request.db.query(TicketType) \
+        .filter(TicketType.event_brand_uuid == context.eventBrandInstance.uuid) \
+        .order_by(TicketType.name) \
+        .all()
 
 @view_config(context=EventBrandInstanceResource, name='seatmap', request_method='GET', renderer='json', permission='get_all_seatmaps')
 def get_all_seatmaps(context, request):
