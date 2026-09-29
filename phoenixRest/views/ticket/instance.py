@@ -97,9 +97,19 @@ def get_ticket(context, request):
 @view_config(context=TicketInstanceResource, name='seat', request_method='PUT', renderer='json', permission='seat_ticket')
 @validate(json_body={'seat_uuid': str})
 def seat_ticket(context, request):
-    seat = request.db.query(Seat).filter(Seat.uuid == request.json_body['seat_uuid']).first()
+    # Lock the seat so concurrent requests can't put two tickets on it
+    seat = request.db.query(Seat) \
+        .filter(Seat.uuid == request.json_body['seat_uuid']) \
+        .with_for_update() \
+        .first()
+    if seat is None:
+        request.response.status = 404
+        return {
+            'error': 'Seat not found'
+        }
+
     event = context.ticketInstance.event
-    
+
     active_events = list(map(lambda u: str(u), get_current_events(request.db)))
     if str(event.uuid) not in active_events:
         request.response.status = 400
@@ -129,12 +139,18 @@ def seat_ticket(context, request):
             'error': "You cannot seat your ticket yet(%s < %s)" % (datetime.now(), seating_time)
         }
 
-    if seat is None:
-        request.response.status = 404
+    if seat.is_reserved:
+        request.response.status = 400
         return {
-            'error': 'Seat not found'
+            'error': "The seat is reserved"
         }
-    
+
+    if seat.row.ticket_type_uuid is not None and seat.row.ticket_type_uuid != context.ticketInstance.ticket_type_uuid:
+        request.response.status = 400
+        return {
+            'error': "The seat is not available for this ticket type"
+        }
+
     if seat.ticket is not None:
         request.response.status = 400
         return {

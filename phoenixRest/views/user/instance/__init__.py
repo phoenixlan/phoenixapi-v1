@@ -37,7 +37,7 @@ import re
 
 from sqlalchemy import and_, or_, extract
 
-from datetime import datetime, timedelta, date
+from datetime import datetime, date
 
 import urllib
 import os
@@ -354,11 +354,10 @@ def get_payments(context, request):
 
 @view_config(context=UserInstanceResource, name='store_session', request_method='GET', renderer='json', permission='user_get_store_session')
 def get_store_session(context, request):
-    session_lifetime = int(request.registry.settings["ticket.store_session_lifetime"])
-
-    too_old = datetime.now() - timedelta(seconds=session_lifetime)
-
-    session = request.db.query(StoreSession).filter(or_(StoreSession.user == context.userInstance, StoreSession.created < too_old)).first()
+    session = request.db.query(StoreSession).filter(and_(
+        StoreSession.user == context.userInstance,
+        StoreSession.expires > datetime.now()
+    )).first()
     if session is not None:
         return session
     raise HTTPNotFound("User does not have an active store session")

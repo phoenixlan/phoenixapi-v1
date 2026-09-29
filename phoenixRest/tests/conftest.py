@@ -14,6 +14,9 @@ from phoenixRest.models.crew.permission import Permission
 from phoenixRest.models.crew.team import Team
 from phoenixRest.models.tickets.ticket import Ticket
 from phoenixRest.models.tickets.ticket_type import TicketType
+from phoenixRest.models.tickets.seatmap import Seatmap
+from phoenixRest.models.tickets.row import Row
+from phoenixRest.models.tickets.seat import Seat
 from phoenixRest import main
 
 from datetime import date, datetime, timedelta
@@ -231,6 +234,17 @@ def upcoming_event(db, event_brand):
     db.add(e)
     db.flush()
     return e
+
+@pytest.fixture
+def upcoming_event_seatmap(db, upcoming_event):
+    """Creates a seatmap for the upcoming event with one unrestricted row of two seats"""
+    seatmap = Seatmap('Test seatmap', 'Seatmap created for tests')
+    seatmap.event_brand = upcoming_event.event_brand
+    row = Row(1, 10, 10, False, seatmap, None, None)
+    db.add_all([seatmap, row, Seat(1, row), Seat(2, row)])
+    upcoming_event.seatmap = seatmap
+    db.flush()
+    return seatmap
 
 @pytest.fixture
 def earlier_upcoming_event(db, event_brand):

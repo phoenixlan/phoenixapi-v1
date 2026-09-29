@@ -7,7 +7,7 @@ from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
 from sqlalchemy import or_
 
-from phoenixRest.models.core.user import Gender, User, calculate_age
+from phoenixRest.models.core.user import Gender, User, calculate_age, MIN_PASSWORD_LENGTH
 from phoenixRest.models.core.activation_code import ActivationCode
 from phoenixRest.models.core.password_reset_code import PasswordResetCode
 from phoenixRest.models.core.user_consent import UserConsent, ConsentType
@@ -104,10 +104,10 @@ def register_user(context, request):
             "error": "Email and repeat email does not match"
         }
     
-    if len(request.json_body["password"]) < 6:
+    if len(request.json_body["password"]) < MIN_PASSWORD_LENGTH:
         request.response.status = 400
         return {
-            "error": "Password is too short. Use at least 6 characters"
+            "error": "Password is too short. Use at least %d characters" % MIN_PASSWORD_LENGTH
         }
 
     email = request.json_body['email'].lower()

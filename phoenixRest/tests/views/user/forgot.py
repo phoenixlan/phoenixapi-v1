@@ -1,4 +1,4 @@
-from phoenixRest.models.core.user import User
+from phoenixRest.models.core.user import User, MIN_PASSWORD_LENGTH
 from phoenixRest.models.core.password_reset_code import PasswordResetCode
 
 
@@ -73,3 +73,20 @@ def test_forgot_password_validation(testapp, jeff_user):
 
         missing = testapp.post_json('/user/forgot', request_obj, status=400)
         assert key in missing.text
+
+
+def test_reset_password_too_short(testapp, db, jeff_user):
+    """A reset is rejected when the new password is shorter than the minimum, and the old password keeps working"""
+    reset_code = PasswordResetCode(jeff_user, "phoenix-crew-test")
+    db.add(reset_code)
+    db.flush()
+
+    short_password = "a" * (MIN_PASSWORD_LENGTH - 1)
+    result = testapp.post_json('/password_reset_code/%s' % reset_code.code, dict({
+        "password": short_password,
+        "passwordRepeat": short_password
+    }), status=400).json_body
+    assert result["error"] == "Password is too short. Use at least %d characters" % MIN_PASSWORD_LENGTH
+
+    # The password is unchanged
+    testapp.auth_get_tokens(jeff_user.email, 'sixcharacters')

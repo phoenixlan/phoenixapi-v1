@@ -3,6 +3,7 @@ from phoenixRest.models.tickets.seatmap import Seatmap
 
 import json
 import transaction
+import uuid
 
 from datetime import datetime, timedelta
 
@@ -288,3 +289,66 @@ def test_ticket_seating_wrong_seatmap(testapp, db, upcoming_event, ticket_types,
 
     assert 'error' in response
     assert 'different seatmap' in response['error']
+
+def test_ticket_seating_reserved_seat(testapp, db, upcoming_event, upcoming_event_seatmap, jeff_user, jeff_membership_ticket):
+    """Test that a reserved seat can't be taken"""
+    token, refresh = testapp.auth_get_tokens(jeff_user.email, 'sixcharacters')
+
+    upcoming_event.booking_time = datetime.now() - timedelta(days=1)
+    upcoming_event.seating_time_delta = 30
+    seat = upcoming_event_seatmap.rows[0].seats[0]
+    seat.is_reserved = True
+    db.flush()
+
+    response = testapp.put_json('/ticket/%s/seat' % jeff_membership_ticket.ticket_id, dict({
+        'seat_uuid': str(seat.uuid)
+    }), headers=dict({
+        "Authorization": "Bearer " + token
+    }), status=400).json_body
+    assert response['error'] == "The seat is reserved"
+    assert jeff_membership_ticket.seat is None
+
+def test_ticket_seating_row_for_other_ticket_type(testapp, db, upcoming_event, upcoming_event_seatmap, jeff_user, jeff_membership_ticket, non_membership_ticket_type):
+    """Test that a ticket can't be seated in a row restricted to another ticket type"""
+    token, refresh = testapp.auth_get_tokens(jeff_user.email, 'sixcharacters')
+
+    upcoming_event.booking_time = datetime.now() - timedelta(days=1)
+    upcoming_event.seating_time_delta = 30
+    row = upcoming_event_seatmap.rows[0]
+    row.ticket_type = non_membership_ticket_type
+    db.flush()
+
+    response = testapp.put_json('/ticket/%s/seat' % jeff_membership_ticket.ticket_id, dict({
+        'seat_uuid': str(row.seats[0].uuid)
+    }), headers=dict({
+        "Authorization": "Bearer " + token
+    }), status=400).json_body
+    assert response['error'] == "The seat is not available for this ticket type"
+    assert jeff_membership_ticket.seat is None
+
+def test_ticket_seating_row_for_own_ticket_type(testapp, db, upcoming_event, upcoming_event_seatmap, jeff_user, jeff_membership_ticket, membership_ticket_type):
+    """Test that a ticket can be seated in a row restricted to its own ticket type"""
+    token, refresh = testapp.auth_get_tokens(jeff_user.email, 'sixcharacters')
+
+    upcoming_event.booking_time = datetime.now() - timedelta(days=1)
+    upcoming_event.seating_time_delta = 30
+    row = upcoming_event_seatmap.rows[0]
+    row.ticket_type = membership_ticket_type
+    db.flush()
+
+    ticket = testapp.put_json('/ticket/%s/seat' % jeff_membership_ticket.ticket_id, dict({
+        'seat_uuid': str(row.seats[0].uuid)
+    }), headers=dict({
+        "Authorization": "Bearer " + token
+    }), status=200).json_body
+    assert ticket['seat']['uuid'] == str(row.seats[0].uuid)
+
+def test_ticket_seating_unknown_seat(testapp, db, upcoming_event, upcoming_event_seatmap, jeff_user, jeff_membership_ticket):
+    """Test that seating a ticket on a seat that doesn't exist returns 404"""
+    token, refresh = testapp.auth_get_tokens(jeff_user.email, 'sixcharacters')
+
+    testapp.put_json('/ticket/%s/seat' % jeff_membership_ticket.ticket_id, dict({
+        'seat_uuid': str(uuid.uuid4())
+    }), headers=dict({
+        "Authorization": "Bearer " + token
+    }), status=404)

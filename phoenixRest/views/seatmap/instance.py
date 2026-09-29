@@ -26,6 +26,8 @@ from sqlalchemy import and_
 
 from datetime import datetime
 
+from PIL import Image
+
 import os
 import shutil
 import json
@@ -105,7 +107,24 @@ def upload_background(context, request):
     filename = request.POST['file'].filename
     log.debug("Got file upload with original name %s" % filename)
 
-    extension = filename.split(".")[-1]
+    if filename.split(".")[-1].lower() not in ['jpg', 'jpeg', 'png']:
+        request.response.status = 400
+        return {
+            "error": "Invalid file type"
+        }
+
+    input_file = request.POST['file'].file
+    input_file.seek(0)
+    try:
+        im = Image.open(input_file, formats=["PNG", "JPEG"])
+        im.verify()
+    except Exception:
+        request.response.status = 400
+        return {
+            "error": "Invalid file type"
+        }
+    # Name the file after what it actually is, not what the uploader called it
+    extension = "png" if im.format == "PNG" else "jpg"
 
     background = SeatmapBackground(request.user, extension)
     background.event_brand = context.seatmapInstance.event_brand
@@ -118,7 +137,6 @@ def upload_background(context, request):
     temp_file_path = file_path + '~'
 
     # Finally write the data to a temporary file
-    input_file = request.POST['file'].file
     input_file.seek(0)
     with open(temp_file_path, 'wb') as output_file:
         shutil.copyfileobj(input_file, output_file)

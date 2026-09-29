@@ -23,7 +23,6 @@ def discord_exchange_code(code):
         'redirect_uri': DISCORD_OAUTH_REDIRECT_URI,
         'scope': DISCORD_SCOPES
     }
-    log.info(data)
     headers = {
         'Content-Type': 'application/x-www-form-urlencoded'
     }

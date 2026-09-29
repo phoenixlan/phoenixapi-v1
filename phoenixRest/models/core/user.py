@@ -28,11 +28,12 @@ import uuid
 import os
 
 # For hashing
-import hashlib
 from passlib.hash import argon2
 
 import logging
 log = logging.getLogger(__name__)
+
+MIN_PASSWORD_LENGTH = 6
 
 class Gender(enum.Enum):
     male = 1
@@ -142,25 +143,6 @@ class User(Base):
     def get_age(self):
         return calculate_age(self.birthdate)
 
-    # Consider a more readable implementation
-    def _constant_time_compare(val1, val2):
-        if len(val1) != len(val2):
-            return False
-        result = 0
-        for x, y in zip(val1, val2):
-            result |= x ^ y
-        return result == 0
-        
-    def _verify_type0(self, password):
-        m = hashlib.sha256()
-        # InfectedAPI 2.0 probably uses ASCII or norwegian ISO
-        # TODO: Figure out what we need here to be 100% correct, 
-        # or some people may not be able to log in
-        m.update(password.encode('utf-8')) 
-        hashed = m.hexdigest()
-        # TODO: Timing safe compare
-        return self._constant_time_compare(hashed, self.password)
-
     def _verify_type1(self, password):
         return argon2.verify(password, self.password)
 
@@ -174,8 +156,7 @@ class User(Base):
 
     def verify_password(self, password):
         if self.password_type == 0:
-            # Sha - old password
-            return self._verify_type0(password)
+            raise RuntimeError("Legacy SHA-256 password hashes are no longer supported")
         elif self.password_type == 1:
             # New password type
             return self._verify_type1(password)
@@ -191,10 +172,3 @@ class User(Base):
         self.password_type = 1
         self.password = argon2.hash(new_password)
 
-    def migrate_password(self, password):
-        if not self.verify_password(password):
-            raise Exception("Failed to migrate password: it is not correct")
-
-        self.password_type = 1
-        self.password = argon2.hash(password)
-        

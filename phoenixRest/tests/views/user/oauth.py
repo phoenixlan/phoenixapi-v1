@@ -1,3 +1,5 @@
+import pytest
+
 # Test authentication with developer user
 def test_auth(testapp, admin_user):
     res = testapp.post_json('/oauth/auth', dict({
@@ -38,3 +40,15 @@ def test_auth_bad(testapp):
         'login': 'test',
         'password': 'bad'
         }), status=403)
+
+
+# Legacy SHA-256 passwords are not supported, so logging in with one must fail loudly
+def test_auth_legacy_password_type(testapp, db, jeff_user):
+    jeff_user.password_type = 0
+    db.flush()
+
+    with pytest.raises(RuntimeError):
+        testapp.post_json('/oauth/auth', dict({
+            'login': jeff_user.email,
+            'password': 'sixcharacters'
+            }))

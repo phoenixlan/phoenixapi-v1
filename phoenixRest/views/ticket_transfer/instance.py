@@ -54,8 +54,28 @@ def revert_transfer(context, request):
         return {
             'error': "The transfer has already been reverted"
         }
+
+    if context.ticketTransferInstance.is_expired(request):
+        request.response.status = 400
+        return {
+            'error': "The transfer can no longer be reverted"
+        }
+
+    ticket = context.ticketTransferInstance.ticket
+    if ticket.checked_in is not None:
+        request.response.status = 400
+        return {
+            'error': "You cannot revert the transfer of a ticket that has been checked in"
+        }
+
     context.ticketTransferInstance.reverted = True
-    context.ticketTransferInstance.ticket.owner = context.ticketTransferInstance.from_user
+    ticket.owner = context.ticketTransferInstance.from_user
+    ticket.seater = context.ticketTransferInstance.from_user
+
+    # Reset the totp token so the recipient can't check the ticket in any more
+    if ticket.totp is not None:
+        request.db.delete(ticket.totp)
+        ticket.totp = None
 
     request.service_manager.get_service('email').send_mail(context.ticketTransferInstance.from_user.email, "Du har angret på en billett-overføring", "ticket_transfer_reverted_to_sender.jinja2", {
         "mail": context.ticketTransferInstance.ticket.event.event_brand.contact_email,

@@ -1,4 +1,8 @@
-from datetime import datetime
+from phoenixRest.models.tickets.ticket_transfer import TicketTransfer
+
+from datetime import datetime, timedelta
+
+import pyotp
 
 def test_ticket_transfer_flow(testapp, upcoming_event, ticket_types, admin_user, jeff_user, adam_user):
     # test is an admin
@@ -200,3 +204,100 @@ def test_ticket_cannot_be_transferred_to_yourself(testapp, upcoming_event, jeff_
         "Authorization": "Bearer " + token,
     }), status=200).json_body
     assert len(transfers) == 0
+
+def test_expired_transfer_cannot_be_reverted(testapp, db, jeff_user, adam_user, jeff_membership_ticket):
+    token, refresh = testapp.auth_get_tokens(jeff_user.email, 'sixcharacters')
+
+    transfer = testapp.post_json('/ticket/%s/transfer' % jeff_membership_ticket.ticket_id, dict({
+        'user_email': adam_user.email
+    }), headers=dict({
+        "Authorization": "Bearer " + token
+    }), status=200).json_body
+
+    # Move the transfer back in time so it is past the revert window
+    transfer_model = db.query(TicketTransfer).filter(TicketTransfer.uuid == transfer['uuid']).one()
+    expiry = int(testapp.app.registry.settings['ticket.transfer.expiry'])
+    transfer_model.created = datetime.now() - timedelta(seconds=expiry + 60)
+    db.flush()
+
+    testapp.post_json('/ticket_transfer/%s/revert' % transfer['uuid'], dict({
+    }), headers=dict({
+        "Authorization": "Bearer " + token
+    }), status=400)
+
+    assert jeff_membership_ticket.owner == adam_user
+    assert not transfer_model.reverted
+
+def test_checked_in_transfer_cannot_be_reverted(testapp, db, jeff_user, adam_user, jeff_membership_ticket):
+    token, refresh = testapp.auth_get_tokens(jeff_user.email, 'sixcharacters')
+
+    transfer = testapp.post_json('/ticket/%s/transfer' % jeff_membership_ticket.ticket_id, dict({
+        'user_email': adam_user.email
+    }), headers=dict({
+        "Authorization": "Bearer " + token
+    }), status=200).json_body
+
+    # The recipient has already used the ticket
+    jeff_membership_ticket.checked_in = datetime.now()
+    db.flush()
+
+    testapp.post_json('/ticket_transfer/%s/revert' % transfer['uuid'], dict({
+    }), headers=dict({
+        "Authorization": "Bearer " + token
+    }), status=400)
+
+    assert jeff_membership_ticket.owner == adam_user
+
+def test_revert_invalidates_recipient_totp(testapp, jeff_user, adam_user, jeff_membership_ticket):
+    sender_token, refresh = testapp.auth_get_tokens(jeff_user.email, 'sixcharacters')
+    receiver_token, refresh = testapp.auth_get_tokens(adam_user.email, 'sixcharacters')
+
+    transfer = testapp.post_json('/ticket/%s/transfer' % jeff_membership_ticket.ticket_id, dict({
+        'user_email': adam_user.email
+    }), headers=dict({
+        "Authorization": "Bearer " + sender_token
+    }), status=200).json_body
+
+    # The recipient generates a QR code for the ticket
+    totp_secret = testapp.get('/ticket/%s/totp' % jeff_membership_ticket.ticket_id, headers=dict({
+        "Authorization": "Bearer " + receiver_token
+    }), status=200).json_body['totp']
+    recipient_code = pyotp.TOTP(totp_secret, digits=8).now()
+
+    testapp.post_json('/ticket_transfer/%s/revert' % transfer['uuid'], dict({
+    }), headers=dict({
+        "Authorization": "Bearer " + sender_token
+    }), status=200)
+
+    # The recipient's QR code no longer verifies the ticket
+    testapp.get('/ticket/%s?totp=%s' % (jeff_membership_ticket.ticket_id, recipient_code), headers=dict({
+        "Authorization": "Bearer " + sender_token
+    }), status=403)
+
+def test_revert_resets_seater(testapp, jeff_user, adam_user, jeff_membership_ticket):
+    sender_token, refresh = testapp.auth_get_tokens(jeff_user.email, 'sixcharacters')
+    receiver_token, refresh = testapp.auth_get_tokens(adam_user.email, 'sixcharacters')
+
+    transfer = testapp.post_json('/ticket/%s/transfer' % jeff_membership_ticket.ticket_id, dict({
+        'user_email': adam_user.email
+    }), headers=dict({
+        "Authorization": "Bearer " + sender_token
+    }), status=200).json_body
+
+    # The recipient makes themselves the seater
+    ticket = testapp.put_json('/ticket/%s/seater' % jeff_membership_ticket.ticket_id, dict({
+    }), headers=dict({
+        "Authorization": "Bearer " + receiver_token
+    }), status=200).json_body
+    assert ticket['seater']['uuid'] == str(adam_user.uuid)
+
+    testapp.post_json('/ticket_transfer/%s/revert' % transfer['uuid'], dict({
+    }), headers=dict({
+        "Authorization": "Bearer " + sender_token
+    }), status=200)
+
+    ticket = testapp.get('/ticket/%s' % jeff_membership_ticket.ticket_id, headers=dict({
+        "Authorization": "Bearer " + sender_token
+    }), status=200).json_body
+    assert ticket['owner']['uuid'] == str(jeff_user.uuid)
+    assert ticket['seater']['uuid'] == str(jeff_user.uuid)

@@ -3,7 +3,8 @@ from pyramid.view import view_config, view_defaults
 from pyramid.httpexceptions import (
     HTTPForbidden,
     HTTPNotFound,
-    HTTPBadRequest
+    HTTPBadRequest,
+    HTTPInternalServerError
 )
 from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
@@ -58,9 +59,13 @@ def burn_voucher(context, request):
             'error': "The has expired - contact support"
         }
 
+    current_event = get_current_event(request.db, context.ticketVoucherInstance.event_brand)
+    if current_event is None:
+        raise HTTPInternalServerError("There is no current event to mint the ticket for")
+
     # Mint the ticket!
     context.ticketVoucherInstance.used = datetime.now()
-    ticket = Ticket(context.ticketVoucherInstance.recipient_user, None, context.ticketVoucherInstance.ticket_type, get_current_event(request.db, context.ticketVoucherInstance.event_brand))
+    ticket = Ticket(context.ticketVoucherInstance.recipient_user, None, context.ticketVoucherInstance.ticket_type, current_event)
     context.ticketVoucherInstance.ticket = ticket
 
     # Save it

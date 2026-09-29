@@ -8,6 +8,7 @@ from pyramid.httpexceptions import (
 from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
 from phoenixRest.models.core.password_reset_code import PasswordResetCode
+from phoenixRest.models.core.user import MIN_PASSWORD_LENGTH
 from phoenixRest.models.core.oauth.refreshToken import OauthRefreshToken
 
 
@@ -58,6 +59,11 @@ def reset_password(context, request):
         request.response.status = 400
         return {
             'error': 'Password and repeat password does not match'
+        }
+    if len(password) < MIN_PASSWORD_LENGTH:
+        request.response.status = 400
+        return {
+            'error': "Password is too short. Use at least %d characters" % MIN_PASSWORD_LENGTH
         }
     context.resetCodeInstance.user.set_password(password)
     request.db.add(context.resetCodeInstance.user)
