@@ -1,3 +1,4 @@
+from datetime import datetime
 
 def test_ticket_transfer_flow(testapp, upcoming_event, ticket_types, admin_user, jeff_user, adam_user):
     # test is an admin
@@ -151,6 +152,48 @@ def test_non_transferable_ticket_cannot_be_transferred(testapp, upcoming_event, 
     }), status=200).json_body
     assert ticket['owner']['uuid'] == str(jeff_user.uuid)
     assert ticket['ticket_type']['transferable'] is False
+
+    # No transfer was recorded
+    transfers = testapp.get('/user/%s/ticket_transfers?event_uuid=%s' % (jeff_user.uuid, upcoming_event.uuid), headers=dict({
+        "Authorization": "Bearer " + token,
+    }), status=200).json_body
+    assert len(transfers) == 0
+
+def test_checked_in_ticket_cannot_be_transferred(testapp, db, upcoming_event, jeff_user, adam_user, jeff_membership_ticket):
+    jeff_membership_ticket.checked_in = datetime.now()
+    db.flush()
+
+    token, refresh = testapp.auth_get_tokens(jeff_user.email, 'sixcharacters')
+
+    # The owner can't transfer a ticket that has already been checked in
+    testapp.post_json('/ticket/%s/transfer' % jeff_membership_ticket.ticket_id, dict({
+        'user_email': adam_user.email
+    }), headers=dict({
+        "Authorization": "Bearer " + token
+    }), status=400)
+
+    # The owner is unchanged
+    ticket = testapp.get('/ticket/%s' % jeff_membership_ticket.ticket_id, headers=dict({
+        "Authorization": "Bearer " + token
+    }), status=200).json_body
+    assert ticket['owner']['uuid'] == str(jeff_user.uuid)
+    assert ticket['checked_in'] is not None
+
+    # No transfer was recorded
+    transfers = testapp.get('/user/%s/ticket_transfers?event_uuid=%s' % (jeff_user.uuid, upcoming_event.uuid), headers=dict({
+        "Authorization": "Bearer " + token,
+    }), status=200).json_body
+    assert len(transfers) == 0
+
+def test_ticket_cannot_be_transferred_to_yourself(testapp, upcoming_event, jeff_user, jeff_membership_ticket):
+    token, refresh = testapp.auth_get_tokens(jeff_user.email, 'sixcharacters')
+
+    # The owner can't transfer a ticket to themselves
+    testapp.post_json('/ticket/%s/transfer' % jeff_membership_ticket.ticket_id, dict({
+        'user_email': jeff_user.email
+    }), headers=dict({
+        "Authorization": "Bearer " + token
+    }), status=400)
 
     # No transfer was recorded
     transfers = testapp.get('/user/%s/ticket_transfers?event_uuid=%s' % (jeff_user.uuid, upcoming_event.uuid), headers=dict({

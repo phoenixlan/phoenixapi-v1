@@ -5,10 +5,11 @@ NORMAL_AVATAR_PNG = "phoenixRest/tests/assets/avatar_test.png"
 TRANSPARENT_AVATAR_PNG_RGBA = "phoenixRest/tests/assets/transparent_rgba.png"
 TRANSPARENT_AVATAR_PNG_P = "phoenixRest/tests/assets/transparent_p.png"
 TRANSPARENT_AVATAR_PNG_RGBA_P = "phoenixRest/tests/assets/transparent_rgba_p.png"
+NORMAL_AVATAR_TGA = "phoenixRest/tests/assets/avatar_test.tga"
 
-def upload_avatar_test_helper(testapp:TestApp, token, path, x,y, w,h, expected_status=None):
+def upload_avatar_test_helper(testapp:TestApp, token, path, x,y, w,h, expected_status=None, filename=None):
     # We upload the avatar with the expected status
-    avatar_uuid = testapp.upload_avatar(token, path, x,y, w,h, expected_status=expected_status)
+    avatar_uuid = testapp.upload_avatar(token, path, x,y, w,h, expected_status=expected_status, filename=filename)
     
     # If we expect a successful upload we need to delete it afterwards
     if expected_status == 200:
@@ -23,6 +24,15 @@ def test_upload_avatar_jpg(testapp:TestApp, admin_user):
 def test_upload_avatar_png(testapp:TestApp, admin_user):
     test_user_token, refresh = testapp.auth_get_tokens(admin_user.email, "sixcharacters")
     upload_avatar_test_helper(testapp, test_user_token, NORMAL_AVATAR_PNG, 10, 10, 600, 450, expected_status=200)
+
+def test_upload_avatar_png_uppercase_extension(testapp:TestApp, admin_user):
+    test_user_token, refresh = testapp.auth_get_tokens(admin_user.email, "sixcharacters")
+    upload_avatar_test_helper(testapp, test_user_token, NORMAL_AVATAR_PNG, 10, 10, 600, 450, expected_status=200, filename="avatar_test.PNG")
+
+def test_upload_avatar_tga_disguised_as_png(testapp:TestApp, admin_user):
+    test_user_token, refresh = testapp.auth_get_tokens(admin_user.email, "sixcharacters")
+    # The .png name gets past the extension check, so the image content itself must be rejected
+    upload_avatar_test_helper(testapp, test_user_token, NORMAL_AVATAR_TGA, 10, 10, 600, 450, expected_status=400, filename="avatar_test.png")
 
 def test_upload_avatar_transparent_rgba(testapp:TestApp, admin_user):
     test_user_token, refresh = testapp.auth_get_tokens(admin_user.email, "sixcharacters")

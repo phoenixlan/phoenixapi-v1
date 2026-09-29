@@ -213,11 +213,23 @@ def transfer_ticket(context, request):
             'error': "This ticket type cannot be transferred"
         }
 
+    if context.ticketInstance.checked_in is not None:
+        request.response.status = 400
+        return {
+            'error': "You cannot transfer a ticket that has been checked in"
+        }
+
     transfer_target = request.db.query(User).filter(User.email == request.json_body['user_email'].lower()).first()
     if transfer_target is None:
         request.response.status = 404
         return {
             'error': "User not found"
+        }
+
+    if transfer_target.uuid == context.ticketInstance.owner.uuid:
+        request.response.status = 400
+        return {
+            'error': "You cannot transfer a ticket to yourself"
         }
 
     expiry_offset = int(request.registry.settings['ticket.transfer.expiry'])

@@ -42,7 +42,7 @@ from datetime import datetime, timedelta, date
 import urllib
 import os
 
-from PIL import Image, ImageOps
+from PIL import Image, ImageOps, UnidentifiedImageError
 
 import logging
 log = logging.getLogger(__name__)
@@ -402,7 +402,7 @@ def upload_avatar(context, request):
 
     extension = filename.split(".")[-1]
 
-    if extension not in ['jpg', 'jpeg', 'png']:
+    if extension.lower() not in ['jpg', 'jpeg', 'png']:
         raise HTTPBadRequest("Invalid file type")
 
     _file_handle = request.POST['file'].file
@@ -412,7 +412,10 @@ def upload_avatar(context, request):
     min_h = int(request.registry.settings["avatar.min_h"])
 
     _file_handle.seek(0)
-    im = Image.open(_file_handle)
+    try:
+        im = Image.open(_file_handle, formats=["PNG", "JPEG"])
+    except UnidentifiedImageError:
+        raise HTTPBadRequest("Invalid file type")
     im = ImageOps.exif_transpose(im)
   
     # Size of the image in pixels (size of orginal image)

@@ -43,7 +43,7 @@ class TestApp(webtest.TestApp):
 
         return res.json_body
     
-    def upload_avatar(self, token, path, x,y, w,h, expected_status=None):
+    def upload_avatar(self, token, path, x,y, w,h, expected_status=None, filename=None):
         # We get some info about the current user
         currentUser = self.get("/user/current/", headers=dict({
             "Authorization": "Bearer " + token
@@ -58,8 +58,15 @@ class TestApp(webtest.TestApp):
                 "Authorization": "Bearer " + token
             }), status=200)
             
+        # Optionally send the file under a different name than it has on disk
+        if filename is None:
+            upload_file = ("file", path)
+        else:
+            with open(path, "rb") as f:
+                upload_file = ("file", filename, f.read())
+
         # We upload an avatar for the user
-        upload_res = self.post(f"/user/{user_uuid}/avatar", params=f"x={x}&y={y}&w={w}&h={h}", upload_files=[("file", path)], headers=dict({
+        upload_res = self.post(f"/user/{user_uuid}/avatar", params=f"x={x}&y={y}&w={w}&h={h}", upload_files=[upload_file], headers=dict({
             "Authorization": "Bearer " + token
         }), status = (expected_status if expected_status is not None else 200))
         
