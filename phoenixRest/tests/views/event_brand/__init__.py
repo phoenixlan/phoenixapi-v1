@@ -1,3 +1,5 @@
+from phoenixRest.models.tickets.ticket_voucher import TicketVoucher
+
 
 def test_event_brand_create_and_list(testapp, db, admin_user):
     """Test creating and listing event brands"""
@@ -243,6 +245,61 @@ def test_list_ticket_types_rejects_unprivileged_users(
         )
 
     testapp.get('/event_brand/%s/ticket_type' % event_brand.uuid, status=403)
+
+
+def test_list_ticket_vouchers_for_brand(
+        testapp, db, upcoming_event, other_upcoming_event,
+        non_transferable_ticket_type, other_ticket_type, admin_user, adam_user,
+        admin_token, brand_admin_user, ticket_admin_user):
+    voucher = TicketVoucher(
+        admin_user, adam_user, non_transferable_ticket_type,
+        upcoming_event.event_brand, upcoming_event
+    )
+    db.add(voucher)
+    db.add(TicketVoucher(
+        admin_user, adam_user, other_ticket_type,
+        other_upcoming_event.event_brand, other_upcoming_event
+    ))
+    db.flush()
+
+    brand_admin_token, refresh = testapp.auth_get_tokens(
+        brand_admin_user.email, 'sixcharacters'
+    )
+    ticket_admin_token, refresh = testapp.auth_get_tokens(
+        ticket_admin_user.email, 'sixcharacters'
+    )
+
+    for token in (admin_token, brand_admin_token, ticket_admin_token):
+        vouchers = testapp.get(
+            '/event_brand/%s/ticket_voucher' % upcoming_event.event_brand.uuid,
+            headers={'Authorization': "Bearer " + token},
+            status=200
+        ).json_body
+
+        assert [v['uuid'] for v in vouchers] == [str(voucher.uuid)]
+        assert vouchers[0]['last_use_event']['uuid'] == str(upcoming_event.uuid)
+
+
+def test_list_ticket_vouchers_brand_and_ticket_admin_are_scoped(
+        testapp, other_event_brand, brand_admin_user, ticket_admin_user):
+    for user in (brand_admin_user, ticket_admin_user):
+        token, refresh = testapp.auth_get_tokens(user.email, 'sixcharacters')
+        testapp.get(
+            '/event_brand/%s/ticket_voucher' % other_event_brand.uuid,
+            headers={'Authorization': "Bearer " + token}, status=403
+        )
+
+
+def test_list_ticket_vouchers_rejects_unprivileged_users(
+        testapp, event_brand, hr_admin_user, adam_user):
+    for user in (hr_admin_user, adam_user):
+        token, refresh = testapp.auth_get_tokens(user.email, 'sixcharacters')
+        testapp.get(
+            '/event_brand/%s/ticket_voucher' % event_brand.uuid,
+            headers={'Authorization': "Bearer " + token}, status=403
+        )
+
+    testapp.get('/event_brand/%s/ticket_voucher' % event_brand.uuid, status=403)
 
 
 def test_positions_are_listed_only_for_their_event_brand(

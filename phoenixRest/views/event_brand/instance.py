@@ -12,6 +12,7 @@ from phoenixRest.models.crew.position import Position
 from phoenixRest.models.crew.crew import Crew
 from phoenixRest.models.tickets.seatmap import Seatmap
 from phoenixRest.models.tickets.ticket_type import TicketType
+from phoenixRest.models.tickets.ticket_voucher import TicketVoucher
 from phoenixRest.mappers.crew import map_crew_simple
 
 from phoenixRest.roles import ADMIN, BRAND_ADMIN, TICKET_ADMIN, HR_ADMIN
@@ -47,6 +48,9 @@ class EventBrandInstanceResource(dict):
             (Allow, TICKET_ADMIN(self.eventBrandInstance.uuid), 'get_all_ticket_types'),
             (Allow, ADMIN(), 'get_all_seatmaps'),
             (Allow, TICKET_ADMIN(self.eventBrandInstance.uuid), 'get_all_seatmaps'),
+            (Allow, ADMIN(), 'get_all_ticket_vouchers'),
+            (Allow, BRAND_ADMIN(self.eventBrandInstance.uuid), 'get_all_ticket_vouchers'),
+            (Allow, TICKET_ADMIN(self.eventBrandInstance.uuid), 'get_all_ticket_vouchers'),
 
 
             (Allow, ADMIN(), 'create_crew'),
@@ -254,6 +258,15 @@ def get_all_seatmaps(context, request):
     return request.db.query(Seatmap) \
         .filter(Seatmap.event_brand_uuid == context.eventBrandInstance.uuid) \
         .order_by(Seatmap.name) \
+        .all()
+
+@view_config(context=EventBrandInstanceResource, name='ticket_voucher', request_method='GET', renderer='json', permission='get_all_ticket_vouchers')
+def get_all_ticket_vouchers(context, request):
+    """Returns all ticket vouchers whose last use event belongs to the brand"""
+    return request.db.query(TicketVoucher) \
+        .join(Event, Event.uuid == TicketVoucher.last_use_event_uuid) \
+        .filter(Event.event_brand_uuid == context.eventBrandInstance.uuid) \
+        .order_by(TicketVoucher.created) \
         .all()
 
 
