@@ -4,6 +4,8 @@
 	import Logo from './components/Logo.svelte';
 	import Panel from './components/Panel.svelte';
 
+	import { fetchMetadata } from "./metadata"
+
 	import Fa from 'svelte-fa/src/fa.svelte'
 	import { faCheck } from '@fortawesome/free-solid-svg-icons/index.es'
 
@@ -63,7 +65,9 @@
 </script>
 
 <main>
-	<Logo />
+	{#await fetchMetadata() then metadata}
+	<Logo url={metadata["logo"]}/>
+	{/await}
 	<div class="divider"> </div>
 	<Panel>
 		<OauthSecurity>

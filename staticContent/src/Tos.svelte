@@ -2,6 +2,8 @@
 	import Logo from './components/Logo.svelte';
 	import Panel from './components/Panel.svelte';
 
+	import { fetchMetadata } from "./metadata"
+
     import SvelteMarkdown from 'svelte-markdown'
 
 	import Spinner from 'svelte-spinner';
@@ -21,7 +23,9 @@
 </script>
 
 <main>
-	<Logo />
+	{#await fetchMetadata() then metadata}
+	<Logo url={metadata["logo"]}/>
+	{/await}
 	<div class="divider"> </div>
 	<Panel>
 			<h1>Regler for bruk</h1>

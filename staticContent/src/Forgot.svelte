@@ -4,6 +4,8 @@
 	import Logo from './components/Logo.svelte';
 	import Panel from './components/Panel.svelte';
 
+	import { fetchMetadata } from "./metadata"
+
 	import Fa from 'svelte-fa/src/fa.svelte'
 	import { faCheck } from '@fortawesome/free-solid-svg-icons/index.es'
 
@@ -56,7 +58,18 @@
 </script>
 
 <main>
-	<Logo />
+	{#await fetchMetadata() }
+		<div class="spinnerContainer">
+			<Spinner
+				size="50"
+				speed="750"
+				color="#999"
+				thickness="2"
+				gap="40"
+			/>
+		</div>
+	{:then metadata} 
+	<Logo url={metadata["logo"]}/>
 	<div class="divider"> </div>
 	<Panel>
 		<OauthSecurity>
@@ -97,6 +110,10 @@
 			<p>Du kan også <a href={"register.html?client_id=" + encodeURIComponent(GET_PARAMS['client_id']) + "&redirect_uri=" + encodeURIComponent(GET_PARAMS['redirect_uri'])}>registrere deg</a> eller <a href={"login.html?client_id=" + encodeURIComponent(GET_PARAMS['client_id']) + "&redirect_uri=" + encodeURIComponent(GET_PARAMS['redirect_uri'])}>logge inn</a></p>
 		</OauthSecurity>
 	</Panel>
+	{:catch error}
+		<h1>Feil</h1>
+		<p>Fikk ikke lastet siden. Prøv på nytt om et par minutter</p>
+	{/await}
 </main>
 
 <style>

@@ -2,6 +2,8 @@
 	import Logo from './components/Logo.svelte';
 	import Panel from './components/Panel.svelte';
 
+	import { fetchMetadata } from "./metadata"
+
     import SvelteMarkdown from 'svelte-markdown'
 
 	import { Button } from 'svelte-mui';
@@ -47,7 +49,9 @@
 </script>
 
 <main>
-	<Logo />
+	{#await fetchMetadata() then metadata}
+	<Logo url={metadata["logo"]}/>
+	{/await}
 	<div class="divider"> </div>
 	<Panel>
         {#if loading}
