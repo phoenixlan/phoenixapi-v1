@@ -27,6 +27,7 @@ from phoenixRest.features.payment.vipps import VIPPS_CALLBACK_AUTH_TOKEN, finali
 from phoenixRest.features.payment.stripe import STRIPE_ENDPOINT_SECRET, finalize_stripe_payment
 
 import stripe
+import traceback
 
 import transaction
 
@@ -58,10 +59,11 @@ def stripe_hook(context, request):
     sig_header = request.headers.get('stripe-signature', '')
     try:
         event = stripe.Webhook.construct_event(
-            request.body.decode('ascii'), sig_header, STRIPE_ENDPOINT_SECRET
+            request.body.decode('utf-8'), sig_header, STRIPE_ENDPOINT_SECRET
         )
     except ValueError as e:
-        log.warn("Unable to decode stripe webhook")
+        log.error("Unable to decode stripe webhook: " + traceback.format_exc())
+
         request.response.status = 400
         return {
             "error": "Failed to decode"
@@ -91,7 +93,7 @@ def stripe_hook(context, request):
         }
 
     finalize_stripe_payment(request, payment)
-    return payment.payment
+    return { "status": "ok" }
 
 #/v2/payments/{orderId}
 @view_config(context=HookResource, name='vipps', request_method='POST', renderer='string', permission='vipps')
