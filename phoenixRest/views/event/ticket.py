@@ -5,7 +5,7 @@ from phoenixRest.models.core.event import get_current_events
 from phoenixRest.models.core.user import User
 from phoenixRest.models.tickets.ticket import Ticket
 from phoenixRest.models.tickets.ticket_type import TicketType
-from phoenixRest.roles import ADMIN, TICKET_ADMIN, TICKET_CHECKIN
+from phoenixRest.roles import ADMIN, TICKET_ADMIN, TICKET_CHECKIN, BRAND_ADMIN
 from phoenixRest.utils import validate
 
 
@@ -15,8 +15,8 @@ class EventTicketResource(object):
             (Allow, ADMIN(), 'create'),
             (Allow, TICKET_ADMIN(self.event.event_brand_uuid), 'create'),
             (Allow, ADMIN(), 'get'),
-            (Allow, TICKET_ADMIN(self.event.event_brand_uuid), 'get'),
-            (Allow, TICKET_CHECKIN(self.event.event_brand_uuid), 'get')
+            (Allow, BRAND_ADMIN(self.event.event_brand_uuid), 'get'),
+            (Allow, TICKET_ADMIN(self.event.event_brand_uuid), 'get')
         ]
 
     def __init__(self, request, event):
