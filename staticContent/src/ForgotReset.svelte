@@ -130,7 +130,7 @@
 			{:else}
 				<h1>Feil</h1>
 				<p>Koden kan ikke brukes. Prøv på nytt.</p>
-				<p>Sliter du med å endre passord? Kontakt <a href="info@phoenixlan.no">info@phoenixlan.no</a></p>
+				<p>Sliter du med å endre passord? Kontakt <a href={"mailto:"+metadata["contact"]}>{metadata["contact"]}</a></p>
 
 			{/if}
 			{:catch error}
