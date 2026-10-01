@@ -14,7 +14,7 @@ from phoenixRest.models.tickets.ticket_transfer import TicketTransfer
 from phoenixRest.models.tickets.ticket import Ticket
 from phoenixRest.models.tickets.seat import Seat
 
-from phoenixRest.roles import ADMIN, TICKET_ADMIN, TICKET_CHECKIN
+from phoenixRest.roles import ADMIN, TICKET_ADMIN, TICKET_CHECKIN, BRAND_ADMIN
 
 from phoenixRest.utils import validate 
 
@@ -32,15 +32,22 @@ class TicketInstanceResource(object):
     def __acl__(self):
         acl = [
             (Allow, ADMIN(), 'view_ticket'),
+            (Allow, BRAND_ADMIN(self.ticketInstance.event.event_brand_uuid), 'view_ticket'),
             (Allow, TICKET_ADMIN(self.ticketInstance.event.event_brand_uuid), 'view_ticket'),
             (Allow, TICKET_CHECKIN(self.ticketInstance.event.event_brand_uuid), 'view_ticket'),
+
             (Allow, ADMIN(), 'seat_ticket'),
+            (Allow, BRAND_ADMIN(self.ticketInstance.event.event_brand_uuid), 'seat_ticket'),
             (Allow, TICKET_ADMIN(self.ticketInstance.event.event_brand_uuid), 'seat_ticket'),
+
             (Allow, ADMIN(), 'set_seater'),
             (Allow, TICKET_ADMIN(self.ticketInstance.event.event_brand_uuid), 'set_seater'),
+            (Allow, BRAND_ADMIN(self.ticketInstance.event.event_brand_uuid), 'set_seater'),
+
             (Allow, ADMIN(), 'check_in'),
             (Allow, TICKET_ADMIN(self.ticketInstance.event.event_brand_uuid), 'check_in'),
             (Allow, TICKET_CHECKIN(self.ticketInstance.event.event_brand_uuid), 'check_in'),
+            (Allow, BRAND_ADMIN(self.ticketInstance.event.event_brand_uuid), 'check_in'),
         ]
         if self.ticketInstance is not None:
             acl = acl + [

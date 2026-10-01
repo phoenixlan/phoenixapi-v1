@@ -14,9 +14,9 @@ class EventTicketResource(object):
         return [
             (Allow, ADMIN(), 'create'),
             (Allow, TICKET_ADMIN(self.event.event_brand_uuid), 'create'),
-            (Allow, ADMIN(), 'get'),
-            (Allow, BRAND_ADMIN(self.event.event_brand_uuid), 'get'),
-            (Allow, TICKET_ADMIN(self.event.event_brand_uuid), 'get')
+            (Allow, ADMIN(), 'list'),
+            (Allow, BRAND_ADMIN(self.event.event_brand_uuid), 'list'),
+            (Allow, TICKET_ADMIN(self.event.event_brand_uuid), 'list')
         ]
 
     def __init__(self, request, event):
@@ -24,7 +24,7 @@ class EventTicketResource(object):
         self.event = event
 
 
-@view_config(context=EventTicketResource, request_method='GET', renderer='json', permission='get')
+@view_config(context=EventTicketResource, request_method='GET', renderer='json', permission='list')
 def get_tickets(context, request):
     return request.db.query(Ticket) \
         .filter(Ticket.event_uuid == context.event.uuid) \
