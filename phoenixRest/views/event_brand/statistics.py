@@ -16,7 +16,7 @@ from phoenixRest.models.tickets.ticket_type import TicketType
 from phoenixRest.utils import validate
 from phoenixRest.resource import resource
 
-from phoenixRest.roles import ADMIN
+from phoenixRest.roles import ADMIN, BRAND_ADMIN
 
 from phoenixRest.views.seatmap.instance import SeatmapInstanceViews
 
@@ -26,13 +26,19 @@ log = logging.getLogger(__name__)
 from datetime import date
 
 class EventBrandStatisticsResource(object):
-    __acl__ = [
-        (Allow, ADMIN(), 'get_ticket_sales_stats'),
+    def __acl__(self):
+        acl = [
+            (Allow, ADMIN(), 'get_ticket_sales_stats'),
+            (Allow, BRAND_ADMIN(self.eventBrandInstance.uuid), 'get_ticket_sales_stats'),
 
-        (Allow, ADMIN(), 'get_participant_history_stats'),
+            (Allow, ADMIN(), 'get_participant_history_stats'),
+            (Allow, BRAND_ADMIN(self.eventBrandInstance.uuid), 'get_participant_history_stats'),
 
-        (Allow, ADMIN(), 'get_age_distribution_stats'),
-    ]
+            (Allow, ADMIN(), 'get_age_distribution_stats'),
+            (Allow, BRAND_ADMIN(self.eventBrandInstance.uuid), 'get_age_distribution_stats'),
+        ]
+        return acl
+
     def __init__(self, request, eventBrandInstance):
         self.request = request
         self.eventBrandInstance = eventBrandInstance
