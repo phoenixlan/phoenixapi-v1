@@ -11,7 +11,7 @@ from phoenixRest.models.core.user import User
 
 from phoenixRest.mappers.position import map_position_with_position_mappings
 
-from phoenixRest.roles import ADMIN, HR_ADMIN
+from phoenixRest.roles import ADMIN, BRAND_ADMIN, HR_ADMIN
 
 import logging
 log = logging.getLogger(__name__)
@@ -24,7 +24,9 @@ class PositionInstanceResource(object):
 
         return [
             (Allow, ADMIN(), 'get_position'),
+            (Allow, BRAND_ADMIN(self.positionInstance.event_brand_uuid), 'get_position') if self.positionInstance.event_brand_uuid else None,
             (Allow, HR_ADMIN(self.positionInstance.event_brand_uuid), 'get_position') if self.positionInstance.event_brand_uuid else None,
+            
             (Allow, ADMIN(), 'create_position'),
             (Allow, HR_ADMIN(self.positionInstance.event_brand_uuid), 'create_position') if self.positionInstance.event_brand_uuid else None,
 
