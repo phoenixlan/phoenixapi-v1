@@ -34,7 +34,7 @@ class EventBrandInstanceResource(dict):
             (Allow, BRAND_ADMIN(self.eventBrandInstance.uuid), 'create_event'),
 
             (Allow, ADMIN(), 'get_all_events'),
-            (Allow, BRAND_ADMIN(), 'get_all_events'),
+            (Allow, BRAND_ADMIN(self.eventBrandInstance.uuid), 'get_all_events'),
             
             (Allow, ADMIN(), 'get_all_positions'),
             (Allow, BRAND_ADMIN(self.eventBrandInstance.uuid), 'get_all_positions'),
@@ -82,7 +82,7 @@ def get_event_brand(context, request):
 def get_active_event(context, request):
     return get_current_event(request.db, context.eventBrandInstance)
 
-@view_config(context=EventBrandInstanceResource, name='events', request_method='GET', renderer='json', permission='get_all_events')
+@view_config(context=EventBrandInstanceResource, name='event', request_method='GET', renderer='json', permission='get_all_events')
 def get_all_events(context, request):
     return request.db.query(Event) \
         .filter(Event.event_brand_uuid == context.eventBrandInstance.uuid) \
