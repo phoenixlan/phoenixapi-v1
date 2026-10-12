@@ -47,11 +47,15 @@ class EventBrandInstanceResource(dict):
             (Allow, ADMIN(), 'create_ticket_type'),
             (Allow, BRAND_ADMIN(self.eventBrandInstance.uuid), 'create_ticket_type'),
             (Allow, TICKET_ADMIN(self.eventBrandInstance.uuid), 'create_ticket_type'),
+
             (Allow, ADMIN(), 'get_all_ticket_types'),
             (Allow, BRAND_ADMIN(self.eventBrandInstance.uuid), 'get_all_ticket_types'),
             (Allow, TICKET_ADMIN(self.eventBrandInstance.uuid), 'get_all_ticket_types'),
+
             (Allow, ADMIN(), 'get_all_seatmaps'),
+            (Allow, BRAND_ADMIN(self.eventBrandInstance.uuid), 'get_all_seatmaps'),
             (Allow, TICKET_ADMIN(self.eventBrandInstance.uuid), 'get_all_seatmaps'),
+
             (Allow, ADMIN(), 'get_all_ticket_vouchers'),
             (Allow, BRAND_ADMIN(self.eventBrandInstance.uuid), 'get_all_ticket_vouchers'),
             (Allow, TICKET_ADMIN(self.eventBrandInstance.uuid), 'get_all_ticket_vouchers'),
