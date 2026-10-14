@@ -43,18 +43,3 @@ class SeatmapViews(object):
 def get_all_seatmaps(context, request):
     return request.db.query(Seatmap).order_by(Seatmap.name).all()
 
-@view_config(name='', context=SeatmapViews, request_method='PUT', renderer='json', permission='create')
-@validate(json_body={'name': str, 'description': str, 'event_brand_uuid': str})
-def create_seatmap(context, request):
-    brand = request.db.query(EventBrand).filter(EventBrand.uuid == request.json_body['event_brand_uuid']).first()
-    if brand is None:
-        request.response.status = 400
-        return {
-            "error": "Event brand not found"
-        }
-
-    seatmap = Seatmap(request.json_body['name'], request.json_body['description'])
-    seatmap.event_brand = brand
-    request.db.add(seatmap)
-    request.db.flush()
-    return seatmap
