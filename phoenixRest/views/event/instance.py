@@ -56,6 +56,7 @@ class EventInstanceResource(dict):
             (Allow, Everyone, 'ticket_availability_get'),
 
             (Allow, ADMIN(), 'event_memberships_get'),
+            (Allow, BRAND_ADMIN(self.eventInstance.event_brand_uuid), 'event_memberships_get'),
             (Allow, TICKET_ADMIN(self.eventInstance.event_brand_uuid), 'event_memberships_get'),
             (Allow, HR_ADMIN(self.eventInstance.event_brand_uuid), 'event_memberships_get'),
 
@@ -71,13 +72,16 @@ class EventInstanceResource(dict):
 
             (Allow, CHIEF(self.eventInstance.event_brand_uuid), 'applications_get'),
             (Allow, ADMIN(), 'applications_get'),
+            (Allow, BRAND_ADMIN(self.eventInstance.event_brand_uuid), 'applications_get'),
 
             (Allow, CHIEF(self.eventInstance.event_brand_uuid), 'list_card_orders'),
             (Allow, ADMIN(), 'list_card_orders'),
+            (Allow, BRAND_ADMIN(self.eventInstance.event_brand_uuid), 'list_card_orders'),
             (Allow, CREW_CARD_PRINTER(self.eventInstance.event_brand_uuid), 'list_card_orders'),
 
             # Who can view the crew card of someone attending this event?
             (Allow, ADMIN(), 'get_crew_card'),
+            (Allow, BRAND_ADMIN(self.eventInstance.event_brand_uuid), 'get_crew_card'),
             (Allow, CHIEF(self.eventInstance.event_brand_uuid), 'get_crew_card'),
             (Allow, CREW_CARD_PRINTER(self.eventInstance.event_brand_uuid), 'get_crew_card'),
 

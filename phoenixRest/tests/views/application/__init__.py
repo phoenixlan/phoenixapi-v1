@@ -72,6 +72,45 @@ def test_create_accept_appliations(testapp, upcoming_event, chief_user, adam_use
 
     # A newly generated token validates the event/position brand pairing.
     testapp.auth_get_tokens(adam_user.email, 'sixcharacters')
+
+def test_create_accept_appliations_as_brand_admin(testapp, upcoming_event, brand_admin_user, adam_user, testcrew):
+    # Log in as the test user
+    token, refresh = testapp.auth_get_tokens(brand_admin_user.email, 'sixcharacters')
+    applicant_token, refresh = testapp.auth_get_tokens(adam_user.email, 'sixcharacters')
+
+    application_uuid = create_application(testapp, applicant_token, [str(testcrew.uuid)], upcoming_event)
+
+    # Try to accept the application
+    res = testapp.patch_json('/application/%s' % application_uuid, dict({
+        'answer': 'That\'s a very poggers application',
+        'crew_uuid': str(testcrew.uuid),
+        'state': 'accepted'
+    }), headers=dict({
+        "Authorization": "Bearer " + token
+    }), status=200)
+
+    res = testapp.get('/application/%s' % application_uuid, headers=dict({
+        "Authorization": "Bearer " + token
+    }), status=200)
+
+    assert len(res.json_body) > 0
+    assert res.json_body['state'] == "ApplicationState.accepted"
+
+    # Get the user object, ensure we are now a member
+    applicant_user = testapp.get('/user/current', headers=dict({
+        "Authorization": "Bearer " + applicant_token
+        }), status=200).json_body
+    
+    assert len(applicant_user['position_mappings']) > 0
+
+    correct_mappings = list(filter(lambda mapping: mapping['event_uuid'] == str(upcoming_event.uuid), applicant_user['position_mappings']))
+    assert len(correct_mappings) == 1
+    assert correct_mappings[0]['position']['crew_uuid'] == str(testcrew.uuid)
+    assert correct_mappings[0]['position']['event_brand_uuid'] == \
+        str(upcoming_event.event_brand_uuid)
+
+    # A newly generated token validates the event/position brand pairing.
+    testapp.auth_get_tokens(adam_user.email, 'sixcharacters')
     
 def test_create_reject_appliations(testapp, upcoming_event, admin_user, greg_user, testcrew):
     # Log in as the test user
@@ -106,9 +145,86 @@ def test_create_reject_appliations(testapp, upcoming_event, admin_user, greg_use
 
     correct_mappings = list(filter(lambda mapping: mapping['event_uuid'] == str(upcoming_event.uuid), applicant_user['position_mappings']))
     assert len(correct_mappings) == 0
+
+def test_create_reject_appliations_as_brand_admin(testapp, upcoming_event, brand_admin_user, greg_user, testcrew):
+    # Log in as the test user
+    token, refresh = testapp.auth_get_tokens(brand_admin_user.email, 'sixcharacters')
+    applicant_token, refresh = testapp.auth_get_tokens(greg_user.email, 'sixcharacters')
+
+    application_crew = str(testcrew.uuid)
+
+    application_uuid = create_application(testapp, applicant_token, [application_crew], upcoming_event)
+
+    # Try to accept the application
+    res = testapp.patch_json('/application/%s' % application_uuid, dict({
+        'answer': 'Nah man',
+        'state': 'rejected'
+    }), headers=dict({
+        "Authorization": "Bearer " + token
+    }), status=200)
+
+    res = testapp.get('/application/%s' % application_uuid, headers=dict({
+        "Authorization": "Bearer " + token
+    }), status=200)
+
+    assert len(res.json_body) > 0
+    assert res.json_body['state'] == "ApplicationState.rejected"
+
+    # Ensure the member didn't join any crews
+    applicant_user = testapp.get('/user/current', headers=dict({
+        "Authorization": "Bearer " + applicant_token
+        }), status=200).json_body
     
-def hide_application(testapp, token, application_crews: list, upcoming_event, admin_user, greg_user):
+    assert len(applicant_user['position_mappings']) > 0
+
+    correct_mappings = list(filter(lambda mapping: mapping['event_uuid'] == str(upcoming_event.uuid), applicant_user['position_mappings']))
+    assert len(correct_mappings) == 0
+    
+def hide_application(testapp, upcoming_event, application_crews: list, admin_user, greg_user):
     token, refresh = testapp.auth_get_tokens(admin_user.email, 'sixcharacters')
+    applicant_token, refresh = testapp.auth_get_tokens(greg_user.email, 'sixcharacters')
+
+    user = testapp.get_user(token)
+
+    my_application_list = testapp.get('/application/my' % application_uuid, headers=dict({
+        "Authorization": "Bearer " + applicant_token
+    }), status=200).json_body
+
+    assert len(my_application_list) == 0
+
+    application_uuid = create_application(testapp, applicant_token, application_crews, upcoming_event)
+
+    my_application_list = testapp.get('/application/my', headers=dict({
+        "Authorization": "Bearer " + applicant_token
+    }), status=200).json_body
+
+    assert len(my_application_list) == 1
+
+    # Check that you can get applications through user uuid
+    my_application_list = testapp.get('/user/%s/applications' % user['uuid'], headers=dict({
+        "Authorization": "Bearer " + applicant_token
+    }), status=200).json_body
+
+    assert len(my_application_list) == 1
+
+    # Try to hide the application
+    res = testapp.patch_json('/application/%s/hide' % application_uuid, headers=dict({
+        "Authorization": "Bearer " + token
+    }), status=200)
+
+    # It should be gone
+    res = testapp.get('/application/%s' % application_uuid, headers=dict({
+        "Authorization": "Bearer " + applicant_token
+    }), status=404)
+
+    my_application_list = testapp.get('/application/my' % application_uuid, headers=dict({
+        "Authorization": "Bearer " + applicant_token
+    }), status=200).json_body
+
+    assert len(my_application_list) == 0
+
+def hide_application_as_brand_admin(testapp, upcoming_event, application_crews: list, brand_admin_user, greg_user):
+    token, refresh = testapp.auth_get_tokens(brand_admin_user.email, 'sixcharacters')
     applicant_token, refresh = testapp.auth_get_tokens(greg_user.email, 'sixcharacters')
 
     user = testapp.get_user(token)
