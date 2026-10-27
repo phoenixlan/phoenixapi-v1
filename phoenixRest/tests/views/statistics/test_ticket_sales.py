@@ -41,7 +41,7 @@ def test_smoketest_ticket_sales(db, testapp, ticketsale_ongoing_event, ongoing_t
             "Authorization": "Bearer " + token
         }), status=200)
 
-    # Ensure at least one ticket is sold
+    # Check that two tickets has been registered, and can be fetched for statistics
     stats = testapp.get(f"/event_brand/{event_brand.uuid}/statistics/ticket_sales", headers=dict({
         "Authorization": "Bearer " + token
     }), status=200).json_body
@@ -96,7 +96,7 @@ def test_smoketest_ticket_sales_as_brand_admin(db, testapp, ticketsale_ongoing_e
             "Authorization": "Bearer " + token
         }), status=200)
 
-    # Ensure at least one ticket is sold
+    # Check that two tickets has been registered, and can be fetched for statistics
     stats = testapp.get(f"/event_brand/{event_brand.uuid}/statistics/ticket_sales", headers=dict({
         "Authorization": "Bearer " + token
     }), status=200).json_body
