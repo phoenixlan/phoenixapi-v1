@@ -15,27 +15,9 @@ def test_new_memberships_includes_membership_personalia(testapp, upcoming_event,
     assert membership['membership_personalia']['address'] == jeff_membership_personalia.address
     assert membership['membership_personalia']['postal_code'] == jeff_membership_personalia.postal_code
 
-def test_new_memberships_includes_membership_personalia_as_brand_admin(testapp, upcoming_event, brand_admin_user, jeff_user, jeff_membership_ticket, jeff_membership_personalia):
-    memberships = _get_new_memberships(testapp, upcoming_event, brand_admin_user).json_body
-
-    assert len(memberships) == 1
-    membership = memberships[0]
-    assert membership['uuid'] == str(jeff_user.uuid)
-    assert membership['phone'] == jeff_user.phone
-    assert membership['membership_personalia']['address'] == jeff_membership_personalia.address
-    assert membership['membership_personalia']['postal_code'] == jeff_membership_personalia.postal_code
-
 def test_new_memberships_without_membership_personalia(testapp, upcoming_event, admin_user, adam_user, adam_membership_ticket):
     """Members who have not filled in personalia are still listed"""
     memberships = _get_new_memberships(testapp, upcoming_event, admin_user).json_body
-
-    assert len(memberships) == 1
-    assert memberships[0]['uuid'] == str(adam_user.uuid)
-    assert memberships[0]['membership_personalia'] is None
-
-def test_new_memberships_without_membership_personalia_as_brand_admin(testapp, upcoming_event, brand_admin_user, adam_user, adam_membership_ticket):
-    """Members who have not filled in personalia are still listed"""
-    memberships = _get_new_memberships(testapp, upcoming_event, brand_admin_user).json_body
 
     assert len(memberships) == 1
     assert memberships[0]['uuid'] == str(adam_user.uuid)

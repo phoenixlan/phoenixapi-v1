@@ -14,7 +14,7 @@ from phoenixRest.models.core.event import get_current_events
 
 from phoenixRest.mappers.application import map_application_with_hidden_fields
 
-from phoenixRest.roles import ADMIN, BRAND_ADMIN, CHIEF
+from phoenixRest.roles import ADMIN, CHIEF
 
 from phoenixRest.utils import validate
 from phoenixRest.resource import resource
@@ -33,15 +33,12 @@ class ApplicationInstanceResource(object):
         acl = [
             (Allow, "%s" % self.applicationInstance.user.uuid, 'application_get'),
             (Allow, ADMIN(), 'application_get'),
-            (Allow, BRAND_ADMIN(self.applicationInstance.event.event_brand_uuid), 'application_get'),
             (Allow, CHIEF(self.applicationInstance.event.event_brand_uuid), 'application_get'),
 
             (Allow, ADMIN(), 'application_edit'),
-            (Allow, BRAND_ADMIN(self.applicationInstance.event.event_brand_uuid), 'application_edit'),
             (Allow, CHIEF(self.applicationInstance.event.event_brand_uuid), 'application_edit'),
 
             (Allow, ADMIN(), 'application_hide'),
-            (Allow, BRAND_ADMIN(self.applicationInstance.event.event_brand_uuid), 'application_hide'),
             (Allow, CHIEF(self.applicationInstance.event.event_brand_uuid), 'application_hide'),
         ]
         return acl

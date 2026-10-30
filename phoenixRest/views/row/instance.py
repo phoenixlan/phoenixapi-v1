@@ -9,7 +9,7 @@ from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 from phoenixRest.models.tickets.seat import Seat
 from phoenixRest.models.tickets.row import Row
 
-from phoenixRest.roles import ADMIN, BRAND_ADMIN, TICKET_ADMIN
+from phoenixRest.roles import ADMIN, TICKET_ADMIN
 
 from phoenixRest.utils import validate, validateUuidAndQuery
 from phoenixRest.resource import resource
@@ -26,11 +26,8 @@ class RowInstanceResource(object):
     def __acl__(self):
         return [
         (Allow, ADMIN(), 'create_seat'),
-        (Allow, BRAND_ADMIN(self.rowInstance.seatmap.event_brand_uuid), 'create_seat'),
         (Allow, TICKET_ADMIN(self.rowInstance.seatmap.event_brand_uuid), 'create_seat'),
-
         (Allow, ADMIN(), 'update_row'),
-        (Allow, BRAND_ADMIN(self.rowInstance.seatmap.event_brand_uuid), 'update_row'),
         (Allow, TICKET_ADMIN(self.rowInstance.seatmap.event_brand_uuid), 'update_row'),
         # Authenticated pages
         #(Allow, Authenticated, Authenticated),
