@@ -1,6 +1,6 @@
 from pyramid.authorization import Allow
 
-from phoenixRest.roles import CREW_CARD_PRINTER, CHIEF, ADMIN, BRAND_ADMIN
+from phoenixRest.roles import CREW_CARD_PRINTER, CHIEF, ADMIN
 from phoenixRest.utils import validateUuidAndQuery
 from phoenixRest.models.crew.card_order import CardOrder, OrderStates
 
@@ -22,19 +22,15 @@ class CardOrderInstanceResource(object):
             (Allow, CREW_CARD_PRINTER(self.cardOrderInstance.event.event_brand_uuid), "view"),
             (Allow, CHIEF(self.cardOrderInstance.event.event_brand_uuid), "view"),
             (Allow, ADMIN(), "view"),
-            (Allow, BRAND_ADMIN(self.cardOrderInstance.event.event_brand_uuid), "view"),
             # Roles with permission to generate a crew card based on an order
             (Allow, CREW_CARD_PRINTER(self.cardOrderInstance.event.event_brand_uuid), "print"),
             (Allow, ADMIN(), "print"),
-            (Allow, BRAND_ADMIN(self.cardOrderInstance.event.event_brand_uuid), "print"),
             # Roles with permission to finish a card order
             (Allow, CREW_CARD_PRINTER(self.cardOrderInstance.event.event_brand_uuid), "finish"),
             (Allow, ADMIN(), "finish"),
-            (Allow, BRAND_ADMIN(self.cardOrderInstance.event.event_brand_uuid), "finish"),
             # Roles with permission to cancel the card order
             (Allow, CHIEF(self.cardOrderInstance.event.event_brand_uuid), "cancel"),
             (Allow, ADMIN(), "cancel"),
-            (Allow, BRAND_ADMIN(self.cardOrderInstance.event.event_brand_uuid), "cancel"),
         ]
         return acl
     

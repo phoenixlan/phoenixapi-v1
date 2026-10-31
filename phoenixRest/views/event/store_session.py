@@ -13,7 +13,6 @@ from phoenixRest.models.tickets.store_session_cart_entry import StoreSessionCart
 from phoenixRest.models.tickets.ticket_type import TicketType
 from phoenixRest.roles import (
     ADMIN,
-    BRAND_ADMIN,
     TICKET_ADMIN,
     TICKET_BYPASS_TICKETSALE_START_RESTRICTION,
     TICKET_WHOLESALE
@@ -30,7 +29,6 @@ class EventStoreSessionResource(object):
             (Allow, Authenticated, 'create'),
 
             (Allow, ADMIN(), 'fetch_active'),
-            (Allow, BRAND_ADMIN(self.event.event_brand_uuid), 'fetch_active'),
             (Allow, TICKET_ADMIN(self.event.event_brand_uuid), 'fetch_active')
         ]
 

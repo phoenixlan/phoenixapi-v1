@@ -223,11 +223,6 @@ def admin_token(testapp, admin_user):
     return privileged_token
 
 @pytest.fixture
-def brand_admin_token(testapp, brand_admin_user):
-    privileged_token, refresh = testapp.auth_get_tokens(brand_admin_user.email, 'sixcharacters')
-    return privileged_token
-
-@pytest.fixture
 def upcoming_event(db, event_brand):
     """Creates an event that has not yet happened, but where ticketsale hasn't started yet"""
 

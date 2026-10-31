@@ -32,10 +32,6 @@ class EventBrandInstanceResource(dict):
             (Allow, Everyone, 'get_current_event'),
             (Allow, ADMIN(), 'create_event'),
             (Allow, BRAND_ADMIN(self.eventBrandInstance.uuid), 'create_event'),
-
-            (Allow, ADMIN(), 'get_all_events'),
-            (Allow, BRAND_ADMIN(self.eventBrandInstance.uuid), 'get_all_events'),
-            
             (Allow, ADMIN(), 'get_all_positions'),
             (Allow, BRAND_ADMIN(self.eventBrandInstance.uuid), 'get_all_positions'),
             (Allow, HR_ADMIN(self.eventBrandInstance.uuid), 'get_all_positions'),
@@ -47,22 +43,15 @@ class EventBrandInstanceResource(dict):
             (Allow, ADMIN(), 'create_ticket_type'),
             (Allow, BRAND_ADMIN(self.eventBrandInstance.uuid), 'create_ticket_type'),
             (Allow, TICKET_ADMIN(self.eventBrandInstance.uuid), 'create_ticket_type'),
-
             (Allow, ADMIN(), 'get_all_ticket_types'),
             (Allow, BRAND_ADMIN(self.eventBrandInstance.uuid), 'get_all_ticket_types'),
             (Allow, TICKET_ADMIN(self.eventBrandInstance.uuid), 'get_all_ticket_types'),
-
             (Allow, ADMIN(), 'get_all_seatmaps'),
-            (Allow, BRAND_ADMIN(self.eventBrandInstance.uuid), 'get_all_seatmaps'),
             (Allow, TICKET_ADMIN(self.eventBrandInstance.uuid), 'get_all_seatmaps'),
-
-            (Allow, ADMIN(), 'create_seatmap'),
-            (Allow, BRAND_ADMIN(self.eventBrandInstance.uuid), 'create_seatmap'),
-            (Allow, TICKET_ADMIN(self.eventBrandInstance.uuid), 'create_seatmap'),
-
             (Allow, ADMIN(), 'get_all_ticket_vouchers'),
             (Allow, BRAND_ADMIN(self.eventBrandInstance.uuid), 'get_all_ticket_vouchers'),
             (Allow, TICKET_ADMIN(self.eventBrandInstance.uuid), 'get_all_ticket_vouchers'),
+
 
             (Allow, ADMIN(), 'create_crew'),
             (Allow, BRAND_ADMIN(self.eventBrandInstance.uuid), 'create_crew'),
@@ -88,13 +77,6 @@ def get_event_brand(context, request):
 @view_config(context=EventBrandInstanceResource, name='current_event', request_method='GET', renderer='json', permission='get_current_event')
 def get_active_event(context, request):
     return get_current_event(request.db, context.eventBrandInstance)
-
-@view_config(context=EventBrandInstanceResource, name='event', request_method='GET', renderer='json', permission='get_all_events')
-def get_all_events(context, request):
-    return request.db.query(Event) \
-        .filter(Event.event_brand_uuid == context.eventBrandInstance.uuid) \
-        .order_by(Event.start_time.asc()) \
-        .all()
 
 @view_config(context=EventBrandInstanceResource, name='event', request_method='PUT', renderer='json', permission='create_event')
 @validate(json_body={'booking_time': int, 'priority_seating_time_delta': int, 'seating_time_delta': int, 'start_time': int, 'end_time': int, 'name': str})
@@ -277,18 +259,6 @@ def get_all_seatmaps(context, request):
         .filter(Seatmap.event_brand_uuid == context.eventBrandInstance.uuid) \
         .order_by(Seatmap.name) \
         .all()
-
-@view_config(context=EventBrandInstanceResource, name='seatmap', request_method='PUT', renderer='json', permission='create_seatmap')
-@validate(json_body={'name': str, 'description': str})
-def create_seatmap(context, request):
-    seatmap = Seatmap(
-        name=request.json_body['name'], 
-        description=request.json_body['description'],
-    )
-    seatmap.event_brand = context.eventBrandInstance
-    request.db.add(seatmap)
-    request.db.flush()
-    return seatmap
 
 @view_config(context=EventBrandInstanceResource, name='ticket_voucher', request_method='GET', renderer='json', permission='get_all_ticket_vouchers')
 def get_all_ticket_vouchers(context, request):

@@ -67,25 +67,6 @@ def test_crew_card_as_chief(testapp, upcoming_event, chief_user, greg_user):
     assert len(res.body) > 0
 
 
-def test_crew_card_as_brand_admin(testapp, upcoming_event, brand_admin_user, greg_user):
-    """A chief can fetch the crew card of someone at their brand's event"""
-    brand_admin_token, refresh = testapp.auth_get_tokens(brand_admin_user.email, 'sixcharacters')
-
-    # The user needs an avatar for the card to be drawn
-    greg_token, refresh = testapp.auth_get_tokens(greg_user.email, 'sixcharacters')
-    testapp.upload_avatar(
-        greg_token, 'phoenixRest/tests/assets/avatar_test.png', 10, 10, 600, 450,
-        expected_status=200
-    )
-
-    res = testapp.get('/event/%s/crew_card?user_uuid=%s' % (upcoming_event.uuid, greg_user.uuid), headers=dict({
-        'Authorization': "Bearer " + brand_admin_token
-    }), status=200)
-
-    assert res.content_type == 'image/png'
-    assert len(res.body) > 0
-
-
 def test_crew_card_forbidden_for_regular_user(testapp, upcoming_event, chief_user, jeff_user):
     """Ordinary crew members can't fetch crew cards"""
     token, refresh = testapp.auth_get_tokens(jeff_user.email, 'sixcharacters')

@@ -25,8 +25,8 @@ def test_get_crews(testapp, db, testcrew, admin_user):
 
 
 def test_get_crew_from_list_as_admin_and_member(
-        testapp, testcrew, admin_user, brand_admin_user, greg_user):
-    for user in [admin_user, brand_admin_user, greg_user]:
+        testapp, testcrew, admin_user, greg_user):
+    for user in [admin_user, greg_user]:
         token, refresh = testapp.auth_get_tokens(user.email, 'sixcharacters')
         headers = {
             "Authorization": "Bearer " + token

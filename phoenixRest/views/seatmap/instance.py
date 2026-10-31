@@ -17,7 +17,7 @@ from phoenixRest.models.tickets.seatmap_background import SeatmapBackground
 
 from phoenixRest.mappers.seatmap import map_seatmap_for_availability
 
-from phoenixRest.roles import ADMIN, BRAND_ADMIN, TICKET_ADMIN
+from phoenixRest.roles import ADMIN, TICKET_ADMIN
 
 from phoenixRest.utils import validate, validateUuidAndQuery
 from phoenixRest.resource import resource
@@ -41,15 +41,12 @@ class SeatmapInstanceViews(object):
         return [
         (Allow, Authenticated, 'seatmap_get_availability'),
         (Allow, ADMIN(), 'create_row'),
-        (Allow, BRAND_ADMIN(self.seatmapInstance.event_brand_uuid), 'create_row'),
         (Allow, TICKET_ADMIN(self.seatmapInstance.event_brand_uuid), 'create_row'),
 
         (Allow, ADMIN(), 'upload_background'),
-        (Allow, BRAND_ADMIN(self.seatmapInstance.event_brand_uuid), 'upload_background'),
         (Allow, TICKET_ADMIN(self.seatmapInstance.event_brand_uuid), 'upload_background'),
 
         (Allow, ADMIN(), 'seatmap_view'),
-        (Allow, BRAND_ADMIN(self.seatmapInstance.event_brand_uuid), 'seatmap_view'),
         (Allow, TICKET_ADMIN(self.seatmapInstance.event_brand_uuid), 'seatmap_view'),
         # Authenticated pages
         #(Allow, Authenticated, Authenticated),
