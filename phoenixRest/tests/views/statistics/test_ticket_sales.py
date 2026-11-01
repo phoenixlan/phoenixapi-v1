@@ -55,7 +55,7 @@ def test_smoketest_ticket_sales(db, testapp, ticketsale_ongoing_event, ongoing_t
     # The two tickets should show up
     assert sum(map(lambda day: day["count"], current_stats["days"])) == 2
 
-def test_smoketest_ticket_sales_as_brand_admin(db, testapp, ticketsale_ongoing_event, ongoing_ticket_types, event_brand, ticketsale_ongoing_brand_admin_user, jeff_user):
+def test_smoketest_ticket_sales_as_brand_admin(db, testapp, ticketsale_ongoing_event, ongoing_ticket_types, event_brand, ticketsale_ongoing_brand_admin_user, admin_token, jeff_user):
     """Simple test that just makes sure ticket sales statistics isn't obviously broken
     """
     # test is a brand admin
@@ -88,12 +88,13 @@ def test_smoketest_ticket_sales_as_brand_admin(db, testapp, ticketsale_ongoing_e
     }), status=200).json_body
 
     # Give test user two free tickets. Why two? To ensure no deduplication happens, etc.
+    # Brand admins cannot create tickets, so an admin creates them
     for i in range(0, 2):
         res = testapp.post_json('/event/%s/ticket' % ticketsale_ongoing_event.uuid, dict({
             'ticket_type': next(ticket_types)['uuid'],
             'recipient': unprivileged_user['uuid']
         }), headers=dict({
-            "Authorization": "Bearer " + token
+            "Authorization": "Bearer " + admin_token
         }), status=200)
 
     # Check that two tickets has been registered, and can be fetched for statistics
