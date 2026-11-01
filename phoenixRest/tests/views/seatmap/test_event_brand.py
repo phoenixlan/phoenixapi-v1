@@ -11,16 +11,14 @@ def test_seatmaps_are_listed_only_for_their_event_brand(
         'Authorization': "Bearer " + admin_token
     }
 
-    seatmap = testapp.put_json('/seatmap', {
+    seatmap = testapp.put_json('/event_brand/%s/seatmap' % event_brand.uuid, {
         'name': 'Main hall',
-        'description': 'Owned by the fixture brand',
-        'event_brand_uuid': str(event_brand.uuid)
+        'description': 'Owned by the fixture brand'
     }, headers=headers, status=200).json_body
 
-    other_seatmap = testapp.put_json('/seatmap', {
+    other_seatmap = testapp.put_json('/event_brand/%s/seatmap' % other_brand.uuid, {
         'name': 'Side hall',
-        'description': 'Owned by the other brand',
-        'event_brand_uuid': str(other_brand.uuid)
+        'description': 'Owned by the other brand'
     }, headers=headers, status=200).json_body
 
     brand_seatmaps = testapp.get(
@@ -48,28 +46,26 @@ def test_seatmaps_are_listed_only_for_their_event_brand_as_brand_admin(
         'Authorization': "Bearer " + brand_admin_token
     }
 
-    seatmap = testapp.put_json('/seatmap', {
+    seatmap = testapp.put_json('/event_brand/%s/seatmap' % event_brand.uuid, {
         'name': 'Main hall',
-        'description': 'Owned by the fixture brand',
-        'event_brand_uuid': str(event_brand.uuid)
+        'description': 'Owned by the fixture brand'
     }, headers=headers, status=200).json_body
 
-    other_seatmap = testapp.put_json('/seatmap', {
+    # Brand admins cannot create or list seatmaps for brands they do not administer
+    testapp.put_json('/event_brand/%s/seatmap' % other_brand.uuid, {
         'name': 'Side hall',
-        'description': 'Owned by the other brand',
-        'event_brand_uuid': str(other_brand.uuid)
-    }, headers=headers, status=200).json_body
+        'description': 'Owned by the other brand'
+    }, headers=headers, status=403)
 
     brand_seatmaps = testapp.get(
         '/event_brand/%s/seatmap' % event_brand.uuid,
         headers=headers,
         status=200
     ).json_body
-    other_brand_seatmaps = testapp.get(
+    testapp.get(
         '/event_brand/%s/seatmap' % other_brand.uuid,
         headers=headers,
-        status=200
-    ).json_body
+        status=403
+    )
 
     assert [entry['uuid'] for entry in brand_seatmaps] == [seatmap['uuid']]
-    assert [entry['uuid'] for entry in other_brand_seatmaps] == [other_seatmap['uuid']]

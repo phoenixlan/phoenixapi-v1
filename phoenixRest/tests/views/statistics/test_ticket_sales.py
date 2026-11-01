@@ -55,11 +55,11 @@ def test_smoketest_ticket_sales(db, testapp, ticketsale_ongoing_event, ongoing_t
     # The two tickets should show up
     assert sum(map(lambda day: day["count"], current_stats["days"])) == 2
 
-def test_smoketest_ticket_sales_as_brand_admin(db, testapp, ticketsale_ongoing_event, ongoing_ticket_types, event_brand, brand_admin_user, jeff_user):
+def test_smoketest_ticket_sales_as_brand_admin(db, testapp, ticketsale_ongoing_event, ongoing_ticket_types, event_brand, ticketsale_ongoing_brand_admin_user, jeff_user):
     """Simple test that just makes sure ticket sales statistics isn't obviously broken
     """
-    # test is an admin
-    token, refresh = testapp.auth_get_tokens(brand_admin_user.email, 'sixcharacters')
+    # test is a brand admin
+    token, refresh = testapp.auth_get_tokens(ticketsale_ongoing_brand_admin_user.email, 'sixcharacters')
     unprivileged_token, refresh = testapp.auth_get_tokens(jeff_user.email, 'sixcharacters')
 
     stats = testapp.get(f"/event_brand/{event_brand.uuid}/statistics/ticket_sales", headers=dict({

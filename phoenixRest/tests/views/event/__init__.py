@@ -154,10 +154,9 @@ def test_edit_event(testapp, upcoming_event, admin_user, jeff_user):
     unprivileged_token, refresh = testapp.auth_get_tokens(jeff_user.email, 'sixcharacters')
 
     # Get a seatmap
-    seatmap = testapp.put_json('/seatmap', dict({
+    seatmap = testapp.put_json('/event_brand/%s/seatmap' % upcoming_event.event_brand_uuid, dict({
         'name': 'Test seatmap',
-        'description': 'seatmap',
-        'event_brand_uuid': str(upcoming_event.event_brand_uuid)
+        'description': 'seatmap'
     }), headers=dict({
         "Authorization": "Bearer " + privileged_token
     }), status=200).json_body

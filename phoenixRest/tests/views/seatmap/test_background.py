@@ -6,10 +6,9 @@ def test_upload_background_jpg(testapp, event_brand, admin_token):
     headers = {
         'Authorization': "Bearer " + admin_token
     }
-    seatmap = testapp.put_json('/seatmap', {
+    seatmap = testapp.put_json('/event_brand/%s/seatmap' % event_brand.uuid, {
         'name': 'Main hall',
-        'description': 'Main hall seating',
-        'event_brand_uuid': str(event_brand.uuid)
+        'description': 'Main hall seating'
     }, headers=headers, status=200).json_body
 
     testapp.put('/seatmap/%s/background' % seatmap['uuid'], upload_files=[
@@ -23,10 +22,9 @@ def test_upload_background_non_image_disguised_as_png(testapp, event_brand, admi
     headers = {
         'Authorization': "Bearer " + admin_token
     }
-    seatmap = testapp.put_json('/seatmap', {
+    seatmap = testapp.put_json('/event_brand/%s/seatmap' % event_brand.uuid, {
         'name': 'Main hall',
-        'description': 'Main hall seating',
-        'event_brand_uuid': str(event_brand.uuid)
+        'description': 'Main hall seating'
     }, headers=headers, status=200).json_body
 
     # The .png name gets past the extension check, so the file content itself must be rejected
@@ -42,10 +40,9 @@ def test_upload_background_invalid_extension(testapp, event_brand, admin_token):
     headers = {
         'Authorization': "Bearer " + admin_token
     }
-    seatmap = testapp.put_json('/seatmap', {
+    seatmap = testapp.put_json('/event_brand/%s/seatmap' % event_brand.uuid, {
         'name': 'Main hall',
-        'description': 'Main hall seating',
-        'event_brand_uuid': str(event_brand.uuid)
+        'description': 'Main hall seating'
     }, headers=headers, status=200).json_body
 
     # A valid image is still rejected when it is named as another file type
