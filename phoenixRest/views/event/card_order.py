@@ -4,7 +4,7 @@ from pyramid.view import view_config
 from phoenixRest.models.core.event import get_current_events
 from phoenixRest.models.core.user import User
 from phoenixRest.models.crew.card_order import CardOrder
-from phoenixRest.roles import ADMIN, CHIEF
+from phoenixRest.roles import ADMIN, BRAND_ADMIN, CHIEF
 from phoenixRest.utils import validate
 
 
@@ -12,6 +12,7 @@ class EventCardOrderResource(object):
     def __acl__(self):
         return [
             (Allow, ADMIN(), 'create'),
+            (Allow, BRAND_ADMIN(self.event.event_brand_uuid), 'create'),
             (Allow, CHIEF(self.event.event_brand_uuid), 'create')
         ]
 
