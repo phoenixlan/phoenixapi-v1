@@ -24,6 +24,7 @@ from phoenixRest.models import (
 
 from phoenixRest.models.core import (
     user,
+    audit_log,
     user_consent,
     membership_personalia,
     friendship,

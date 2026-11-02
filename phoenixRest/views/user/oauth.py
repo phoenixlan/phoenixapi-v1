@@ -52,11 +52,11 @@ def generate_token(user: User, request):
 
         if position_map.position.event_brand_uuid is not None:
             # This position belongs to an event brand
-            return [ f"brand:{position_map.position.event_brand_uuid}:{permission.permission}" for permission in position_map.position.permissions ]
+            return [ f"brand:{position_map.position.event_brand_uuid}:{permission.permission}" for permission in position_map.position.permissions ] + [ f"brand_any:{permission.permission}" for permission in position_map.position.permissions ]
         else:
             # This position does not belong to a brand, so we apply it globally
             # TODO: with this system, only permissions that support global scope will work here
-            return [ f"global:{permission.permission}" for permission in position_map.position.permissions ]
+            return [ f"global:{permission.permission}" for permission in position_map.position.permissions ]  + [ f"global_any:{permission.permission}" for permission in position_map.position.permissions ]
 
     # Create a set of all permissions you have
     # A list of list of strings

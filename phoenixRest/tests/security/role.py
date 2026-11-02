@@ -53,6 +53,7 @@ def test_role_event_assignment(testapp, db, upcoming_event, previous_event, jeff
     expected_roles = [
         'user:%s' % current_user['uuid'],
         'brand:%s:test1' % current_event.event_brand_uuid,
+        'brand_any:test1',
         'brand:%s:member' % current_event.event_brand_uuid,
         'member'
     ]

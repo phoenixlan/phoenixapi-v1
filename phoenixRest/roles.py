@@ -11,12 +11,27 @@ def role_lambda(template):
         return template % brand_uuid
     return inner
 
+# Helpers to create any-permissions
+def brand_any(permission):
+    """Brand admin for any brand
+    """
+    def inner():
+        return f"role:brand_any:{permission}"
+    return inner
+
+def global_any(permission):
+    """Brand admin for any brand
+    """
+    def inner():
+        return f"role:global_any:{permission}"
+    return inner
 
 ADMIN = lambda: "role:global:admin" # Site administrator. Full access to PII and everything.
 
 ANY_MEMBER = lambda: "role:member" # Crew member of any crew
 
 BRAND_ADMIN = role_lambda("role:brand:%s:admin") # Admin for a brand
+ANY_BRAND_ADMIN = brand_any("admin") # Any brand admin
 CHIEF = role_lambda("role:brand:%s:chief") # Chief for a crew
 MEMBER = role_lambda("role:brand:%s:member") # Crew member
 

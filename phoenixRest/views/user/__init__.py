@@ -23,7 +23,7 @@ from phoenixRest.utils import validate
 from phoenixRest.resource import resource
 from phoenixRest.views.user.instance import UserInstanceResource
 
-from phoenixRest.roles import ADMIN
+from phoenixRest.roles import ADMIN, ANY_BRAND_ADMIN
 
 from datetime import datetime, date
 
@@ -37,9 +37,9 @@ class UserViews(object):
     __acl__ = [
         (Allow, Authenticated, 'current_get'),
         (Allow, Everyone, 'activate_user_by_code'),
-        (Allow, ADMIN(), 'all_get'),
 
         (Allow, ADMIN(), 'search'),
+        (Allow, ANY_BRAND_ADMIN(), 'search'),
 
         (Allow, Everyone, 'register'),
         (Allow, Everyone, 'connect_discord'),
