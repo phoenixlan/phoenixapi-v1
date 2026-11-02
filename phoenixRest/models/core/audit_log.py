@@ -43,6 +43,8 @@ class AuditLog(Base):
         self.action = action
         self.meta = meta
 
+        self.created = datetime.now()
+
     
     def __json__(self, request):
         return {
