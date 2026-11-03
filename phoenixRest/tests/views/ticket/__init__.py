@@ -54,6 +54,37 @@ def test_ticket_admin_is_scoped_to_event_brand(
         'Authorization': "Bearer " + token
     }, status=403)
 
+def test_brand_admin_can_create_ticket_for_own_brand(
+        testapp, upcoming_event, other_upcoming_event, ticket_types,
+        brand_admin_token, admin_token, jeff_user):
+    ticket_type = testapp.get(
+        '/event/%s/ticketType' % upcoming_event.uuid, status=200
+    ).json_body[0]
+
+    owned_tickets_pre = testapp.get('/user/%s/owned_tickets' % jeff_user.uuid, headers={
+        'Authorization': "Bearer " + admin_token
+    }, status=200).json_body
+
+    testapp.post_json('/event/%s/ticket' % upcoming_event.uuid, {
+        'ticket_type': ticket_type['uuid'],
+        'recipient': str(jeff_user.uuid)
+    }, headers={
+        'Authorization': "Bearer " + brand_admin_token
+    }, status=200)
+
+    owned_tickets_post = testapp.get('/user/%s/owned_tickets' % jeff_user.uuid, headers={
+        'Authorization': "Bearer " + admin_token
+    }, status=200).json_body
+    assert len(owned_tickets_pre) + 1 == len(owned_tickets_post)
+
+    # Brand admins can't give out tickets for events of other brands
+    testapp.post_json('/event/%s/ticket' % other_upcoming_event.uuid, {
+        'ticket_type': ticket_type['uuid'],
+        'recipient': str(jeff_user.uuid)
+    }, headers={
+        'Authorization': "Bearer " + brand_admin_token
+    }, status=403)
+
 def test_ticket_rejects_ticket_type_from_other_brand(
         testapp, upcoming_event, other_ticket_type, admin_token, jeff_user):
     response = testapp.post_json('/event/%s/ticket' % upcoming_event.uuid, {

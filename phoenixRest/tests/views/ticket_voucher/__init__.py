@@ -159,3 +159,65 @@ def test_voucher_rejects_ticket_type_from_other_brand(
 
     assert response.json_body['error'] == \
         'Ticket type belongs to a different event brand'
+
+
+def test_brand_admin_can_create_voucher_for_own_brand(
+        testapp, upcoming_event, ticket_types, brand_admin_token, jeff_user):
+    receiver_token, refresh = testapp.auth_get_tokens(jeff_user.email, 'sixcharacters')
+
+    ticket_type = testapp.get(
+        '/event/%s/ticketType' % upcoming_event.uuid, status=200
+    ).json_body[0]
+
+    voucher = testapp.post_json('/ticket_voucher', {
+        'ticket_type_uuid': ticket_type['uuid'],
+        'recipient_user_uuid': str(jeff_user.uuid),
+        'last_use_event_uuid': str(upcoming_event.uuid)
+    }, headers={
+        'Authorization': "Bearer " + brand_admin_token
+    }, status=200).json_body
+
+    jeff_owned_vouchers = testapp.get('/user/%s/ticket_vouchers' % jeff_user.uuid, headers={
+        'Authorization': "Bearer " + receiver_token
+    }, status=200).json_body
+    assert len(jeff_owned_vouchers) == 1
+    assert jeff_owned_vouchers[0]['uuid'] == voucher['uuid']
+
+    # The recipient can burn the voucher to get a ticket
+    post_burn_voucher = testapp.post_json('/ticket_voucher/%s/burn' % voucher['uuid'], {}, headers={
+        'Authorization': "Bearer " + receiver_token
+    }, status=200).json_body
+    assert post_burn_voucher['ticket']['event']['uuid'] == str(upcoming_event.uuid)
+
+
+def test_brand_admin_cannot_create_voucher_for_other_brand(
+        testapp, other_upcoming_event, other_ticket_type, brand_admin_token, jeff_user):
+    testapp.post_json('/ticket_voucher', {
+        'ticket_type_uuid': str(other_ticket_type.uuid),
+        'recipient_user_uuid': str(jeff_user.uuid),
+        'last_use_event_uuid': str(other_upcoming_event.uuid)
+    }, headers={
+        'Authorization': "Bearer " + brand_admin_token
+    }, status=403)
+
+
+def test_brand_admin_cannot_list_global_vouchers(testapp, brand_admin_token):
+    testapp.get('/ticket_voucher', headers={
+        'Authorization': "Bearer " + brand_admin_token
+    }, status=403)
+
+
+def test_regular_user_cannot_create_voucher(
+        testapp, upcoming_event, ticket_types, jeff_user, adam_user):
+    token, refresh = testapp.auth_get_tokens(jeff_user.email, 'sixcharacters')
+    ticket_type = testapp.get(
+        '/event/%s/ticketType' % upcoming_event.uuid, status=200
+    ).json_body[0]
+
+    testapp.post_json('/ticket_voucher', {
+        'ticket_type_uuid': ticket_type['uuid'],
+        'recipient_user_uuid': str(adam_user.uuid),
+        'last_use_event_uuid': str(upcoming_event.uuid)
+    }, headers={
+        'Authorization': "Bearer " + token
+    }, status=403)
