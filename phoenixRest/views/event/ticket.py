@@ -13,6 +13,7 @@ class EventTicketResource(object):
     def __acl__(self):
         return [
             (Allow, ADMIN(), 'create'),
+            (Allow, BRAND_ADMIN(self.event.event_brand_uuid), 'create'),
             (Allow, TICKET_ADMIN(self.event.event_brand_uuid), 'create'),
             (Allow, ADMIN(), 'list'),
             (Allow, BRAND_ADMIN(self.event.event_brand_uuid), 'list'),

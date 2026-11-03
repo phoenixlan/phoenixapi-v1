@@ -11,6 +11,7 @@ from phoenixRest.models.core.user import Gender, User, calculate_age, MIN_PASSWO
 from phoenixRest.models.core.activation_code import ActivationCode
 from phoenixRest.models.core.password_reset_code import PasswordResetCode
 from phoenixRest.models.core.user_consent import UserConsent, ConsentType
+from phoenixRest.models.core.audit_log import AuditLog
 
 from phoenixRest.models.utils.discord_mapping_oauth_state import DiscordMappingOauthState
 from phoenixRest.models.utils.discord_mapping import DiscordMapping
@@ -23,7 +24,7 @@ from phoenixRest.utils import validate
 from phoenixRest.resource import resource
 from phoenixRest.views.user.instance import UserInstanceResource
 
-from phoenixRest.roles import ADMIN
+from phoenixRest.roles import ADMIN, ANY_BRAND_ADMIN
 
 from datetime import datetime, date
 
@@ -37,9 +38,9 @@ class UserViews(object):
     __acl__ = [
         (Allow, Authenticated, 'current_get'),
         (Allow, Everyone, 'activate_user_by_code'),
-        (Allow, ADMIN(), 'all_get'),
 
         (Allow, ADMIN(), 'search'),
+        (Allow, ANY_BRAND_ADMIN(), 'search'),
 
         (Allow, Everyone, 'register'),
         (Allow, Everyone, 'connect_discord'),
@@ -85,6 +86,12 @@ def search_users(context, request):
         User.lastname.contains(query),
         User.email.contains(query)
     )).limit(10).all()
+
+    request.db.add(AuditLog(request.user, "user_search", {
+        "query": query,
+        "result_user_uuids": [ str(user.uuid) for user in users ]
+    }))
+
     return [ map_user_simple_with_secret_fields(user, request) for user in users ]
 
 #https://stackoverflow.com/questions/201323/how-can-i-validate-an-email-address-using-a-regular-expression

@@ -15,7 +15,7 @@ from phoenixRest.views.ticket_voucher.instance import TicketVoucherInstanceResou
 from phoenixRest.utils import validate
 from phoenixRest.resource import resource
 
-from phoenixRest.roles import ADMIN
+from phoenixRest.roles import ADMIN, ANY_BRAND_ADMIN, BRAND_ADMIN
 
 from sqlalchemy import and_, or_, extract
 
@@ -26,6 +26,8 @@ log = logging.getLogger(__name__)
 class TicketVoucherResource(object):
     __acl__ = [
         (Allow, ADMIN(), 'create'),
+        # Brand admins are further scoped to their own brand in create_voucher
+        (Allow, ANY_BRAND_ADMIN(), 'create'),
 
         (Allow, ADMIN(), 'get'),
     ]
@@ -65,7 +67,11 @@ def create_voucher(context, request):
         return {
             "error": "last_use_event not found"
         }
-        
+
+    if ADMIN() not in request.effective_principals and \
+            BRAND_ADMIN(last_use_event.event_brand_uuid) not in request.effective_principals:
+        raise HTTPForbidden("You are not allowed to create vouchers for this event brand")
+
     if ticket_type.event_brand_uuid != last_use_event.event_brand_uuid:
         request.response.status = 400
         return {

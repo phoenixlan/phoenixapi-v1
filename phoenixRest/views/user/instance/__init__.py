@@ -11,6 +11,7 @@ from phoenixRest.models.core.membership_personalia import MembershipPersonalia
 from phoenixRest.models.core.friendship import Friendship
 from phoenixRest.models.core.event import Event
 from phoenixRest.models.core.avatar import Avatar
+from phoenixRest.models.core.audit_log import AuditLog
 from phoenixRest.models.crew.application import Application
 from phoenixRest.models.tickets.ticket import Ticket
 from phoenixRest.models.tickets.ticket_type import TicketType
@@ -137,6 +138,11 @@ class UserInstanceResource(object):
 
 @view_config(context=UserInstanceResource, name='', request_method='GET', renderer='json', permission='user_view')
 def get_user(context, request):
+    if request.user.uuid != context.userInstance.uuid:
+        request.db.add(AuditLog(request.user, "user_get", {
+            "target_user_uuid": str(context.userInstance.uuid)
+        }))
+
     if ADMIN() in request.effective_principals or \
         request.user.uuid == context.userInstance.uuid:
 
