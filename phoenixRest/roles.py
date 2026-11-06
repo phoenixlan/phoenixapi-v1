@@ -37,6 +37,7 @@ MEMBER = role_lambda("role:brand:%s:member") # Crew member
 
 TICKET_ADMIN = role_lambda("role:brand:%s:ticket_admin") # Admin for the ticket part of the site
 TICKET_CHECKIN = role_lambda("role:brand:%s:ticket_checkin") # Neccesary for checking in users
+TICKET_AUDIT = role_lambda("role:brand:%s:ticket_audit") # Access to view ticket lists, ticket status, active store sessions, and tickettypes
 INFO_ADMIN = role_lambda("role:brand:%s:info_admin") # Access to publish information(agenda + infoscreen later)
 COMPO_ADMIN = role_lambda("role:brand:%s:compo_admin") # Admin for compos
 NFC_ADMIN = role_lambda("role:brand:%s:nfc_admin") # Admin for the NFC system
