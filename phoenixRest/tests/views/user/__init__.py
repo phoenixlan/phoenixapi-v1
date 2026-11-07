@@ -17,6 +17,48 @@ def test_search_users_returns_matching_user(
     assert [user['uuid'] for user in users] == [str(jeff_user.uuid)]
     assert users[0]['email'] == jeff_user.email
 
+def test_search_users_case_insensitivity(
+        testapp, admin_user, jeff_user):
+    """The search endpoint should be case insensitive"""
+    token, refresh = testapp.auth_get_tokens(
+        admin_user.email, 'sixcharacters'
+    )
+
+    users = testapp.get(
+        '/user/search',
+        params={'query': jeff_user.firstname.lower()},
+        headers={'Authorization': "Bearer " + token},
+        status=200
+    ).json_body
+
+    assert [user['uuid'] for user in users] == [str(jeff_user.uuid)]
+
+    users = testapp.get(
+        '/user/search',
+        params={'query': jeff_user.firstname.upper()},
+        headers={'Authorization': "Bearer " + token},
+        status=200
+    ).json_body
+
+    assert [user['uuid'] for user in users] == [str(jeff_user.uuid)]
+
+    users = testapp.get(
+        '/user/search',
+        params={'query': jeff_user.lastname.lower()},
+        headers={'Authorization': "Bearer " + token},
+        status=200
+    ).json_body
+
+    assert [user['uuid'] for user in users] == [str(jeff_user.uuid)]
+
+    users = testapp.get(
+        '/user/search',
+        params={'query': jeff_user.lastname.upper()},
+        headers={'Authorization': "Bearer " + token},
+        status=200
+    ).json_body
+
+    assert [user['uuid'] for user in users] == [str(jeff_user.uuid)]
 
 def test_search_users_validates_query(testapp, admin_user):
     token, refresh = testapp.auth_get_tokens(

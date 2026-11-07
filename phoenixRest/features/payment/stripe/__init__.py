@@ -38,6 +38,28 @@ def initialize_stripe_payment(request, payment: Payment):
 
     return client_secret
 
+def refund_stripe_payment(stripe_payment: StripePayment, amount: int):
+    # If we are running in pytest, we can safely mock
+    if "PYTEST_CURRENT_TEST" in os.environ:
+        return True
+    # Only set API key when it is used, for testing purposes
+    global STRIPE_INITIALIZED
+    if not STRIPE_INITIALIZED:
+        STRIPE_INITIALIZED = True
+        stripe.api_key = os.environ["STRIPE_API_KEY"]
+
+    try:
+        refund = stripe.Refund.create(
+            payment_intent=stripe_payment.payment_id,
+            amount=amount*100
+        )
+    except stripe.error.StripeError:
+        log.exception("Failed to refund %s NOK of stripe payment %s" % (amount, stripe_payment.payment_id))
+        return False
+
+    log.info("Refunded %s NOK of stripe payment %s - refund %s has status %s" % (amount, stripe_payment.payment_id, refund['id'], refund['status']))
+    return refund['status'] in ('succeeded', 'pending')
+
 # This should be called from the webhook
 def finalize_stripe_payment(request, payment: StripePayment):
     # Mark it as paid
