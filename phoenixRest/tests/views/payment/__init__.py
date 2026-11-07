@@ -187,26 +187,28 @@ def test_payment_flow_stripe(testapp, upcoming_event, ticket_types, admin_user, 
 
 def test_refund_partial_then_full(testapp, db, admin_token, jeff_stripe_payment, non_membership_ticket_type):
     """Refunding one ticket at a time first partially refunds, then fully refunds the payment"""
-    first, second = [ ticket.ticket_id for ticket in jeff_stripe_payment.tickets ]
+    first, second = jeff_stripe_payment.tickets
 
     res = testapp.post_json('/payment/%s/refund' % jeff_stripe_payment.uuid, {
-        'tickets': [first]
+        'tickets': [first.ticket_id]
     }, headers={'Authorization': "Bearer " + admin_token}, status=200)
     assert res.json_body['state'] == "PaymentState.partially_refunded"
     assert res.json_body['refunded_amount'] == non_membership_ticket_type.price
-    assert [ ticket.ticket_id for ticket in jeff_stripe_payment.tickets ] == [second]
-    assert db.query(Ticket).filter(Ticket.ticket_id == first).first() is None
+    assert jeff_stripe_payment.tickets == [second]
+    assert db.query(Ticket).filter(Ticket.ticket_id == first.ticket_id).first() is None
 
     res = testapp.post_json('/payment/%s/refund' % jeff_stripe_payment.uuid, {
-        'tickets': [second]
+        'tickets': [second.ticket_id]
     }, headers={'Authorization': "Bearer " + admin_token}, status=200)
     assert res.json_body['state'] == "PaymentState.refunded"
     assert res.json_body['refunded_amount'] == jeff_stripe_payment.price
     assert jeff_stripe_payment.tickets == []
 
 def test_refund_full_vipps(testapp, admin_token, jeff_vipps_payment):
+    first, second = jeff_vipps_payment.tickets
+
     res = testapp.post_json('/payment/%s/refund' % jeff_vipps_payment.uuid, {
-        'tickets': [ ticket.ticket_id for ticket in jeff_vipps_payment.tickets ]
+        'tickets': [first.ticket_id, second.ticket_id]
     }, headers={'Authorization': "Bearer " + admin_token}, status=200)
     assert res.json_body['state'] == "PaymentState.refunded"
     assert res.json_body['refunded_amount'] == jeff_vipps_payment.price
