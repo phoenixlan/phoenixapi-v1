@@ -16,7 +16,8 @@ from phoenixRest.roles import (
     BRAND_ADMIN,
     TICKET_ADMIN,
     TICKET_BYPASS_TICKETSALE_START_RESTRICTION,
-    TICKET_WHOLESALE
+    TICKET_WHOLESALE,
+    TICKET_AUDIT
 )
 from phoenixRest.utils import validate, validateUuidAndQuery
 
@@ -31,7 +32,8 @@ class EventStoreSessionResource(object):
 
             (Allow, ADMIN(), 'fetch_active'),
             (Allow, BRAND_ADMIN(self.event.event_brand_uuid), 'fetch_active'),
-            (Allow, TICKET_ADMIN(self.event.event_brand_uuid), 'fetch_active')
+            (Allow, TICKET_ADMIN(self.event.event_brand_uuid), 'fetch_active'),
+            (Allow, TICKET_AUDIT(self.event.event_brand_uuid), 'fetch_active')
         ]
 
     def __init__(self, request, event):
