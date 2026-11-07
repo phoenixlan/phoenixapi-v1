@@ -1,4 +1,5 @@
 from phoenixRest.models.core.event import Event
+from phoenixRest.models.core.audit_log import AuditLog
 from phoenixRest.models.tickets.payment import Payment, PaymentProvider, PaymentState
 from phoenixRest.models.tickets.ticket import Ticket
 from phoenixRest.models.tickets.ticket_voucher import TicketVoucher
@@ -204,6 +205,31 @@ def test_refund_partial_then_full(testapp, db, admin_token, jeff_stripe_payment,
     assert res.json_body['state'] == "PaymentState.refunded"
     assert res.json_body['refunded_amount'] == jeff_stripe_payment.price
     assert len(jeff_stripe_payment.tickets) == 0
+
+def test_refund_creates_audit_log(testapp, db, admin_user, admin_token, jeff_stripe_payment, non_membership_ticket_type):
+    ticket = jeff_stripe_payment.tickets[0]
+    ticket_id = ticket.ticket_id
+
+    testapp.post_json('/payment/%s/refund' % jeff_stripe_payment.uuid, {
+        'tickets': [ticket_id]
+    }, headers={'Authorization': "Bearer " + admin_token}, status=200)
+
+    logs = db.query(AuditLog).filter(AuditLog.user_uuid == admin_user.uuid, AuditLog.action == "payment_refund").all()
+    assert len(logs) == 1
+    assert logs[0].meta['payment_uuid'] == str(jeff_stripe_payment.uuid)
+    assert len(logs[0].meta['ticket_ids']) == 1
+    assert logs[0].meta['ticket_ids'][0] == ticket_id
+    assert logs[0].meta['amount'] == non_membership_ticket_type.price
+    assert logs[0].meta['full_refund'] is False
+
+def test_refund_rejected_does_not_create_audit_log(testapp, db, admin_user, admin_token, jeff_stripe_payment):
+    jeff_stripe_payment.price = 1
+
+    testapp.post_json('/payment/%s/refund' % jeff_stripe_payment.uuid, {
+        'tickets': [jeff_stripe_payment.tickets[0].ticket_id]
+    }, headers={'Authorization': "Bearer " + admin_token}, status=500)
+
+    assert db.query(AuditLog).filter(AuditLog.action == "payment_refund").count() == 0
 
 def test_refund_full_vipps(testapp, admin_token, jeff_vipps_payment):
     first, second = jeff_vipps_payment.tickets

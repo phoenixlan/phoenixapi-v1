@@ -6,6 +6,7 @@ from pyramid.httpexceptions import (
 )
 from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
+from phoenixRest.models.core.audit_log import AuditLog
 from phoenixRest.models.tickets.payment import Payment, PaymentState, PaymentProvider
 from phoenixRest.models.tickets.ticket_transfer import TicketTransfer
 from phoenixRest.models.tickets.ticket_voucher import TicketVoucher
@@ -166,6 +167,13 @@ def refund_payment(context, request):
 
     payment.refunded_amount += amount
     payment.state = PaymentState.refunded if is_full_refund else PaymentState.partially_refunded
+
+    request.db.add(AuditLog(request.user, "payment_refund", {
+        "payment_uuid": str(payment.uuid),
+        "ticket_ids": ticket_ids,
+        "amount": amount,
+        "full_refund": is_full_refund
+    }))
     request.db.flush()
 
     log.info("Refunded %s NOK (tickets %s) for payment %s" % (amount, ", ".join(str(ticket_id) for ticket_id in ticket_ids), payment.uuid))
