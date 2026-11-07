@@ -59,6 +59,7 @@ def test_get_active_store_sessions_as_ticket_admin(testapp, db, upcoming_event, 
     }), status=200)
     assert [session['uuid'] for session in res.json_body] == [str(store_session.uuid)]
 
+
 def test_get_active_store_sessions_as_brand_admin(testapp, db, upcoming_event, brand_admin_token, jeff_user):
     store_session = StoreSession(jeff_user, 3600, upcoming_event)
     db.add(store_session)
@@ -66,6 +67,18 @@ def test_get_active_store_sessions_as_brand_admin(testapp, db, upcoming_event, b
 
     store_sessions = testapp.get('/event/%s/store_session/active' % upcoming_event.uuid, headers=dict({
         "Authorization": "Bearer " + brand_admin_token
+    }), status=200).json_body
+
+    assert len(store_sessions) == 1
+    assert store_sessions[0]["uuid"] == str(store_session.uuid)
+
+def test_get_active_store_sessions_as_ticket_audit(testapp, db, upcoming_event, ticket_audit_token, jeff_user):
+    store_session = StoreSession(jeff_user, 3600, upcoming_event)
+    db.add(store_session)
+    db.flush()
+
+    store_sessions = testapp.get('/event/%s/store_session/active' % upcoming_event.uuid, headers=dict({
+        "Authorization": "Bearer " + ticket_audit_token
     }), status=200).json_body
 
     assert len(store_sessions) == 1
@@ -80,6 +93,13 @@ def test_get_active_store_sessions_as_other_brand_ticket_admin(testapp, other_up
 
 def test_get_active_store_sessions_as_other_brand_admin(testapp, other_upcoming_event, brand_admin_user):
     token, refresh = testapp.auth_get_tokens(brand_admin_user.email, 'sixcharacters')
+
+    testapp.get('/event/%s/store_session/active' % other_upcoming_event.uuid, headers=dict({
+        "Authorization": "Bearer " + token
+    }), status=403)
+
+def test_get_active_store_sessions_as_other_ticket_audit(testapp, other_upcoming_event, ticket_audit_user):
+    token, refresh = testapp.auth_get_tokens(ticket_audit_user.email, 'sixcharacters')
 
     testapp.get('/event/%s/store_session/active' % other_upcoming_event.uuid, headers=dict({
         "Authorization": "Bearer " + token
