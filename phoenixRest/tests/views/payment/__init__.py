@@ -194,7 +194,8 @@ def test_refund_partial_then_full(testapp, db, admin_token, jeff_stripe_payment,
     }, headers={'Authorization': "Bearer " + admin_token}, status=200)
     assert res.json_body['state'] == "PaymentState.partially_refunded"
     assert res.json_body['refunded_amount'] == non_membership_ticket_type.price
-    assert jeff_stripe_payment.tickets == [second]
+    assert len(jeff_stripe_payment.tickets) == 1
+    assert jeff_stripe_payment.tickets[0] == second
     assert db.query(Ticket).filter(Ticket.ticket_id == first.ticket_id).first() is None
 
     res = testapp.post_json('/payment/%s/refund' % jeff_stripe_payment.uuid, {
@@ -202,7 +203,7 @@ def test_refund_partial_then_full(testapp, db, admin_token, jeff_stripe_payment,
     }, headers={'Authorization': "Bearer " + admin_token}, status=200)
     assert res.json_body['state'] == "PaymentState.refunded"
     assert res.json_body['refunded_amount'] == jeff_stripe_payment.price
-    assert jeff_stripe_payment.tickets == []
+    assert len(jeff_stripe_payment.tickets) == 0
 
 def test_refund_full_vipps(testapp, admin_token, jeff_vipps_payment):
     first, second = jeff_vipps_payment.tickets
@@ -327,4 +328,5 @@ def test_refund_mails_buyer(testapp, monkeypatch, admin_token, jeff_user, jeff_s
         'tickets': [jeff_stripe_payment.tickets[0].ticket_id]
     }, headers={'Authorization': "Bearer " + admin_token}, status=200)
 
-    assert sent_to == [jeff_user.email]
+    assert len(sent_to) == 1
+    assert sent_to[0] == jeff_user.email
