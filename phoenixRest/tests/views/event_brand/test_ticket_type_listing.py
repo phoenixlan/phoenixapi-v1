@@ -8,9 +8,3 @@ def test_event_brand_ticket_type_listing_as_ticket_audit(testapp, upcoming_event
         "Authorization": "Bearer " + privileged_token
     }), status=200)
     assert len(res.json_body) > 0
-
-    # Test ACL functionality for TICKET_AUDIT, check that that the permission 'get_ticket_sales_stats' works.
-    # The user should be able to view ticket sales stats, we expect status code 200.
-    res = testapp.get('/event_brand/%s/statistics/ticket_sales' % upcoming_event.event_brand_uuid, headers=dict({
-        "Authorization": "Bearer " + privileged_token
-    }), status=200)

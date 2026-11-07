@@ -30,7 +30,6 @@ class EventBrandStatisticsResource(object):
         acl = [
             (Allow, ADMIN(), 'get_ticket_sales_stats'),
             (Allow, BRAND_ADMIN(self.eventBrandInstance.uuid), 'get_ticket_sales_stats'),
-            (Allow, TICKET_AUDIT(self.eventBrandInstance.uuid), 'get_ticket_sales_stats'),
 
             (Allow, ADMIN(), 'get_participant_history_stats'),
             (Allow, BRAND_ADMIN(self.eventBrandInstance.uuid), 'get_participant_history_stats'),
