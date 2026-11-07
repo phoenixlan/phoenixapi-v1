@@ -8,7 +8,7 @@ from pyramid.authorization import Authenticated, Everyone, Deny, Allow
 
 from phoenixRest.models.tickets.payment import Payment, PaymentState, PaymentProvider
 
-from phoenixRest.roles import ADMIN, TICKET_ADMIN
+from phoenixRest.roles import ADMIN, TICKET_ADMIN, TICKET_AUDIT
 
 from phoenixRest.features.payment.vipps import initialize_vipps_payment
 from phoenixRest.features.payment.stripe import initialize_stripe_payment
@@ -27,8 +27,11 @@ class PaymentInstanceResource(object):
         return [
             (Allow, ADMIN(), 'get_payment'),
             (Allow, TICKET_ADMIN(self.paymentInstance.event.event_brand_uuid), 'get_payment'),
+            (Allow, TICKET_AUDIT(self.paymentInstance.event.event_brand_uuid), 'get_payment'),
+
             # Everyone may fetch their own payment
             (Allow, 'role:user:%s' % self.paymentInstance.user.uuid, 'get_payment'),
+            
             # Everyone may initiate their own payment(but admins can't initiate others payments)
             (Allow, 'role:user:%s' % self.paymentInstance.user.uuid, 'initiate_payment')
         ]

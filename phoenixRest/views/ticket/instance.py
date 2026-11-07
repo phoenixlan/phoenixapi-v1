@@ -14,7 +14,7 @@ from phoenixRest.models.tickets.ticket_transfer import TicketTransfer
 from phoenixRest.models.tickets.ticket import Ticket
 from phoenixRest.models.tickets.seat import Seat
 
-from phoenixRest.roles import ADMIN, TICKET_ADMIN, TICKET_CHECKIN, BRAND_ADMIN
+from phoenixRest.roles import ADMIN, TICKET_ADMIN, TICKET_CHECKIN, TICKET_AUDIT, BRAND_ADMIN
 
 from phoenixRest.utils import validate 
 
@@ -35,6 +35,7 @@ class TicketInstanceResource(object):
             (Allow, BRAND_ADMIN(self.ticketInstance.event.event_brand_uuid), 'view_ticket'),
             (Allow, TICKET_ADMIN(self.ticketInstance.event.event_brand_uuid), 'view_ticket'),
             (Allow, TICKET_CHECKIN(self.ticketInstance.event.event_brand_uuid), 'view_ticket'),
+            (Allow, TICKET_AUDIT(self.ticketInstance.event.event_brand_uuid), 'view_ticket'),
 
             (Allow, ADMIN(), 'seat_ticket'),
             (Allow, BRAND_ADMIN(self.ticketInstance.event.event_brand_uuid), 'seat_ticket'),

@@ -197,6 +197,12 @@ def brand_admin_user(db, upcoming_event):
     )
 
 @pytest.fixture
+def ticket_audit_user(db, upcoming_event):
+    return _create_scoped_permission_user(
+        db, upcoming_event, 'ticket_audit', 'ticketaudit', 'ticketaudit@example.com'
+    )
+
+@pytest.fixture
 def ticketsale_ongoing_brand_admin_user(db, ticketsale_ongoing_event):
     """Brand admin mapped to the ticketsale ongoing event, which becomes the
     brand's current event when it exists, so its roles end up in the token"""
@@ -234,6 +240,11 @@ def admin_token(testapp, admin_user):
 @pytest.fixture
 def brand_admin_token(testapp, brand_admin_user):
     privileged_token, refresh = testapp.auth_get_tokens(brand_admin_user.email, 'sixcharacters')
+    return privileged_token
+
+@pytest.fixture
+def ticket_audit_token(testapp, ticket_audit_user):
+    privileged_token, refresh = testapp.auth_get_tokens(ticket_audit_user.email, 'sixcharacters')
     return privileged_token
 
 @pytest.fixture
