@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 import requests
 import json
 import os
+import uuid
 
 from phoenixRest.models.tickets.payment_providers.vipps_payment import VippsPayment
 from phoenixRest.models.tickets.payment import Payment
@@ -126,6 +127,41 @@ def capture_vipps_payment(vipps_payment):
 	
 	log.info("Captured vipps payment for %s - got response %d" % (vipps_payment.order_id, response.status_code))
 	
+	return response.status_code == 200
+
+def refund_vipps_payment(vipps_payment, amount: int, ticket_count: int):
+	# Don't talk to vipps if we are running tests
+	if "PYTEST_CURRENT_TEST" in os.environ:
+		return True
+
+	_ensureToken()
+
+	payload = {
+		"merchantInfo": {
+			"merchantSerialNumber": MERCHANT_SERIAL_NUMBER,
+		},
+		"transaction": {
+			"amount": amount*100,
+			# The store session is gone after minting, so we can't use _get_payment_str here
+			"transactionText": "Refusjon av %s billett%s" % (ticket_count, "er" if ticket_count > 1 else "")
+		}
+	}
+
+	log.debug("Sending %s" % json.dumps(payload))
+
+	response = requests.post('%s/ecomm/v2/payments/%s/refund' % (API_ROOT, vipps_payment.order_id),
+		headers={
+			**_get_headers(),
+			**{
+				"Authorization": token,
+				"Content-Type": "application/json",
+				# Idempotency key - every refund is a separate operation
+				"X-Request-Id": str(uuid.uuid4())
+			}},
+		json=payload)
+
+	log.info("Refunded %s NOK of vipps payment %s - got response %d" % (amount, vipps_payment.order_id, response.status_code))
+
 	return response.status_code == 200
 
 def _initiatePayment(request, payment, vipps_payment, fallback):

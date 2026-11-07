@@ -73,7 +73,7 @@ def search_users(context, request):
             "error": "Missing query"
         }
 
-    query = request.GET['query']
+    query = request.GET['query'].lower()
 
     if len(query) < 4:
         request.response.status = 400
@@ -82,9 +82,9 @@ def search_users(context, request):
         }
 
     users = request.db.query(User).filter(or_(
-        User.firstname.contains(query),
-        User.lastname.contains(query),
-        User.email.contains(query)
+        User.firstname.icontains(query),
+        User.lastname.icontains(query),
+        User.email.icontains(query)
     )).limit(10).all()
 
     request.db.add(AuditLog(request.user, "user_search", {

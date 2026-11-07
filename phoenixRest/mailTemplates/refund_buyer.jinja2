@@ -1,0 +1,23 @@
+<html>
+    <body>
+        <p>Hei!</p>
+
+        {% if full_refund %}
+        <p>Kjøpet ditt hos {{ name }} har blitt refundert.</p>
+        {% else %}
+        <p>Deler av kjøpet ditt hos {{ name }} har blitt refundert.</p>
+        {% endif %}
+
+        <p>Følgende billetter er refundert og er ikke lenger gyldige:</p>
+        <ul>
+        {% for ticket in tickets %}
+        <li>#{{ ticket.ticket_id }} ({{ ticket.ticket_type }})</li>
+        {% endfor %}
+        </ul>
+
+        <p><b>Refundert beløp:</b> {{ amount }},-</p>
+        <p>Det kan ta noen dager før pengene er tilbake på kontoen din.</p>
+
+        <p>Spørsmål? Kontakt <a href="mailto:{{mail}}">{{mail}}</a></p>
+    </body>
+</html>
