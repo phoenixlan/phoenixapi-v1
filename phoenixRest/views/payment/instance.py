@@ -163,6 +163,7 @@ def refund_payment(context, request):
     for ticket in tickets:
         if ticket.totp is not None:
             request.db.delete(ticket.totp)
+            ticket.totp = None
         for transfer in request.db.query(TicketTransfer).filter(TicketTransfer.ticket == ticket).all():
             request.db.delete(transfer)
         request.db.delete(ticket)

@@ -3,6 +3,7 @@ from phoenixRest.models.core.audit_log import AuditLog
 from phoenixRest.models.tickets.payment import Payment, PaymentProvider, PaymentState
 from phoenixRest.models.tickets.ticket import Ticket
 from phoenixRest.models.tickets.ticket_voucher import TicketVoucher
+from phoenixRest.models.tickets.ticket_totp import TicketTotp
 
 from phoenixRest.services.mail import MailService
 
@@ -239,6 +240,22 @@ def test_refund_full_vipps(testapp, admin_token, jeff_vipps_payment):
     }, headers={'Authorization': "Bearer " + admin_token}, status=200)
     assert res.json_body['state'] == "PaymentState.refunded"
     assert res.json_body['refunded_amount'] == jeff_vipps_payment.price
+
+def test_refund_tickets_with_totp(testapp, db, admin_token, jeff_user, jeff_stripe_payment):
+    """Tickets get a totp once the owner opens them, which must be cleaned up on refund"""
+    first, second = jeff_stripe_payment.tickets
+    first_id = first.ticket_id
+    second_id = second.ticket_id
+
+    token, refresh = testapp.auth_get_tokens(jeff_user.email, 'sixcharacters')
+    for ticket_id in [first_id, second_id]:
+        testapp.get('/ticket/%s/totp' % ticket_id, headers={'Authorization': "Bearer " + token}, status=200)
+
+    res = testapp.post_json('/payment/%s/refund' % jeff_stripe_payment.uuid, {
+        'tickets': [first_id, second_id]
+    }, headers={'Authorization': "Bearer " + admin_token}, status=200)
+    assert res.json_body['state'] == "PaymentState.refunded"
+    assert db.query(TicketTotp).filter(TicketTotp.ticket_id.in_([first_id, second_id])).count() == 0
 
 def test_refund_after_manual_deletion_is_full(testapp, db, admin_token, jeff_stripe_payment):
     """A ticket deleted manually means the remaining ticket is all that's left, so refunding it is a full refund"""
