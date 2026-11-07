@@ -15,7 +15,7 @@ from phoenixRest.models.tickets.ticket_type import TicketType
 from phoenixRest.models.tickets.ticket_voucher import TicketVoucher
 from phoenixRest.mappers.crew import map_crew_simple
 
-from phoenixRest.roles import ADMIN, BRAND_ADMIN, TICKET_ADMIN, HR_ADMIN
+from phoenixRest.roles import ADMIN, BRAND_ADMIN, TICKET_ADMIN, TICKET_AUDIT, HR_ADMIN
 from phoenixRest.utils import validate
 
 from phoenixRest.views.event_brand.statistics import EventBrandStatisticsResource
@@ -51,6 +51,7 @@ class EventBrandInstanceResource(dict):
             (Allow, ADMIN(), 'get_all_ticket_types'),
             (Allow, BRAND_ADMIN(self.eventBrandInstance.uuid), 'get_all_ticket_types'),
             (Allow, TICKET_ADMIN(self.eventBrandInstance.uuid), 'get_all_ticket_types'),
+            (Allow, TICKET_AUDIT(self.eventBrandInstance.uuid), 'get_all_ticket_types'),
 
             (Allow, ADMIN(), 'get_all_seatmaps'),
             (Allow, BRAND_ADMIN(self.eventBrandInstance.uuid), 'get_all_seatmaps'),

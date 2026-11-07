@@ -11,7 +11,7 @@ from phoenixRest.models.tickets.payment import Payment, PaymentState, PaymentPro
 from phoenixRest.models.tickets.ticket_transfer import TicketTransfer
 from phoenixRest.models.tickets.ticket_voucher import TicketVoucher
 
-from phoenixRest.roles import ADMIN, TICKET_ADMIN, BRAND_ADMIN
+from phoenixRest.roles import ADMIN, TICKET_ADMIN, BRAND_ADMIN, TICKET_AUDIT
 
 from phoenixRest.features.payment.vipps import initialize_vipps_payment, refund_vipps_payment
 from phoenixRest.features.payment.stripe import initialize_stripe_payment, refund_stripe_payment
@@ -32,6 +32,7 @@ class PaymentInstanceResource(object):
         return [
             (Allow, ADMIN(), 'get_payment'),
             (Allow, TICKET_ADMIN(self.paymentInstance.event.event_brand_uuid), 'get_payment'),
+            (Allow, TICKET_AUDIT(self.paymentInstance.event.event_brand_uuid), 'get_payment'),
 
             # Admins can refund a payment, either partially or in full
             (Allow, ADMIN(), 'refund_payment'),
@@ -40,6 +41,7 @@ class PaymentInstanceResource(object):
 
             # Everyone may fetch their own payment
             (Allow, 'role:user:%s' % self.paymentInstance.user.uuid, 'get_payment'),
+            
             # Everyone may initiate their own payment(but admins can't initiate others payments)
             (Allow, 'role:user:%s' % self.paymentInstance.user.uuid, 'initiate_payment')
         ]

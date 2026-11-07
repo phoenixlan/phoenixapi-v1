@@ -30,7 +30,7 @@ from phoenixRest.mappers.user import map_user_with_secret_fields_membership_pers
 
 from phoenixRest.features.crew_card import generate_badge
 
-from phoenixRest.roles import ADMIN, BRAND_ADMIN, CHIEF, HR_ADMIN, TICKET_ADMIN
+from phoenixRest.roles import ADMIN, BRAND_ADMIN, CHIEF, HR_ADMIN, TICKET_ADMIN, TICKET_AUDIT
 
 from phoenixRest.utils import validate, validateUuidAndQuery
 
@@ -63,6 +63,7 @@ class EventInstanceResource(dict):
             (Allow, ADMIN(), 'ticket_type_mapping_list'),
             (Allow, BRAND_ADMIN(self.eventInstance.event_brand_uuid), 'ticket_type_mapping_list'),
             (Allow, TICKET_ADMIN(self.eventInstance.event_brand_uuid), 'ticket_type_mapping_list'),
+            (Allow, TICKET_AUDIT(self.eventInstance.event_brand_uuid), 'ticket_type_mapping_list'),
 
             (Allow, ADMIN(), 'ticket_type_mapping_create'),
             (Allow, BRAND_ADMIN(self.eventInstance.event_brand_uuid), 'ticket_type_mapping_create'),

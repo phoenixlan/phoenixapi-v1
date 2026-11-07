@@ -16,7 +16,7 @@ from phoenixRest.models.tickets.ticket_type import TicketType
 from phoenixRest.utils import validate
 from phoenixRest.resource import resource
 
-from phoenixRest.roles import ADMIN, BRAND_ADMIN
+from phoenixRest.roles import ADMIN, BRAND_ADMIN, TICKET_AUDIT
 
 from phoenixRest.views.seatmap.instance import SeatmapInstanceViews
 
