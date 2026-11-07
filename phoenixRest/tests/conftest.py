@@ -14,6 +14,9 @@ from phoenixRest.models.crew.permission import Permission
 from phoenixRest.models.crew.team import Team
 from phoenixRest.models.tickets.ticket import Ticket
 from phoenixRest.models.tickets.ticket_type import TicketType
+from phoenixRest.models.tickets.payment import Payment, PaymentProvider, PaymentState
+from phoenixRest.models.tickets.payment_providers.stripe_payment import StripePayment
+from phoenixRest.models.tickets.payment_providers.vipps_payment import VippsPayment
 from phoenixRest.models.tickets.seatmap import Seatmap
 from phoenixRest.models.tickets.row import Row
 from phoenixRest.models.tickets.seat import Seat
@@ -422,6 +425,33 @@ def greg_non_membership_ticket(db, greg_user, non_membership_ticket_type, upcomi
 @pytest.fixture
 def jeff_non_transferable_ticket(db, jeff_user, non_transferable_ticket_type, upcoming_event):
     return _create_ticket(db, jeff_user, non_transferable_ticket_type, upcoming_event)
+
+def _create_paid_payment(db, buyer, provider, ticket_type, event):
+    """Creates a payment that has gone all the way through to minted tickets, with two tickets"""
+    payment = Payment(buyer, provider, ticket_type.price * 2, event)
+    payment.state = PaymentState.tickets_minted
+    db.add(payment)
+    db.add_all([Ticket(buyer, payment, ticket_type, event), Ticket(buyer, payment, ticket_type, event)])
+    db.flush()
+    return payment
+
+@pytest.fixture
+def jeff_stripe_payment(db, jeff_user, non_membership_ticket_type, upcoming_event):
+    """A stripe payment by jeff for two refundable tickets"""
+    payment = _create_paid_payment(db, jeff_user, PaymentProvider.stripe, non_membership_ticket_type, upcoming_event)
+    db.add(StripePayment(payment, 'pi_test'))
+    db.flush()
+    return payment
+
+@pytest.fixture
+def jeff_vipps_payment(db, jeff_user, non_membership_ticket_type, upcoming_event):
+    """A vipps payment by jeff for two refundable tickets"""
+    payment = _create_paid_payment(db, jeff_user, PaymentProvider.vipps, non_membership_ticket_type, upcoming_event)
+    vipps_payment = VippsPayment(payment)
+    vipps_payment.order_id = vipps_payment.slug
+    db.add(vipps_payment)
+    db.flush()
+    return payment
 
 @pytest.fixture
 def jeff_membership_personalia(db, jeff_user):

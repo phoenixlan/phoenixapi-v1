@@ -34,6 +34,8 @@ class PaymentState(enum.Enum):
     paid = 3
     failed = 4
     tickets_minted = 5
+    partially_refunded = 6
+    refunded = 7
 
 class Payment(Base):
     __tablename__ = "payment"
@@ -57,6 +59,7 @@ class Payment(Base):
     state = Column(Enum(PaymentState), nullable=False)
 
     price = Column(Integer, nullable=False)
+    refunded_amount = Column(Integer, nullable=False, server_default='0')
 
     created = Column(DateTime, nullable=False)
 
@@ -79,5 +82,6 @@ class Payment(Base):
             'provider': str(self.provider),
             'state': str(self.state),
             'price': self.price,
+            'refunded_amount': self.refunded_amount,
             'created': int(self.created.timestamp())
         }
