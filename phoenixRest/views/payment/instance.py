@@ -31,6 +31,7 @@ class PaymentInstanceResource(object):
     def __acl__(self):
         return [
             (Allow, ADMIN(), 'get_payment'),
+            (Allow, BRAND_ADMIN(self.paymentInstance.event.event_brand_uuid), 'get_payment'),
             (Allow, TICKET_ADMIN(self.paymentInstance.event.event_brand_uuid), 'get_payment'),
             (Allow, TICKET_AUDIT(self.paymentInstance.event.event_brand_uuid), 'get_payment'),
 

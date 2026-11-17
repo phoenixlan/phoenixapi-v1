@@ -373,3 +373,12 @@ def test_refund_mails_buyer(testapp, monkeypatch, admin_token, jeff_user, jeff_s
 
     assert len(sent_to) == 1
     assert sent_to[0] == jeff_user.email
+
+def test_get_payment_information_as_brand_admin(testapp, brand_admin_token, jeff_stripe_payment):
+    """Test that a brand admin can view payments"""
+
+    # Test ACL functionality for BRAND_ADMIN, check that the permission 'get_payment' works.
+    # The user should be able to read the Stripe test payment for Jeff, we expect status code 200.
+    res = testapp.get('/payment/%s' % jeff_stripe_payment.uuid, headers=dict({
+        "Authorization": "Bearer " + brand_admin_token
+    }), status=200)
